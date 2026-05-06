@@ -1,0 +1,36 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Expo
+mobile/.expo/
+mobile/dist/
+mobile/web-build/
+mobile/*.jks
+mobile/*.p8
+mobile/*.p12
+mobile/*.key
+mobile/*.mobileprovision
+mobile/*.orig.*
+
+# Native
+mobile/ios/
+mobile/android/
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Brainstorm session artifacts
+.superpowers/
+
+# Editors
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Supabase
+supabase/.branches/
+supabase/.temp/
