@@ -17,13 +17,12 @@ export default function RootLayout() {
 
     const inAuthGroup = segments[0] === '(auth)';
     const inOnboardingGroup = segments[0] === '(onboarding)';
-    const inAppGroup = segments[0] === '(app)';
 
     if (auth.status === 'unauthenticated' && !inAuthGroup) {
       router.replace('/(auth)/login');
     } else if (auth.status === 'authenticated' && family.status === 'no-family' && !inOnboardingGroup) {
       router.replace('/(onboarding)/create-family');
-    } else if (auth.status === 'authenticated' && family.status === 'has-family' && !inAppGroup) {
+    } else if (auth.status === 'authenticated' && family.status === 'has-family' && inAuthGroup) {
       router.replace('/(app)');
     }
   }, [auth, family, segments]);
