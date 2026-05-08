@@ -1,8 +1,10 @@
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from '../src/hooks/useAuth';
 import { useFamily } from '../src/hooks/useFamily';
+import { queryClient } from '../src/lib/queryClient';
 
 export default function RootLayout() {
   const auth = useAuth();
@@ -35,5 +37,9 @@ export default function RootLayout() {
     );
   }
 
-  return <Slot />;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Slot />
+    </QueryClientProvider>
+  );
 }
