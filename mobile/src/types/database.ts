@@ -253,6 +253,125 @@ export type Database = {
           },
         ]
       }
+      redemptions: {
+        Row: {
+          family_id: string
+          id: string
+          kid_profile_id: string
+          parent_note: string | null
+          requested_at: string
+          resolved_at: string | null
+          resolved_by: string | null
+          reward_id: string
+          star_cost_snapshot: number
+          status: string
+        }
+        Insert: {
+          family_id: string
+          id?: string
+          kid_profile_id: string
+          parent_note?: string | null
+          requested_at?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          reward_id: string
+          star_cost_snapshot: number
+          status?: string
+        }
+        Update: {
+          family_id?: string
+          id?: string
+          kid_profile_id?: string
+          parent_note?: string | null
+          requested_at?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          reward_id?: string
+          star_cost_snapshot?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "redemptions_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "redemptions_kid_profile_id_fkey"
+            columns: ["kid_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "redemptions_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "redemptions_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "rewards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rewards: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string
+          description: string | null
+          family_id: string
+          icon_id: number
+          id: string
+          star_cost: number
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by: string
+          description?: string | null
+          family_id: string
+          icon_id: number
+          id?: string
+          star_cost: number
+          title: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          family_id?: string
+          icon_id?: number
+          id?: string
+          star_cost?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rewards_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rewards_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       star_ledger: {
         Row: {
           created_at: string
@@ -343,7 +462,12 @@ export type Database = {
     }
     Functions: {
       approve_chore: { Args: { instance_id: string }; Returns: undefined }
+      approve_redemption: {
+        Args: { redemption_id: string }
+        Returns: undefined
+      }
       archive_chore: { Args: { chore_id: string }; Returns: undefined }
+      archive_reward: { Args: { reward_id: string }; Returns: undefined }
       complete_chore: {
         Args: {
           instance_id: string
@@ -376,12 +500,38 @@ export type Database = {
         Args: { avatar: number; kid_name: string; pin_hash?: string }
         Returns: string
       }
+      create_reward: {
+        Args: {
+          description: string
+          family_id: string
+          icon_id: number
+          star_cost: number
+          title: string
+        }
+        Returns: string
+      }
       current_family_id: { Args: never; Returns: string }
       current_streak: { Args: { p: string }; Returns: number }
+      deny_redemption: {
+        Args: { parent_note?: string; redemption_id: string }
+        Returns: undefined
+      }
+      ensure_today_instance: {
+        Args: { p_chore_id: string }
+        Returns: undefined
+      }
+      fulfill_redemption: {
+        Args: { redemption_id: string }
+        Returns: undefined
+      }
       next_occurrence: { Args: { after: string; rec: Json }; Returns: string }
       reject_chore: {
         Args: { instance_id: string; reason?: string }
         Returns: undefined
+      }
+      request_redemption: {
+        Args: { kid_profile_id: string; reward_id: string }
+        Returns: string
       }
       seed_starter_chores: { Args: { family_id: string }; Returns: number }
       update_chore: {
@@ -394,6 +544,16 @@ export type Database = {
           star_value?: number
           title?: string
           verification_mode?: string
+        }
+        Returns: undefined
+      }
+      update_reward: {
+        Args: {
+          description?: string
+          icon_id?: number
+          reward_id: string
+          star_cost?: number
+          title?: string
         }
         Returns: undefined
       }
