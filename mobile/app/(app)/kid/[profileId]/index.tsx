@@ -84,9 +84,14 @@ export default function KidHome() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Today's chores</Text>
-        <Pressable onPress={() => router.replace('/(app)')}>
-          <Text style={styles.switch}>Switch</Text>
-        </Pressable>
+        <View style={{ flexDirection: 'row', gap: 16 }}>
+          <Pressable onPress={() => router.push(`/(app)/kid/${profileId}/rewards` as never)}>
+            <Text style={styles.switch}>Rewards</Text>
+          </Pressable>
+          <Pressable onPress={() => router.replace('/(app)')}>
+            <Text style={styles.switch}>Switch</Text>
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.statsRow}>
