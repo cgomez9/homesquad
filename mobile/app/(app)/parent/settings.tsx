@@ -1,16 +1,28 @@
-import { useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Modal, Pressable, Alert } from 'react-native';
+// mobile/app/(app)/parent/settings.tsx
+import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, Modal, Pressable, Alert, Switch } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import * as Clipboard from 'expo-clipboard';
 import { supabase } from '../../../src/lib/supabase';
 import { Button } from '../../../src/components/Button';
 import { signOut } from '../../../src/lib/auth';
+import { isEnabled, setEnabled } from '../../../src/lib/feedback';
 
 export default function Settings() {
   const router = useRouter();
   const [code, setCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [feedbackOn, setFeedbackOn] = useState(true);
+
+  useEffect(() => {
+    isEnabled().then(setFeedbackOn);
+  }, []);
+
+  async function onToggleFeedback(v: boolean) {
+    setFeedbackOn(v);
+    await setEnabled(v);
+  }
 
   const { data, isLoading } = useQuery({
     queryKey: ['family-summary'],
@@ -56,6 +68,14 @@ export default function Settings() {
         <Button label="Invite a co-parent" onPress={() => invite.mutate()} loading={invite.isPending} variant="secondary" />
       </View>
 
+      <View style={styles.section}>
+        <Text style={styles.label}>Feedback</Text>
+        <View style={styles.toggleRow}>
+          <Text style={styles.toggleLabel}>Sounds & haptics on this device</Text>
+          <Switch value={feedbackOn} onValueChange={onToggleFeedback} />
+        </View>
+      </View>
+
       <View style={styles.stub}><Text style={styles.stubText}>Notifications — coming soon</Text></View>
       <View style={styles.stub}><Text style={styles.stubText}>Subscription — coming soon</Text></View>
 
@@ -87,6 +107,8 @@ const styles = StyleSheet.create({
   section: { paddingVertical: 8 },
   label: { fontSize: 11, color: '#6b7280', textTransform: 'uppercase', fontWeight: '600' },
   value: { fontSize: 16, marginTop: 4 },
+  toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
+  toggleLabel: { fontSize: 15, flex: 1 },
   stub: { padding: 12, backgroundColor: '#f3f4f6', borderRadius: 8 },
   stubText: { color: '#6b7280' },
   modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' },
