@@ -1,12 +1,17 @@
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { useState } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, Modal, Pressable, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import * as Clipboard from 'expo-clipboard';
 import { supabase } from '../../../src/lib/supabase';
 import { Button } from '../../../src/components/Button';
 import { signOut } from '../../../src/lib/auth';
 
 export default function Settings() {
   const router = useRouter();
+  const [code, setCode] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
   const { data, isLoading } = useQuery({
     queryKey: ['family-summary'],
     queryFn: async () => {
@@ -19,6 +24,22 @@ export default function Settings() {
     },
   });
 
+  const invite = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.rpc('create_family_invite');
+      if (error) throw error;
+      return data as string;
+    },
+    onSuccess: (c) => { setCopied(false); setCode(c); },
+    onError: (e) => Alert.alert('Could not generate code', (e as Error).message),
+  });
+
+  async function onCopy() {
+    if (!code) return;
+    await Clipboard.setStringAsync(code);
+    setCopied(true);
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Settings</Text>
@@ -30,12 +51,32 @@ export default function Settings() {
         </View>
       )}
 
+      <View style={styles.section}>
+        <Text style={styles.label}>Co-parents</Text>
+        <Button label="Invite a co-parent" onPress={() => invite.mutate()} loading={invite.isPending} variant="secondary" />
+      </View>
+
       <View style={styles.stub}><Text style={styles.stubText}>Notifications — coming soon</Text></View>
-      <View style={styles.stub}><Text style={styles.stubText}>Co-parents — coming soon</Text></View>
       <View style={styles.stub}><Text style={styles.stubText}>Subscription — coming soon</Text></View>
 
       <Button label="Switch profile" variant="secondary" onPress={() => router.replace('/(app)')} />
       <Button label="Sign out" variant="secondary" onPress={signOut} style={{ marginTop: 8 }} />
+
+      <Modal visible={!!code} transparent animationType="fade" onRequestClose={() => setCode(null)}>
+        <View style={styles.modalBg}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Co-parent invite code</Text>
+            <Text style={styles.codeBig}>{code}</Text>
+            <Text style={styles.modalSub}>Expires in 24 hours. Share it with your co-parent — they enter it on the join-family screen when they sign up.</Text>
+            <Pressable onPress={onCopy} style={styles.copyBtn}>
+              <Text style={styles.copyText}>{copied ? '✓ Copied' : 'Copy code'}</Text>
+            </Pressable>
+            <Pressable onPress={() => setCode(null)} style={styles.doneBtn}>
+              <Text style={styles.doneText}>Done</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -48,4 +89,13 @@ const styles = StyleSheet.create({
   value: { fontSize: 16, marginTop: 4 },
   stub: { padding: 12, backgroundColor: '#f3f4f6', borderRadius: 8 },
   stubText: { color: '#6b7280' },
+  modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' },
+  modalCard: { backgroundColor: '#fff', borderRadius: 16, padding: 24, width: 320, gap: 12, alignItems: 'center' },
+  modalTitle: { fontSize: 17, fontWeight: '600' },
+  codeBig: { fontSize: 36, fontWeight: '700', letterSpacing: 8, color: '#111827', marginVertical: 8 },
+  modalSub: { fontSize: 13, color: '#6b7280', textAlign: 'center' },
+  copyBtn: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 999, backgroundColor: '#3b82f6' },
+  copyText: { color: '#fff', fontWeight: '600' },
+  doneBtn: { paddingVertical: 8 },
+  doneText: { color: '#6b7280', fontWeight: '500' },
 });
