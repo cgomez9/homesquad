@@ -1,10 +1,38 @@
+// mobile/app/_layout.tsx — full file
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider, useQueryClient } from '@tanstack/react-query';
+import * as Notifications from 'expo-notifications';
 import { useAuth } from '../src/hooks/useAuth';
 import { useFamily } from '../src/hooks/useFamily';
 import { queryClient } from '../src/lib/queryClient';
+import { subscribeToFamily } from '../src/lib/realtime';
+import { supabase } from '../src/lib/supabase';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
+function RealtimeBridge() {
+  const auth = useAuth();
+  const userId = auth.status === 'authenticated' ? auth.session.user.id : undefined;
+  const family = useFamily(userId);
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    if (family.status !== 'has-family') return;
+    const channel = subscribeToFamily(family.familyId, qc);
+    return () => { supabase.removeChannel(channel); };
+  }, [family, qc]);
+
+  return null;
+}
 
 export default function RootLayout() {
   const auth = useAuth();
@@ -39,6 +67,7 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <RealtimeBridge />
       <Slot />
     </QueryClientProvider>
   );
