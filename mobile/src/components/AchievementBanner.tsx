@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { useSegments } from 'expo-router';
 import { on } from '../lib/events';
 import { ACHIEVEMENTS, type AchievementKey } from '../constants/achievements';
 import { fireAchievementFeedback } from '../lib/feedback';
@@ -12,10 +13,21 @@ export function AchievementBanner() {
   const [current, setCurrent] = useState<QueuedBanner | null>(null);
   const [queue, setQueue] = useState<QueuedBanner[]>([]);
 
+  // Track current route so we only fire when the user is in kid mode.
+  // The banner is for the kid celebrating their own win — not for the parent
+  // who just approved on the Approvals tab.
+  const segments = useSegments();
+  const inKidMode = segments.some((s) => s === 'kid');
+  const inKidModeRef = useRef(inKidMode);
+  inKidModeRef.current = inKidMode;
+
   // Subscribe once.
   useEffect(() => {
     let counter = 0;
     const unsub = on('achievement_unlocked', (p) => {
+      // Drop events when not in kid mode — the parent doesn't need a banner
+      // when they themselves triggered the unlock.
+      if (!inKidModeRef.current) return;
       counter += 1;
       const entry: QueuedBanner = { id: counter, key: p.key as AchievementKey };
       setQueue((q) => [...q, entry]);
