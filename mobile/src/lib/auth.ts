@@ -1,5 +1,11 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { supabase } from './supabase';
+
+GoogleSignin.configure({
+  iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+});
 
 export async function signUp(email: string, password: string) {
   const { data, error } = await supabase.auth.signUp({ email, password });
@@ -43,6 +49,21 @@ export async function signInWithApple() {
   const { data, error } = await supabase.auth.signInWithIdToken({
     provider: 'apple',
     token: credential.identityToken,
+  });
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function signInWithGoogle() {
+  await GoogleSignin.hasPlayServices();
+  const userInfo = await GoogleSignin.signIn();
+  const idToken = userInfo.data?.idToken;
+  if (!idToken) {
+    throw new Error('No identity token from Google');
+  }
+  const { data, error } = await supabase.auth.signInWithIdToken({
+    provider: 'google',
+    token: idToken,
   });
   if (error) throw new Error(error.message);
   return data;
