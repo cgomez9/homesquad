@@ -1,6 +1,15 @@
 import { signUp, signIn, signOut, requestPasswordReset } from '../src/lib/auth';
 import { supabase } from '../src/lib/supabase';
 
+jest.mock('@react-native-google-signin/google-signin', () => ({
+  GoogleSignin: {
+    configure: jest.fn(),
+    hasPlayServices: jest.fn().mockResolvedValue(true),
+    signIn: jest.fn(),
+  },
+  statusCodes: { SIGN_IN_CANCELLED: 'SIGN_IN_CANCELLED' },
+}));
+
 jest.mock('../src/lib/supabase', () => ({
   supabase: {
     auth: {
