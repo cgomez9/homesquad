@@ -1,6 +1,7 @@
-import { signInWithApple } from '../src/lib/auth';
+import { signInWithApple, signInWithGoogle } from '../src/lib/auth';
 import { supabase } from '../src/lib/supabase';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 jest.mock('../src/lib/supabase', () => ({
   supabase: {
@@ -15,8 +16,18 @@ jest.mock('expo-apple-authentication', () => ({
   AppleAuthenticationScope: { EMAIL: 'email', FULL_NAME: 'fullName' },
 }));
 
+jest.mock('@react-native-google-signin/google-signin', () => ({
+  GoogleSignin: {
+    configure: jest.fn(),
+    hasPlayServices: jest.fn().mockResolvedValue(true),
+    signIn: jest.fn(),
+  },
+  statusCodes: { SIGN_IN_CANCELLED: 'SIGN_IN_CANCELLED' },
+}));
+
 const mockedAuth = supabase.auth as jest.Mocked<typeof supabase.auth>;
 const mockedApple = AppleAuthentication as jest.Mocked<typeof AppleAuthentication>;
+const mockedGoogle = GoogleSignin as jest.Mocked<typeof GoogleSignin>;
 
 beforeEach(() => jest.clearAllMocks());
 
@@ -45,5 +56,30 @@ describe('signInWithApple', () => {
     mockedApple.signInAsync.mockResolvedValue({ identityToken: 'tok' } as any);
     mockedAuth.signInWithIdToken.mockResolvedValue({ data: { user: null, session: null }, error: { message: 'invalid' } } as any);
     await expect(signInWithApple()).rejects.toThrow('invalid');
+  });
+});
+
+describe('signInWithGoogle', () => {
+  it('passes the Google id token to supabase.auth.signInWithIdToken', async () => {
+    mockedGoogle.signIn.mockResolvedValue({ data: { idToken: 'google-id-token-xyz' } } as any);
+    mockedAuth.signInWithIdToken.mockResolvedValue({ data: { user: null, session: null }, error: null } as any);
+
+    await signInWithGoogle();
+
+    expect(mockedAuth.signInWithIdToken).toHaveBeenCalledWith({
+      provider: 'google',
+      token: 'google-id-token-xyz',
+    });
+  });
+
+  it('throws when Google returns no id token', async () => {
+    mockedGoogle.signIn.mockResolvedValue({ data: { idToken: null } } as any);
+    await expect(signInWithGoogle()).rejects.toThrow(/identity token/i);
+  });
+
+  it('throws when supabase returns an error', async () => {
+    mockedGoogle.signIn.mockResolvedValue({ data: { idToken: 'tok' } } as any);
+    mockedAuth.signInWithIdToken.mockResolvedValue({ data: { user: null, session: null }, error: { message: 'invalid' } } as any);
+    await expect(signInWithGoogle()).rejects.toThrow('invalid');
   });
 });
