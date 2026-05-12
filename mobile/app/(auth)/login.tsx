@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, KeyboardAvoidingView, Platform } from 'react-na
 import { Link } from 'expo-router';
 import { Button } from '../../src/components/Button';
 import { TextField } from '../../src/components/TextField';
+import { SocialAuthRow } from '../../src/components/SocialAuthRow';
 import { signIn } from '../../src/lib/auth';
 
 export default function LoginScreen() {
@@ -26,6 +27,7 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
       <Text style={styles.title}>Welcome back</Text>
+      <SocialAuthRow />
       <TextField
         label="Email"
         value={email}
