@@ -12,7 +12,11 @@
       "bundleIdentifier": "com.shores.app"
     },
     "android": {
-      "package": "com.shores.app"
+      "package": "com.shores.app",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -21,6 +25,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "efd25541-1278-4358-a693-3da8bdad9776"
+      }
     }
   }
 }
