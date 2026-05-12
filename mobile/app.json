@@ -23,7 +23,11 @@
       "expo-router",
       "expo-secure-store",
       "expo-audio",
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      [
+        "@react-native-google-signin/google-signin",
+        { "iosUrlScheme": "REPLACE_ME_AFTER_TASK_25" }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
