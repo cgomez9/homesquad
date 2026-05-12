@@ -26,7 +26,7 @@
       "expo-apple-authentication",
       [
         "@react-native-google-signin/google-signin",
-        { "iosUrlScheme": "REPLACE_ME_AFTER_TASK_25" }
+        { "iosUrlScheme": "com.googleusercontent.apps.000000000000-placeholder" }
       ]
     ],
     "experiments": {
