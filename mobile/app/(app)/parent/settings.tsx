@@ -8,6 +8,7 @@ import { supabase } from '../../../src/lib/supabase';
 import { Button } from '../../../src/components/Button';
 import { signOut } from '../../../src/lib/auth';
 import { isEnabled, setEnabled } from '../../../src/lib/feedback';
+import { DeleteAccountModal } from '../../../src/components/DeleteAccountModal';
 
 export default function Settings() {
   const router = useRouter();
@@ -46,6 +47,22 @@ export default function Settings() {
     onError: (e) => Alert.alert('Could not generate code', (e as Error).message),
   });
 
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const deleteAccount = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc('delete_account');
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      setDeleteOpen(false);
+      await supabase.auth.signOut();
+      router.replace('/(auth)/login');
+    },
+    onError: (e) => setDeleteError((e as Error).message),
+  });
+
   async function onCopy() {
     if (!code) return;
     await Clipboard.setStringAsync(code);
@@ -79,6 +96,13 @@ export default function Settings() {
       <View style={styles.stub}><Text style={styles.stubText}>Notifications — coming soon</Text></View>
       <View style={styles.stub}><Text style={styles.stubText}>Subscription — coming soon</Text></View>
 
+      <View style={styles.section}>
+        <Text style={styles.label}>Account</Text>
+        <Pressable onPress={() => { setDeleteError(null); setDeleteOpen(true); }} style={styles.dangerBtn}>
+          <Text style={styles.dangerText}>Delete account</Text>
+        </Pressable>
+      </View>
+
       <Button label="Switch profile" variant="secondary" onPress={() => router.replace('/(app)')} />
       <Button label="Sign out" variant="secondary" onPress={signOut} style={{ marginTop: 8 }} />
 
@@ -97,6 +121,14 @@ export default function Settings() {
           </View>
         </View>
       </Modal>
+
+      <DeleteAccountModal
+        visible={deleteOpen}
+        loading={deleteAccount.isPending}
+        error={deleteError}
+        onCancel={() => setDeleteOpen(false)}
+        onConfirm={() => { setDeleteError(null); deleteAccount.mutate(); }}
+      />
     </View>
   );
 }
@@ -120,4 +152,6 @@ const styles = StyleSheet.create({
   copyText: { color: '#fff', fontWeight: '600' },
   doneBtn: { paddingVertical: 8 },
   doneText: { color: '#6b7280', fontWeight: '500' },
+  dangerBtn: { paddingVertical: 12, paddingHorizontal: 16, borderRadius: 8, backgroundColor: '#fff', borderWidth: 1, borderColor: '#ef4444', alignItems: 'center', marginTop: 8 },
+  dangerText: { color: '#ef4444', fontWeight: '600', fontSize: 15 },
 });

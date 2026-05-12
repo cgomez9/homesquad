@@ -612,6 +612,7 @@ export type Database = {
       }
       current_family_id: { Args: never; Returns: string }
       current_streak: { Args: { p: string }; Returns: number }
+      delete_account: { Args: never; Returns: undefined }
       deny_redemption: {
         Args: { parent_note?: string; redemption_id: string }
         Returns: undefined
