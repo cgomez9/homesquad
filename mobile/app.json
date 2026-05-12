@@ -9,7 +9,8 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.shores.app"
+      "bundleIdentifier": "com.shores.app",
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "com.shores.app",
@@ -21,7 +22,8 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-audio"
+      "expo-audio",
+      "expo-apple-authentication"
     ],
     "experiments": {
       "typedRoutes": true
