@@ -1,4 +1,5 @@
 import { Pressable, Text, StyleSheet, ActivityIndicator, ViewStyle } from 'react-native';
+import { colors, radii, typography } from '../theme';
 
 type Props = {
   label: string;
@@ -18,11 +19,11 @@ export function Button({ label, onPress, disabled, loading, variant = 'primary',
         styles.base,
         variant === 'primary' ? styles.primary : styles.secondary,
         (disabled || loading) && styles.disabled,
-        pressed && styles.pressed,
+        pressed && (variant === 'primary' ? styles.primaryPressed : styles.secondaryPressed),
         style,
       ]}
     >
-      {loading ? <ActivityIndicator color="#fff" /> : (
+      {loading ? <ActivityIndicator color={variant === 'primary' ? '#fff' : colors.primary} /> : (
         <Text style={[styles.label, variant === 'secondary' && styles.labelSecondary]}>{label}</Text>
       )}
     </Pressable>
@@ -30,11 +31,18 @@ export function Button({ label, onPress, disabled, loading, variant = 'primary',
 }
 
 const styles = StyleSheet.create({
-  base: { paddingVertical: 14, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  primary: { backgroundColor: '#3b82f6' },
-  secondary: { backgroundColor: '#e5e7eb' },
+  base: {
+    height: 52,
+    borderRadius: radii.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
+  primary: { backgroundColor: colors.primary },
+  primaryPressed: { backgroundColor: colors.primaryDark },
+  secondary: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.primary },
+  secondaryPressed: { backgroundColor: 'rgba(14, 165, 164, 0.08)' },
   disabled: { opacity: 0.5 },
-  pressed: { opacity: 0.8 },
-  label: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  labelSecondary: { color: '#111' },
+  label: { color: '#fff', fontSize: typography.body, fontFamily: typography.fontFamilyBold },
+  labelSecondary: { color: colors.primary },
 });
