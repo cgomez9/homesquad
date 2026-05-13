@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../../src/components/Button';
 import { TextField } from '../../src/components/TextField';
 import { AvatarPicker } from '../../src/components/AvatarPicker';
@@ -8,8 +9,10 @@ import type { AvatarId } from '../../src/constants/avatars';
 import { supabase } from '../../src/lib/supabase';
 import { refetchFamily } from '../../src/hooks/useFamily';
 import { signOut } from '../../src/lib/auth';
+import { colors, spacing, typography } from '../../src/theme';
 
 export default function CreateFamilyScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [familyName, setFamilyName] = useState('');
   const [parentName, setParentName] = useState('');
@@ -19,22 +22,21 @@ export default function CreateFamilyScreen() {
 
   async function onSubmit() {
     setError(null);
-    if (familyName.trim().length === 0) return setError('Family name required');
-    if (parentName.trim().length === 0) return setError('Your name is required');
+    if (familyName.trim().length === 0) return setError(t('auth.createFamily.errorFamilyNameRequired'));
+    if (parentName.trim().length === 0) return setError(t('auth.createFamily.errorParentNameRequired'));
     setLoading(true);
-    const { error } = await supabase.rpc('create_family', {
+    const { error: rpcErr } = await supabase.rpc('create_family', {
       family_name: familyName.trim(),
       parent_name: parentName.trim(),
       parent_avatar: avatar,
     });
-    if (error) {
+    if (rpcErr) {
       setLoading(false);
-      setError(error.message);
+      setError(rpcErr.message);
       return;
     }
     refetchFamily();
 
-    // Seed starter chores. Find the new family_id from the parent profile we just created.
     const { data: profile } = await supabase
       .from('profiles')
       .select('family_id')
@@ -53,30 +55,57 @@ export default function CreateFamilyScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Create your family</Text>
-      <TextField label="Family name" value={familyName} onChangeText={setFamilyName} placeholder="The Smiths" />
-      <TextField label="Your name (parent)" value={parentName} onChangeText={setParentName} placeholder="Alex" />
-      <Text style={styles.label}>Pick your avatar</Text>
+      <Text style={styles.title}>{t('auth.createFamily.title')}</Text>
+      <TextField
+        label={t('auth.createFamily.familyName')}
+        value={familyName}
+        onChangeText={setFamilyName}
+        placeholder={t('auth.createFamily.familyNamePlaceholder')}
+      />
+      <TextField
+        label={t('auth.createFamily.parentName')}
+        value={parentName}
+        onChangeText={setParentName}
+        placeholder={t('auth.createFamily.parentNamePlaceholder')}
+      />
+      <Text style={styles.sectionLabel}>{t('auth.createFamily.pickAvatar')}</Text>
       <AvatarPicker value={avatar} onChange={setAvatar} />
       {error && <Text style={styles.error}>{error}</Text>}
-      <Button label="Create family" onPress={onSubmit} loading={loading} />
+      <Button label={t('auth.createFamily.submit')} onPress={onSubmit} loading={loading} />
       <Pressable onPress={() => router.push('/(onboarding)/join-family' as never)} style={styles.joinLink}>
-        <Text style={styles.joinLinkText}>Have an invite code? Join an existing family</Text>
+        <Text style={styles.joinLinkText}>{t('auth.createFamily.joinLink')}</Text>
       </Pressable>
       <Pressable onPress={signOut} style={styles.signOut}>
-        <Text style={styles.signOutText}>Sign out</Text>
+        <Text style={styles.signOutText}>{t('auth.createFamily.signOut')}</Text>
       </Pressable>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 24, paddingTop: 64, gap: 4 },
-  title: { fontSize: 26, fontWeight: '700', marginBottom: 16, textAlign: 'center' },
-  label: { fontSize: 14, fontWeight: '500', color: '#374151' },
-  error: { color: '#ef4444', marginBottom: 12, textAlign: 'center' },
-  signOut: { paddingVertical: 12, alignItems: 'center', marginTop: 12 },
-  signOutText: { color: '#6b7280', fontSize: 13 },
-  joinLink: { paddingVertical: 14, alignItems: 'center', marginTop: 8 },
-  joinLinkText: { color: '#3b82f6', fontSize: 14, fontWeight: '500' },
+  container: { padding: spacing.xl, paddingTop: 64, gap: spacing.xs, backgroundColor: colors.bg, flexGrow: 1 },
+  title: {
+    fontFamily: typography.fontFamilyBold,
+    fontSize: typography.h1,
+    color: colors.text,
+    marginBottom: spacing.xl,
+    textAlign: 'center',
+  },
+  sectionLabel: {
+    fontFamily: typography.fontFamilySemi,
+    fontSize: typography.small,
+    color: colors.text,
+    marginBottom: spacing.xs,
+  },
+  error: {
+    color: colors.error,
+    fontFamily: typography.fontFamily,
+    fontSize: typography.small,
+    marginBottom: spacing.md,
+    textAlign: 'center',
+  },
+  signOut: { paddingVertical: spacing.md, alignItems: 'center', marginTop: spacing.md },
+  signOutText: { color: colors.textMuted, fontSize: typography.small, fontFamily: typography.fontFamily },
+  joinLink: { paddingVertical: spacing.lg, alignItems: 'center', marginTop: spacing.sm },
+  joinLinkText: { color: colors.primary, fontSize: typography.body, fontFamily: typography.fontFamilySemi },
 });
