@@ -1,15 +1,20 @@
+import { useState } from 'react';
 import { TextInput, View, Text, StyleSheet, TextInputProps } from 'react-native';
+import { colors, radii, spacing, typography } from '../theme';
 
 type Props = TextInputProps & { label: string; error?: string };
 
-export function TextField({ label, error, style, ...rest }: Props) {
+export function TextField({ label, error, style, onFocus, onBlur, ...rest }: Props) {
+  const [focused, setFocused] = useState(false);
   return (
-    <View style={{ marginBottom: 12 }}>
+    <View style={{ marginBottom: spacing.xl }}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
         {...rest}
-        style={[styles.input, error && styles.inputError, style]}
-        placeholderTextColor="#9ca3af"
+        onFocus={(e) => { setFocused(true); onFocus?.(e); }}
+        onBlur={(e) => { setFocused(false); onBlur?.(e); }}
+        style={[styles.input, focused && styles.inputFocused, error && styles.inputError, style]}
+        placeholderTextColor={colors.textMuted}
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
@@ -17,8 +22,29 @@ export function TextField({ label, error, style, ...rest }: Props) {
 }
 
 const styles = StyleSheet.create({
-  label: { fontSize: 14, fontWeight: '500', marginBottom: 4, color: '#374151' },
-  input: { borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, padding: 12, fontSize: 16, color: '#111' },
-  inputError: { borderColor: '#ef4444' },
-  error: { color: '#ef4444', fontSize: 13, marginTop: 2 },
+  label: {
+    fontFamily: typography.fontFamilySemi,
+    fontSize: typography.small,
+    marginBottom: spacing.xs,
+    color: colors.text,
+  },
+  input: {
+    height: 48,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.lg,
+    paddingHorizontal: spacing.md,
+    fontSize: typography.body,
+    fontFamily: typography.fontFamily,
+    color: colors.text,
+    backgroundColor: colors.surface,
+  },
+  inputFocused: { borderColor: colors.primary },
+  inputError: { borderColor: colors.error },
+  error: {
+    color: colors.error,
+    fontSize: typography.small,
+    fontFamily: typography.fontFamily,
+    marginTop: spacing.xs,
+  },
 });
