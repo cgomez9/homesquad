@@ -1,27 +1,34 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { Link } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../../src/components/Button';
 import { TextField } from '../../src/components/TextField';
+import { PasswordField } from '../../src/components/PasswordField';
 import { SocialAuthRow } from '../../src/components/SocialAuthRow';
+import { isAcceptable } from '../../src/components/PasswordStrengthMeter';
 import { signUp } from '../../src/lib/auth';
+import { colors, spacing, typography } from '../../src/theme';
 
 export default function SignupScreen() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const canSubmit = email.trim().length > 0 && isAcceptable(password) && password === confirm;
+
   async function onSubmit() {
     setError(null);
-    if (password.length < 8) return setError('Password must be at least 8 characters');
-    if (password !== confirm) return setError('Passwords do not match');
+    if (!isAcceptable(password)) return setError(t('auth.signup.passwordTooShort'));
+    if (password !== confirm) return setError(t('auth.signup.passwordsDontMatch'));
     setLoading(true);
     try {
       await signUp(email.trim(), password);
     } catch (e: any) {
-      setError(e.message ?? 'Sign-up failed');
+      setError(e.message ?? t('auth.errors.signUpFailed'));
     } finally {
       setLoading(false);
     }
@@ -29,23 +36,59 @@ export default function SignupScreen() {
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
-      <Text style={styles.title}>Create your account</Text>
+      <Text style={styles.title}>{t('auth.signup.title')}</Text>
       <SocialAuthRow />
-      <TextField label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" autoComplete="email" />
-      <TextField label="Password" value={password} onChangeText={setPassword} secureTextEntry autoComplete="new-password" />
-      <TextField label="Confirm password" value={confirm} onChangeText={setConfirm} secureTextEntry autoComplete="new-password" />
+      <TextField
+        label={t('auth.signup.email')}
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        keyboardType="email-address"
+        autoComplete="email"
+      />
+      <PasswordField
+        label={t('auth.signup.password')}
+        value={password}
+        onChangeText={setPassword}
+        autoComplete="new-password"
+        showStrength
+      />
+      <PasswordField
+        label={t('auth.signup.confirmPassword')}
+        value={confirm}
+        onChangeText={setConfirm}
+        autoComplete="new-password"
+      />
       {error && <Text style={styles.error}>{error}</Text>}
-      <Button label="Sign up" onPress={onSubmit} loading={loading} />
+      <Button label={t('auth.signup.submit')} onPress={onSubmit} loading={loading} disabled={!canSubmit} />
       <View style={styles.links}>
-        <Link href="/(auth)/login">Already have an account? Log in</Link>
+        <Link href="/(auth)/login" style={styles.link}>{t('auth.signup.hasAccount')}</Link>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, justifyContent: 'center' },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: 24, textAlign: 'center' },
-  error: { color: '#ef4444', marginBottom: 12, textAlign: 'center' },
-  links: { marginTop: 16, alignItems: 'center' },
+  container: { flex: 1, padding: spacing.xl, justifyContent: 'center', backgroundColor: colors.bg },
+  title: {
+    fontFamily: typography.fontFamilyBold,
+    fontSize: typography.h1,
+    color: colors.text,
+    marginBottom: spacing.xxl,
+    textAlign: 'center',
+  },
+  error: {
+    color: colors.error,
+    fontFamily: typography.fontFamily,
+    fontSize: typography.small,
+    marginBottom: spacing.md,
+    textAlign: 'center',
+  },
+  links: { marginTop: spacing.lg, alignItems: 'center' },
+  link: {
+    color: colors.primary,
+    fontFamily: typography.fontFamilySemi,
+    fontSize: typography.body,
+    paddingVertical: spacing.sm,
+  },
 });
