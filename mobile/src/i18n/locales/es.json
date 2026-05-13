@@ -1,0 +1,93 @@
+{
+  "auth": {
+    "login": {
+      "title": "Bienvenido de nuevo",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "submit": "Iniciar sesión",
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "noAccount": "¿Eres nuevo? Crea una cuenta"
+    },
+    "signup": {
+      "title": "Crea tu cuenta",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "confirmPassword": "Confirma la contraseña",
+      "submit": "Crear cuenta",
+      "hasAccount": "¿Ya tienes una cuenta? Inicia sesión",
+      "passwordsDontMatch": "Las contraseñas no coinciden",
+      "passwordTooShort": "La contraseña debe tener al menos 8 caracteres"
+    },
+    "reset": {
+      "title": "Restablecer contraseña",
+      "email": "Correo electrónico",
+      "submit": "Enviar enlace",
+      "backToLogin": "Volver al inicio de sesión",
+      "checkEmail": "Revisa tu correo",
+      "checkEmailBody": "Si ese correo está registrado, te enviamos un enlace para restablecer tu contraseña."
+    },
+    "createFamily": {
+      "title": "Crea tu familia",
+      "familyName": "Nombre de la familia",
+      "familyNamePlaceholder": "Los García",
+      "parentName": "Tu nombre (padre/madre)",
+      "parentNamePlaceholder": "Alex",
+      "pickAvatar": "Elige tu avatar",
+      "submit": "Crear familia",
+      "joinLink": "¿Tienes un código de invitación? Únete a una familia existente",
+      "signOut": "Cerrar sesión",
+      "errorFamilyNameRequired": "El nombre de la familia es obligatorio",
+      "errorParentNameRequired": "Tu nombre es obligatorio"
+    },
+    "addKid": {
+      "title": "Agrega un niño",
+      "name": "Nombre del niño",
+      "namePlaceholder": "Sara",
+      "avatar": "Avatar",
+      "pin": "PIN (opcional, 4 dígitos)",
+      "addAnother": "Agregar y agregar otro",
+      "finish": "Agregar y terminar",
+      "errorNameRequired": "El nombre del niño es obligatorio",
+      "errorPinFormat": "El PIN debe tener exactamente 4 dígitos, o estar vacío"
+    },
+    "social": {
+      "google": "Continuar con Google",
+      "or": "o"
+    },
+    "passwordStrength": {
+      "tooShort": "Demasiado corta",
+      "veryWeak": "Muy débil — usa una contraseña más larga",
+      "weak": "Débil — intenta agregar otra palabra",
+      "fair": "Regular — podría ser más fuerte",
+      "strong": "Fuerte",
+      "veryStrong": "Muy fuerte"
+    },
+    "errors": {
+      "signInFailed": "No se pudo iniciar sesión",
+      "signUpFailed": "No se pudo crear la cuenta",
+      "tryAgain": "Inténtalo de nuevo",
+      "googlePlayMissing": "Google requiere los servicios de Google Play"
+    }
+  },
+  "settings": {
+    "language": {
+      "label": "Idioma",
+      "current": "Actual",
+      "change": "Cambiar",
+      "english": "English",
+      "spanish": "Español",
+      "system": "Predeterminado del dispositivo"
+    },
+    "account": {
+      "label": "Cuenta",
+      "deleteAccount": "Eliminar cuenta"
+    }
+  },
+  "deleteModal": {
+    "title": "¿Eliminar tu cuenta?",
+    "body": "Esto elimina permanentemente tu cuenta y todos tus datos. Si eres el último padre/madre de esta familia, también se eliminarán la familia, los perfiles de tus hijos, todas las tareas, recompensas e historial. Esto no se puede deshacer.",
+    "typeDelete": "Escribe DELETE para confirmar:",
+    "cancel": "Cancelar",
+    "confirm": "Eliminar para siempre"
+  }
+}
