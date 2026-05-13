@@ -5,10 +5,6 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   removeItem: jest.fn(),
 }));
 
-jest.mock('expo-localization', () => ({
-  getLocales: jest.fn(),
-}));
-
 jest.mock('i18next', () => {
   const i18nMock: any = {
     use: jest.fn(() => i18nMock),
@@ -21,41 +17,47 @@ jest.mock('i18next', () => {
 jest.mock('react-i18next', () => ({ initReactI18next: 'init-react-i18next' }));
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Localization from 'expo-localization';
 import i18n from 'i18next';
 import { initI18n, setLanguage, getCurrentLanguagePref } from '../src/i18n';
 
 const mockedStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
-const mockedLocalization = Localization as jest.Mocked<typeof Localization>;
 const mockedI18n = i18n as unknown as { init: jest.Mock; changeLanguage: jest.Mock };
 
+// Stub Intl.DateTimeFormat().resolvedOptions().locale for deterministic tests.
+function mockDeviceLocale(locale: string) {
+  jest.spyOn(Intl, 'DateTimeFormat').mockImplementation(() => {
+    return { resolvedOptions: () => ({ locale } as any) } as any;
+  });
+}
+
 beforeEach(() => jest.clearAllMocks());
+afterEach(() => jest.restoreAllMocks());
 
 describe('initI18n', () => {
   it('uses stored preference when present', async () => {
     mockedStorage.getItem.mockResolvedValue('es');
-    mockedLocalization.getLocales.mockReturnValue([{ languageCode: 'en' } as any]);
+    mockDeviceLocale('en-US');
     await initI18n();
     expect(mockedI18n.init).toHaveBeenCalledWith(expect.objectContaining({ lng: 'es' }));
   });
 
   it('falls back to device locale when no stored preference (es device)', async () => {
     mockedStorage.getItem.mockResolvedValue(null);
-    mockedLocalization.getLocales.mockReturnValue([{ languageCode: 'es' } as any]);
+    mockDeviceLocale('es-MX');
     await initI18n();
     expect(mockedI18n.init).toHaveBeenCalledWith(expect.objectContaining({ lng: 'es' }));
   });
 
   it('falls back to device locale when no stored preference (en device)', async () => {
     mockedStorage.getItem.mockResolvedValue(null);
-    mockedLocalization.getLocales.mockReturnValue([{ languageCode: 'en' } as any]);
+    mockDeviceLocale('en-US');
     await initI18n();
     expect(mockedI18n.init).toHaveBeenCalledWith(expect.objectContaining({ lng: 'en' }));
   });
 
   it('defaults to en when device locale is not es', async () => {
     mockedStorage.getItem.mockResolvedValue(null);
-    mockedLocalization.getLocales.mockReturnValue([{ languageCode: 'fr' } as any]);
+    mockDeviceLocale('fr-FR');
     await initI18n();
     expect(mockedI18n.init).toHaveBeenCalledWith(expect.objectContaining({ lng: 'en' }));
   });
@@ -75,7 +77,7 @@ describe('setLanguage', () => {
   });
 
   it("'system' clears storage and reverts to device locale", async () => {
-    mockedLocalization.getLocales.mockReturnValue([{ languageCode: 'es' } as any]);
+    mockDeviceLocale('es-AR');
     await setLanguage('system');
     expect(mockedStorage.removeItem).toHaveBeenCalledWith('shores_lang_pref');
     expect(mockedI18n.changeLanguage).toHaveBeenCalledWith('es');

@@ -1,15 +1,22 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import * as Localization from 'expo-localization';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import en from './locales/en.json';
 import es from './locales/es.json';
 
 const LANG_STORAGE_KEY = 'shores_lang_pref';
 
+// Use Intl.DateTimeFormat for device locale detection. Built into Hermes
+// (RN 0.81), so it works in Expo Go, dev-client APKs, and production builds
+// without a native module dependency. We only need to know whether the
+// device prefers Spanish — full locale data isn't needed.
 function deviceLang(): 'en' | 'es' {
-  const code = Localization.getLocales()[0]?.languageCode;
-  return code === 'es' ? 'es' : 'en';
+  try {
+    const locale = Intl.DateTimeFormat().resolvedOptions().locale ?? 'en';
+    return locale.toLowerCase().startsWith('es') ? 'es' : 'en';
+  } catch {
+    return 'en';
+  }
 }
 
 export async function initI18n(): Promise<void> {
