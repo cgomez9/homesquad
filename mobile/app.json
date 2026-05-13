@@ -26,8 +26,11 @@
       "expo-apple-authentication",
       [
         "@react-native-google-signin/google-signin",
-        { "iosUrlScheme": "com.googleusercontent.apps.000000000000-placeholder" }
-      ]
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.000000000000-placeholder"
+        }
+      ],
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true
