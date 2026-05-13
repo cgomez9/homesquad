@@ -1,3 +1,16 @@
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string) => {
+    const map: Record<string, string> = {
+      'deleteModal.title': 'Delete your account?',
+      'deleteModal.body': 'This permanently deletes your account.',
+      'deleteModal.typeDelete': 'Type DELETE to confirm:',
+      'deleteModal.cancel': 'Cancel',
+      'deleteModal.confirm': 'Delete forever',
+    };
+    return map[key] ?? key;
+  } }),
+}));
+
 import { render, fireEvent } from '@testing-library/react-native';
 import { DeleteAccountModal } from '../src/components/DeleteAccountModal';
 
