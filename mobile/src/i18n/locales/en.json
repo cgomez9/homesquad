@@ -1,0 +1,93 @@
+{
+  "auth": {
+    "login": {
+      "title": "Welcome back",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Log in",
+      "forgotPassword": "Forgot password?",
+      "noAccount": "New here? Sign up"
+    },
+    "signup": {
+      "title": "Create your account",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "submit": "Sign up",
+      "hasAccount": "Already have an account? Log in",
+      "passwordsDontMatch": "Passwords do not match",
+      "passwordTooShort": "Password must be at least 8 characters"
+    },
+    "reset": {
+      "title": "Reset your password",
+      "email": "Email",
+      "submit": "Send reset link",
+      "backToLogin": "Back to login",
+      "checkEmail": "Check your email",
+      "checkEmailBody": "If that email is registered, we've sent a reset link."
+    },
+    "createFamily": {
+      "title": "Create your family",
+      "familyName": "Family name",
+      "familyNamePlaceholder": "The Smiths",
+      "parentName": "Your name (parent)",
+      "parentNamePlaceholder": "Alex",
+      "pickAvatar": "Pick your avatar",
+      "submit": "Create family",
+      "joinLink": "Have an invite code? Join an existing family",
+      "signOut": "Sign out",
+      "errorFamilyNameRequired": "Family name required",
+      "errorParentNameRequired": "Your name is required"
+    },
+    "addKid": {
+      "title": "Add a kid",
+      "name": "Kid's name",
+      "namePlaceholder": "Sara",
+      "avatar": "Avatar",
+      "pin": "PIN (optional, 4 digits)",
+      "addAnother": "Add and add another",
+      "finish": "Add and finish",
+      "errorNameRequired": "Kid name required",
+      "errorPinFormat": "PIN must be exactly 4 digits, or empty"
+    },
+    "social": {
+      "google": "Continue with Google",
+      "or": "or"
+    },
+    "passwordStrength": {
+      "tooShort": "Too short",
+      "veryWeak": "Very weak — use a longer password",
+      "weak": "Weak — try adding another word",
+      "fair": "Fair — could be stronger",
+      "strong": "Strong",
+      "veryStrong": "Very strong"
+    },
+    "errors": {
+      "signInFailed": "Sign-in failed",
+      "signUpFailed": "Sign-up failed",
+      "tryAgain": "Try again",
+      "googlePlayMissing": "Google sign-in requires Google Play services"
+    }
+  },
+  "settings": {
+    "language": {
+      "label": "Language",
+      "current": "Current",
+      "change": "Change",
+      "english": "English",
+      "spanish": "Español",
+      "system": "System default"
+    },
+    "account": {
+      "label": "Account",
+      "deleteAccount": "Delete account"
+    }
+  },
+  "deleteModal": {
+    "title": "Delete your account?",
+    "body": "This permanently deletes your account and all your data. If you're the last parent in this family, the family, your kids' profiles, all chores, rewards, and history will be deleted too. This cannot be undone.",
+    "typeDelete": "Type DELETE to confirm:",
+    "cancel": "Cancel",
+    "confirm": "Delete forever"
+  }
+}
