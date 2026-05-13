@@ -9,6 +9,9 @@ import { Button } from '../../../src/components/Button';
 import { signOut } from '../../../src/lib/auth';
 import { isEnabled, setEnabled } from '../../../src/lib/feedback';
 import { DeleteAccountModal } from '../../../src/components/DeleteAccountModal';
+import { useTranslation } from 'react-i18next';
+import { LanguagePickerModal } from '../../../src/components/LanguagePickerModal';
+import { setLanguage as setI18nLanguage, getCurrentLanguagePref } from '../../../src/i18n';
 
 export default function Settings() {
   const router = useRouter();
@@ -63,6 +66,26 @@ export default function Settings() {
     onError: (e) => setDeleteError((e as Error).message),
   });
 
+  const { t } = useTranslation();
+  const [langPickerOpen, setLangPickerOpen] = useState(false);
+  const [langPref, setLangPref] = useState<'en' | 'es' | 'system'>('system');
+
+  useEffect(() => {
+    getCurrentLanguagePref().then(setLangPref);
+  }, []);
+
+  async function onSelectLanguage(lang: 'en' | 'es' | 'system') {
+    setLangPickerOpen(false);
+    await setI18nLanguage(lang);
+    setLangPref(lang);
+  }
+
+  function currentLanguageLabel(): string {
+    if (langPref === 'system') return t('settings.language.system');
+    if (langPref === 'es') return t('settings.language.spanish');
+    return t('settings.language.english');
+  }
+
   async function onCopy() {
     if (!code) return;
     await Clipboard.setStringAsync(code);
@@ -97,9 +120,19 @@ export default function Settings() {
       <View style={styles.stub}><Text style={styles.stubText}>Subscription — coming soon</Text></View>
 
       <View style={styles.section}>
-        <Text style={styles.label}>Account</Text>
+        <Text style={styles.label}>{t('settings.language.label')}</Text>
+        <View style={styles.languageRow}>
+          <Text style={styles.value}>{currentLanguageLabel()}</Text>
+          <Pressable onPress={() => setLangPickerOpen(true)}>
+            <Text style={styles.languageChange}>{t('settings.language.change')}</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.label}>{t('settings.account.label')}</Text>
         <Pressable onPress={() => { setDeleteError(null); setDeleteOpen(true); }} style={styles.dangerBtn}>
-          <Text style={styles.dangerText}>Delete account</Text>
+          <Text style={styles.dangerText}>{t('settings.account.deleteAccount')}</Text>
         </Pressable>
       </View>
 
@@ -129,6 +162,13 @@ export default function Settings() {
         onCancel={() => setDeleteOpen(false)}
         onConfirm={() => { setDeleteError(null); deleteAccount.mutate(); }}
       />
+
+      <LanguagePickerModal
+        visible={langPickerOpen}
+        current={langPref}
+        onSelect={onSelectLanguage}
+        onCancel={() => setLangPickerOpen(false)}
+      />
     </View>
   );
 }
@@ -154,4 +194,6 @@ const styles = StyleSheet.create({
   doneText: { color: '#6b7280', fontWeight: '500' },
   dangerBtn: { paddingVertical: 12, paddingHorizontal: 16, borderRadius: 8, backgroundColor: '#fff', borderWidth: 1, borderColor: '#ef4444', alignItems: 'center', marginTop: 8 },
   dangerText: { color: '#ef4444', fontWeight: '600', fontSize: 15 },
+  languageRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
+  languageChange: { color: '#3b82f6', fontSize: 14, fontWeight: '600' },
 });
