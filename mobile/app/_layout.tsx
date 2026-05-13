@@ -11,6 +11,7 @@ import { subscribeToFamily } from '../src/lib/realtime';
 import { supabase } from '../src/lib/supabase';
 import { ConfettiHost } from '../src/components/ConfettiHost';
 import { AchievementBanner } from '../src/components/AchievementBanner';
+import { useFonts, Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold } from '@expo-google-fonts/nunito';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -43,6 +44,12 @@ export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
 
+  const [fontsLoaded] = useFonts({
+    Nunito_400Regular,
+    Nunito_600SemiBold,
+    Nunito_700Bold,
+  });
+
   useEffect(() => {
     if (auth.status === 'loading') return;
     if (auth.status === 'authenticated' && family.status === 'loading') return;
@@ -59,7 +66,7 @@ export default function RootLayout() {
     }
   }, [auth, family, segments]);
 
-  if (auth.status === 'loading' || (auth.status === 'authenticated' && family.status === 'loading')) {
+  if (auth.status === 'loading' || (auth.status === 'authenticated' && family.status === 'loading') || !fontsLoaded) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator />
