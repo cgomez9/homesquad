@@ -1,6 +1,6 @@
 // mobile/app/_layout.tsx — full file
 import { Slot, useRouter, useSegments } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import * as Notifications from 'expo-notifications';
@@ -12,6 +12,7 @@ import { supabase } from '../src/lib/supabase';
 import { ConfettiHost } from '../src/components/ConfettiHost';
 import { AchievementBanner } from '../src/components/AchievementBanner';
 import { useFonts, Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold } from '@expo-google-fonts/nunito';
+import { initI18n } from '../src/i18n';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -50,6 +51,12 @@ export default function RootLayout() {
     Nunito_700Bold,
   });
 
+  const [i18nReady, setI18nReady] = useState(false);
+
+  useEffect(() => {
+    initI18n().then(() => setI18nReady(true));
+  }, []);
+
   useEffect(() => {
     if (auth.status === 'loading') return;
     if (auth.status === 'authenticated' && family.status === 'loading') return;
@@ -66,7 +73,7 @@ export default function RootLayout() {
     }
   }, [auth, family, segments]);
 
-  if (auth.status === 'loading' || (auth.status === 'authenticated' && family.status === 'loading') || !fontsLoaded) {
+  if (auth.status === 'loading' || (auth.status === 'authenticated' && family.status === 'loading') || !fontsLoaded || !i18nReady) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator />
