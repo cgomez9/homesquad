@@ -18,7 +18,8 @@ export default function CreateGoalScreen() {
   const submit = async () => {
     setSubmitting(true);
     setErrorKey(null);
-    const { error } = await supabase.rpc('create_family_goal', {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any).rpc('create_family_goal', {
       p_title: title.trim(),
       p_target_stars: targetStars,
       p_description: description.trim() || null,

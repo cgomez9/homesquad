@@ -5,6 +5,8 @@ import { View, Text, Pressable, StyleSheet, ActivityIndicator, ScrollView } from
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../../src/lib/supabase';
 import { fireSmallFeedback, fireBigFeedback } from '../../../../src/lib/feedback';
+import { useActiveGoal } from '../../../../src/hooks/useActiveGoal';
+import { GoalCard } from '../../../../src/components/GoalCard';
 
 type Instance = {
   id: string;
@@ -18,6 +20,21 @@ export default function KidHome() {
   const router = useRouter();
   const { profileId } = useLocalSearchParams<{ profileId: string }>();
   const qc = useQueryClient();
+
+  const { data: familyId } = useQuery({
+    queryKey: ['kid-family-id', profileId],
+    enabled: !!profileId,
+    queryFn: async (): Promise<string | null> => {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('family_id')
+        .eq('id', profileId)
+        .maybeSingle();
+      return (profile as { family_id: string } | null)?.family_id ?? null;
+    },
+  });
+
+  const activeGoal = useActiveGoal(familyId ?? undefined);
 
   const { data: instances, isLoading, error } = useQuery({
     queryKey: ['kid-today', profileId],
@@ -144,6 +161,12 @@ export default function KidHome() {
         )}
       </View>
 
+      {activeGoal.data && (
+        <View style={styles.goalCardWrapper}>
+          <GoalCard goal={activeGoal.data} />
+        </View>
+      )}
+
       {isLoading && <ActivityIndicator />}
       {error && <Text style={styles.err}>{(error as Error).message}</Text>}
       {instances && instances.length === 0 && (
@@ -199,4 +222,5 @@ const styles = StyleSheet.create({
   rejected: { fontSize: 12, color: '#b91c1c', marginTop: 4, fontStyle: 'italic' },
   doneBtn: { backgroundColor: '#10b981', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 999 },
   doneText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  goalCardWrapper: { marginBottom: 12 },
 });

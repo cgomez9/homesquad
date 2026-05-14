@@ -9,6 +9,7 @@ export default function ParentLayout() {
       <Tabs.Screen name="activity"    options={{ title: 'Activity' }} />
       <Tabs.Screen name="settings"    options={{ title: 'Settings' }} />
       <Tabs.Screen name="leaderboard" options={{ href: null, title: 'Leaderboard' }} />
+      <Tabs.Screen name="goals"       options={{ href: null, title: 'Goals' }} />
     </Tabs>
   );
 }

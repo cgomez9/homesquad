@@ -244,6 +244,13 @@ export default function Settings() {
       </View>
 
       <View style={styles.section}>
+        <Pressable onPress={() => router.push('/(app)/parent/goals')} style={styles.linkRow}>
+          <Text style={styles.linkText}>{t('goals.title')}</Text>
+          <Text style={styles.linkChevron}>›</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.section}>
         <Text style={styles.label}>{t('settings.account.label')}</Text>
         <Pressable onPress={() => { setDeleteError(null); setDeleteOpen(true); }} style={styles.dangerBtn}>
           <Text style={styles.dangerText}>{t('settings.account.deleteAccount')}</Text>

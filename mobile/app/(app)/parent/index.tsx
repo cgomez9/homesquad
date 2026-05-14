@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../src/lib/supabase';
 import { formatRecurrence, Recurrence } from '../../../src/lib/recurrence';
 import { AVATARS, AvatarId } from '../../../src/constants/avatars';
+import { useActiveGoal } from '../../../src/hooks/useActiveGoal';
+import { GoalCard } from '../../../src/components/GoalCard';
 
 type Chore = {
   id: string;
@@ -16,6 +18,23 @@ type Chore = {
 export default function ChoresList() {
   const router = useRouter();
   const qc = useQueryClient();
+
+  const { data: familyId } = useQuery({
+    queryKey: ['parent-family-id-home'],
+    queryFn: async (): Promise<string | null> => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('family_id')
+        .eq('user_id', user.id)
+        .eq('type', 'parent')
+        .maybeSingle();
+      return (profile as { family_id: string } | null)?.family_id ?? null;
+    },
+  });
+
+  const activeGoal = useActiveGoal(familyId ?? undefined);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['parent-chores'],
@@ -53,6 +72,15 @@ export default function ChoresList() {
           <Text style={styles.fabText}>+</Text>
         </Pressable>
       </View>
+
+      {activeGoal.data && (
+        <Pressable
+          onPress={() => router.push('/(app)/parent/goals' as never)}
+          style={styles.goalCardWrapper}
+        >
+          <GoalCard goal={activeGoal.data} />
+        </Pressable>
+      )}
 
       {isLoading && <ActivityIndicator />}
       {error && <Text style={styles.err}>{(error as Error).message}</Text>}
@@ -101,4 +129,5 @@ const styles = StyleSheet.create({
   meta: { fontSize: 13, color: '#6b7280', marginTop: 2 },
   assignee: { fontSize: 13 },
   sep: { height: 1, backgroundColor: '#e5e7eb' },
+  goalCardWrapper: { marginBottom: 12 },
 });
