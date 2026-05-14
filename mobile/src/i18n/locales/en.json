@@ -116,5 +116,41 @@
       "invalidTimezone": "We couldn't recognize that timezone.",
       "saveFailed": "Couldn't save your changes — try again."
     }
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "tabThisWeek": "This Week",
+    "tabAllTime": "All Time",
+    "starsLabel": "stars",
+    "starsThisWeek": "{{count}}⭐ this week",
+    "starsAllTime": "{{count}}⭐ all time",
+    "soloFallback": "You're flying solo this week — keep it up!",
+    "medalGoldAlt": "1st place",
+    "medalSilverAlt": "2nd place",
+    "medalBronzeAlt": "3rd place",
+    "emptyState": "No stars earned yet. Approve some chores to get on the board!"
+  },
+  "goals": {
+    "title": "Family Goals",
+    "active": "Active goal",
+    "noActive": "No active goal — create one to get started.",
+    "createTitle": "Create a family goal",
+    "titleLabel": "Goal name",
+    "titlePlaceholder": "Pizza Night",
+    "targetLabel": "Target stars",
+    "descriptionLabel": "Description (optional)",
+    "descriptionPlaceholder": "Mom orders pizza Friday",
+    "createButton": "Create goal",
+    "cancelButton": "Cancel goal",
+    "cancelConfirm": "Cancel this goal? Progress will be lost.",
+    "completedBanner": "Goal reached: {{title}} 🎉",
+    "progressRemaining": "{{count}} to go",
+    "progressDone": "Complete!",
+    "archiveTitle": "Past goals",
+    "archiveEmpty": "No past goals yet.",
+    "errors": {
+      "alreadyActive": "There's already an active goal. Cancel it before creating a new one.",
+      "createFailed": "Couldn't create the goal — try again."
+    }
   }
 }

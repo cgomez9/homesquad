@@ -116,5 +116,41 @@
       "invalidTimezone": "No reconocemos esa zona horaria.",
       "saveFailed": "No pudimos guardar tus cambios — vuelve a intentarlo."
     }
+  },
+  "leaderboard": {
+    "title": "Ranking",
+    "tabThisWeek": "Esta semana",
+    "tabAllTime": "Histórico",
+    "starsLabel": "estrellas",
+    "starsThisWeek": "{{count}}⭐ esta semana",
+    "starsAllTime": "{{count}}⭐ histórico",
+    "soloFallback": "Vas en solitario esta semana — ¡sigue así!",
+    "medalGoldAlt": "1.º lugar",
+    "medalSilverAlt": "2.º lugar",
+    "medalBronzeAlt": "3.º lugar",
+    "emptyState": "Aún no hay estrellas. Aprueba algunas tareas para empezar."
+  },
+  "goals": {
+    "title": "Metas familiares",
+    "active": "Meta activa",
+    "noActive": "Sin meta activa — crea una para comenzar.",
+    "createTitle": "Crear una meta familiar",
+    "titleLabel": "Nombre de la meta",
+    "titlePlaceholder": "Noche de pizza",
+    "targetLabel": "Estrellas objetivo",
+    "descriptionLabel": "Descripción (opcional)",
+    "descriptionPlaceholder": "Mamá pide pizza el viernes",
+    "createButton": "Crear meta",
+    "cancelButton": "Cancelar meta",
+    "cancelConfirm": "¿Cancelar esta meta? Se perderá el progreso.",
+    "completedBanner": "¡Meta lograda: {{title}} 🎉",
+    "progressRemaining": "Faltan {{count}}",
+    "progressDone": "¡Completada!",
+    "archiveTitle": "Metas anteriores",
+    "archiveEmpty": "Aún no hay metas pasadas.",
+    "errors": {
+      "alreadyActive": "Ya hay una meta activa. Cancélala antes de crear otra.",
+      "createFailed": "No pudimos crear la meta — vuelve a intentarlo."
+    }
   }
 }
