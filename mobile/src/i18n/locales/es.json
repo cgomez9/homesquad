@@ -89,5 +89,32 @@
     "typeDelete": "Escribe DELETE para confirmar:",
     "cancel": "Cancelar",
     "confirm": "Eliminar para siempre"
+  },
+  "notifications": {
+    "sectionTitle": "Notificaciones",
+    "quietHoursLabel": "Horario silencioso",
+    "quietHoursHelp": "Las notificaciones en este horario se acumulan y llegan como un resumen al final.",
+    "enabledLabel": "Activado",
+    "startLabel": "Inicio",
+    "endLabel": "Fin",
+    "timezoneLabel": "Zona horaria",
+    "muteSectionTitle": "Silenciar notificaciones",
+    "muteSectionHelp": "Desactiva avisos de eventos específicos. No afecta a los demás padres de tu familia.",
+    "events": {
+      "chore_submitted": "Tarea enviada",
+      "chore_approved": "Tarea aprobada",
+      "chore_rejected": "Tarea por corregir",
+      "redemption_requested": "Premio solicitado",
+      "redemption_approved": "Premio aprobado",
+      "redemption_denied": "Premio rechazado",
+      "redemption_fulfilled": "Premio entregado",
+      "achievement_unlocked": "Insignia ganada",
+      "streak_milestone": "Racha lograda",
+      "goal_completed": "Meta familiar lograda"
+    },
+    "errors": {
+      "invalidTimezone": "No reconocemos esa zona horaria.",
+      "saveFailed": "No pudimos guardar tus cambios — vuelve a intentarlo."
+    }
   }
 }

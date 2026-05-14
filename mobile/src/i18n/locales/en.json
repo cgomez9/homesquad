@@ -89,5 +89,32 @@
     "typeDelete": "Type DELETE to confirm:",
     "cancel": "Cancel",
     "confirm": "Delete forever"
+  },
+  "notifications": {
+    "sectionTitle": "Notifications",
+    "quietHoursLabel": "Quiet hours",
+    "quietHoursHelp": "Pushes during these hours are queued and sent as one summary at the end of the window.",
+    "enabledLabel": "Enabled",
+    "startLabel": "Start",
+    "endLabel": "End",
+    "timezoneLabel": "Timezone",
+    "muteSectionTitle": "Mute notifications",
+    "muteSectionHelp": "Turn off notifications for specific events. Other parents in your family are unaffected.",
+    "events": {
+      "chore_submitted": "Chore submitted",
+      "chore_approved": "Chore approved",
+      "chore_rejected": "Chore needs rework",
+      "redemption_requested": "Reward requested",
+      "redemption_approved": "Reward approved",
+      "redemption_denied": "Reward denied",
+      "redemption_fulfilled": "Reward delivered",
+      "achievement_unlocked": "Badge unlocked",
+      "streak_milestone": "Streak milestone",
+      "goal_completed": "Family goal reached"
+    },
+    "errors": {
+      "invalidTimezone": "We couldn't recognize that timezone.",
+      "saveFailed": "Couldn't save your changes — try again."
+    }
   }
 }
