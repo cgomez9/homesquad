@@ -124,6 +124,9 @@ export default function KidHome() {
           <Pressable onPress={() => router.push(`/(app)/kid/${profileId}/rewards` as never)}>
             <Text style={styles.switch}>Rewards</Text>
           </Pressable>
+          <Pressable onPress={() => router.push(`/(app)/kid/${profileId}/leaderboard` as never)}>
+            <Text style={styles.switch}>Leaderboard</Text>
+          </Pressable>
           <Pressable onPress={() => router.replace('/(app)')}>
             <Text style={styles.switch}>Switch</Text>
           </Pressable>

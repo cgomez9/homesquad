@@ -237,6 +237,13 @@ export default function Settings() {
       </View>
 
       <View style={styles.section}>
+        <Pressable onPress={() => router.push('/(app)/parent/leaderboard')} style={styles.linkRow}>
+          <Text style={styles.linkText}>{t('leaderboard.title')}</Text>
+          <Text style={styles.linkChevron}>›</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.section}>
         <Text style={styles.label}>{t('settings.account.label')}</Text>
         <Pressable onPress={() => { setDeleteError(null); setDeleteOpen(true); }} style={styles.dangerBtn}>
           <Text style={styles.dangerText}>{t('settings.account.deleteAccount')}</Text>
@@ -303,4 +310,7 @@ const styles = StyleSheet.create({
   dangerText: { color: '#ef4444', fontWeight: '600', fontSize: 15 },
   languageRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
   languageChange: { color: '#3b82f6', fontSize: 14, fontWeight: '600' },
+  linkRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 8, backgroundColor: '#f9fafb' },
+  linkText: { fontSize: 15, fontWeight: '500', color: '#111827' },
+  linkChevron: { fontSize: 18, color: '#9ca3af' },
 });
