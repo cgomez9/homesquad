@@ -1,15 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useSegments } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { on } from '../lib/events';
 import { ACHIEVEMENTS, type AchievementKey } from '../constants/achievements';
 import { fireAchievementFeedback } from '../lib/feedback';
 
-type QueuedBanner = { id: number; key: AchievementKey };
+type AchievementBannerItem = { id: number; kind: 'achievement'; key: AchievementKey };
+type GoalBannerItem = { id: number; kind: 'goal'; emoji: string; title: string; description: string };
+type QueuedBanner = AchievementBannerItem | GoalBannerItem;
 
 const DISPLAY_MS = 4000;
 
 export function AchievementBanner() {
+  const { t } = useTranslation();
   const [current, setCurrent] = useState<QueuedBanner | null>(null);
   const [queue, setQueue] = useState<QueuedBanner[]>([]);
 
@@ -24,16 +28,34 @@ export function AchievementBanner() {
   // Subscribe once.
   useEffect(() => {
     let counter = 0;
-    const unsub = on('achievement_unlocked', (p) => {
+
+    const unsubAchievement = on('achievement_unlocked', (p) => {
       // Drop events when not in kid mode — the parent doesn't need a banner
       // when they themselves triggered the unlock.
       if (!inKidModeRef.current) return;
       counter += 1;
-      const entry: QueuedBanner = { id: counter, key: p.key as AchievementKey };
+      const entry: AchievementBannerItem = { id: counter, kind: 'achievement', key: p.key as AchievementKey };
       setQueue((q) => [...q, entry]);
     });
-    return () => unsub();
-  }, []);
+
+    const unsubGoal = on('goal_completed', (p) => {
+      if (!inKidModeRef.current) return;
+      counter += 1;
+      const entry: GoalBannerItem = {
+        id: counter,
+        kind: 'goal',
+        emoji: '🎉',
+        title: t('goals.completedBanner', { title: p.title }),
+        description: '',
+      };
+      setQueue((q) => [...q, entry]);
+    });
+
+    return () => {
+      unsubAchievement();
+      unsubGoal();
+    };
+  }, [t]);
 
   // Drain the queue.
   useEffect(() => {
@@ -48,6 +70,18 @@ export function AchievementBanner() {
   }, [current, queue]);
 
   if (!current) return null;
+
+  if (current.kind === 'goal') {
+    return (
+      <View style={styles.overlay} pointerEvents="box-none">
+        <Pressable onPress={() => setCurrent(null)} style={styles.card}>
+          <Text style={styles.emoji}>{current.emoji}</Text>
+          <Text style={styles.title}>{current.title}</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
   const a = ACHIEVEMENTS[current.key];
   if (!a) return null;
 
