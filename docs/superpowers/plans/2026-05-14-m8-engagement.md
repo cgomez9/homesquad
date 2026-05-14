@@ -430,7 +430,7 @@ insert into public.profiles (id, user_id, family_id, type, display_name, pin_has
 
 -- 1. Parent call succeeds.
 set local role authenticated;
-set local "request.jwt.claim.sub" to '11111111-1111-1111-1111-111111111111';
+set local "request.jwt.claims" to '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
 
 select lives_ok(
   $$ select set_quiet_hours(true, '22:00'::time, '06:30'::time, 'America/Bogota') $$,
@@ -449,7 +449,7 @@ select is(
 
 -- 3. Invalid timezone raises.
 set local role authenticated;
-set local "request.jwt.claim.sub" to '11111111-1111-1111-1111-111111111111';
+set local "request.jwt.claims" to '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
 select throws_ok(
   $$ select set_quiet_hours(true, '21:00'::time, '07:00'::time, 'Not/A_Zone') $$,
   'P0001', 'invalid_timezone',
@@ -458,7 +458,7 @@ select throws_ok(
 -- 4. Kid call rejected.
 reset role;
 set local role authenticated;
-set local "request.jwt.claim.sub" to '22222222-2222-2222-2222-222222222222';
+set local "request.jwt.claims" to '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}';
 select throws_ok(
   $$ select set_quiet_hours(true, '21:00'::time, '07:00'::time, 'UTC') $$,
   'P0001', 'not_a_parent',
@@ -568,7 +568,7 @@ insert into public.profiles (id, user_id, family_id, type, display_name, pin_has
           'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'parent', 'Parent', '0000');
 
 set local role authenticated;
-set local "request.jwt.claim.sub" to '11111111-1111-1111-1111-111111111111';
+set local "request.jwt.claims" to '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
 
 -- 1. Setting a pref returns the updated jsonb.
 select is(
@@ -1660,6 +1660,10 @@ git commit -m "feat(functions): send_push_drain — formats messages + POSTs Exp
 begin;
 select plan(11);
 
+-- The kid is inserted as an auth user only (no profile), since the schema's
+-- profiles_parent_has_user CHECK forbids non-null user_id on 'kid' rows.
+-- "Kid cannot call" is exercised by JWT-as-22222222 → no matching parent
+-- profile row → not_a_parent branch.
 insert into auth.users (id, email)
   values ('11111111-1111-1111-1111-111111111111', 'p@t.local');
 insert into auth.users (id, email)
@@ -1672,11 +1676,11 @@ values
    '11111111-1111-1111-1111-111111111111',
    'faaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'parent', 'P', '0'),
   ('55555555-5555-5555-5555-555555555555',
-   '22222222-2222-2222-2222-222222222222',
+   null,
    'faaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'kid', 'K', '0');
 
 set local role authenticated;
-set local "request.jwt.claim.sub" to '11111111-1111-1111-1111-111111111111';
+set local "request.jwt.claims" to '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
 
 -- 1. Parent can create.
 select lives_ok(
@@ -1703,7 +1707,7 @@ select throws_ok(
 -- 4. Kid cannot create.
 reset role;
 set local role authenticated;
-set local "request.jwt.claim.sub" to '22222222-2222-2222-2222-222222222222';
+set local "request.jwt.claims" to '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}';
 select throws_ok(
   $$ select create_family_goal('Sneak', 10, null) $$,
   'P0001', 'not_a_parent',
@@ -1716,7 +1720,7 @@ insert into public.star_ledger (profile_id, family_id, delta, reason)
           'faaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 25, 'test');
 
 set local role authenticated;
-set local "request.jwt.claim.sub" to '11111111-1111-1111-1111-111111111111';
+set local "request.jwt.claims" to '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
 
 select is(
   (select progress_stars from get_active_goal('faaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')),
@@ -2145,7 +2149,7 @@ values
    'faaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 100, 'chore', now() - interval '60 days');
 
 set local role authenticated;
-set local "request.jwt.claim.sub" to '11111111-1111-1111-1111-111111111111';
+set local "request.jwt.claims" to '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
 
 -- 1. Two rows returned (kids only, no parent).
 select is(
@@ -2180,7 +2184,7 @@ select is(
 reset role;
 delete from public.profiles where id='66666666-6666-6666-6666-666666666666';
 set local role authenticated;
-set local "request.jwt.claim.sub" to '11111111-1111-1111-1111-111111111111';
+set local "request.jwt.claims" to '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
 
 select is(
   (select count(*)::int from get_leaderboard('faaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')),
