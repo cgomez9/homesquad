@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Modal, Pressable, Alert, Switch } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as Clipboard from 'expo-clipboard';
 import { supabase } from '../../../src/lib/supabase';
 import { Button } from '../../../src/components/Button';
@@ -12,9 +12,13 @@ import { DeleteAccountModal } from '../../../src/components/DeleteAccountModal';
 import { useTranslation } from 'react-i18next';
 import { LanguagePickerModal } from '../../../src/components/LanguagePickerModal';
 import { setLanguage as setI18nLanguage, getCurrentLanguagePref } from '../../../src/i18n';
+import { QuietHoursPicker } from '../../../src/components/QuietHoursPicker';
+import { PushPrefsList } from '../../../src/components/PushPrefsList';
+import type { EventType } from '../../../src/components/PushPrefsList';
 
 export default function Settings() {
   const router = useRouter();
+  const qc = useQueryClient();
   const [code, setCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [feedbackOn, setFeedbackOn] = useState(true);
@@ -37,6 +41,93 @@ export default function Settings() {
         familyName: (fam as { name: string } | null)?.name ?? 'Family',
         memberCount: profs?.length ?? 0,
       };
+    },
+  });
+
+  // --- Identity: resolve familyId + profileId for Notifications queries ---
+  const { data: identityData } = useQuery({
+    queryKey: ['parent-identity'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, family_id')
+        .eq('user_id', user.id)
+        .eq('type', 'parent')
+        .maybeSingle();
+      if (!profile) return null;
+      return { profileId: profile.id as string, familyId: profile.family_id as string };
+    },
+  });
+
+  const familyId = identityData?.familyId ?? null;
+  const profileId = identityData?.profileId ?? null;
+
+  // --- Quiet Hours query ---
+  const { data: familyData } = useQuery({
+    queryKey: ['family', familyId],
+    enabled: !!familyId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('families')
+        .select('quiet_hours_enabled, quiet_hours_start, quiet_hours_end, timezone')
+        .eq('id', familyId!)
+        .single();
+      if (error) throw error;
+      return data as unknown as {
+        quiet_hours_enabled: boolean;
+        quiet_hours_start: string;
+        quiet_hours_end: string;
+        timezone: string;
+      };
+    },
+  });
+
+  // --- Push prefs query ---
+  const { data: pushPrefsData } = useQuery({
+    queryKey: ['profile-push-prefs', profileId],
+    enabled: !!profileId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('push_prefs')
+        .eq('id', profileId!)
+        .single();
+      if (error) throw error;
+      return ((data as unknown as { push_prefs: Record<string, boolean> } | null)?.push_prefs ?? {}) as Partial<Record<EventType, boolean>>;
+    },
+  });
+
+  // --- set_quiet_hours mutation ---
+  const setQuietHours = useMutation({
+    mutationFn: async (values: { enabled: boolean; start: string; end: string; timezone: string }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).rpc('set_quiet_hours', {
+        p_enabled: values.enabled,
+        p_start: values.start,
+        p_end: values.end,
+        p_timezone: values.timezone,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['family', familyId] });
+    },
+  });
+
+  // --- set_push_pref mutation ---
+  const setPushPref = useMutation({
+    mutationFn: async ({ event, enabled }: { event: EventType; enabled: boolean }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).rpc('set_push_pref', {
+        p_event_type: event,
+        p_enabled: enabled,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['profile-push-prefs', profileId] });
     },
   });
 
@@ -116,7 +207,6 @@ export default function Settings() {
         </View>
       </View>
 
-      <View style={styles.stub}><Text style={styles.stubText}>Notifications — coming soon</Text></View>
       <View style={styles.stub}><Text style={styles.stubText}>Subscription — coming soon</Text></View>
 
       <View style={styles.section}>
@@ -127,6 +217,23 @@ export default function Settings() {
             <Text style={styles.languageChange}>{t('settings.language.change')}</Text>
           </Pressable>
         </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.label}>{t('settings.notifications.label', 'Notifications')}</Text>
+        {familyData ? (
+          <QuietHoursPicker
+            enabled={familyData.quiet_hours_enabled}
+            start={familyData.quiet_hours_start}
+            end={familyData.quiet_hours_end}
+            timezone={familyData.timezone}
+            onSave={(values) => setQuietHours.mutateAsync(values)}
+          />
+        ) : null}
+        <PushPrefsList
+          prefs={pushPrefsData ?? {}}
+          onTogglePref={(event, enabled) => setPushPref.mutateAsync({ event, enabled })}
+        />
       </View>
 
       <View style={styles.section}>
