@@ -32,6 +32,8 @@ export function subscribeToFamily(familyId: string, queryClient: QueryClient): R
       () => {
         queryClient.invalidateQueries({ queryKey: ['balance'] });
         queryClient.invalidateQueries({ queryKey: ['streak'] });
+        queryClient.invalidateQueries({ queryKey: ['leaderboard', familyId] });
+        queryClient.invalidateQueries({ queryKey: ['active-goal', familyId] });
       },
     )
     .on(
@@ -40,6 +42,24 @@ export function subscribeToFamily(familyId: string, queryClient: QueryClient): R
       (payload) => {
         const row = payload.new as { achievement_key: string; profile_id: string };
         emit('achievement_unlocked', { key: row.achievement_key, profile_id: row.profile_id });
+      },
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'family_goals', filter: `family_id=eq.${familyId}` },
+      (payload) => {
+        queryClient.invalidateQueries({ queryKey: ['active-goal', familyId] });
+        queryClient.invalidateQueries({ queryKey: ['goals-archive', familyId] });
+
+        // Emit goal_completed when a row transitions active → completed.
+        if (
+          payload.eventType === 'UPDATE' &&
+          (payload.old as { status?: string } | undefined)?.status === 'active' &&
+          (payload.new as { status?: string; title?: string } | undefined)?.status === 'completed'
+        ) {
+          const title = (payload.new as { title?: string }).title ?? '';
+          emit('goal_completed', { title });
+        }
       },
     )
     .subscribe();
