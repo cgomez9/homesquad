@@ -61,7 +61,7 @@ select throws_ok(
 reset role;
 insert into public.star_ledger (profile_id, family_id, delta, reason)
   values ('55555555-5555-5555-5555-555555555555',
-          'faaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 25, 'test');
+          'faaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 25, 'chore_approved');
 
 set local role authenticated;
 set local "request.jwt.claims" to '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
