@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../../src/lib/supabase';
 import { fireSmallFeedback, fireBigFeedback } from '../../../../src/lib/feedback';
 import { useActiveGoal } from '../../../../src/hooks/useActiveGoal';
+import { useCelebrationCatchup } from '../../../../src/hooks/useCelebrationCatchup';
 import { GoalCard } from '../../../../src/components/GoalCard';
 
 type Instance = {
@@ -35,6 +36,7 @@ export default function KidHome() {
   });
 
   const activeGoal = useActiveGoal(familyId ?? undefined);
+  useCelebrationCatchup(profileId, familyId ?? undefined);
 
   const { data: instances, isLoading, error } = useQuery({
     queryKey: ['kid-today', profileId],
