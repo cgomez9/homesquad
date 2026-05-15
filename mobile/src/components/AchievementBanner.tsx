@@ -43,11 +43,11 @@ export function AchievementBanner() {
   useEffect(() => {
     const unsubA = on('achievement_unlocked', (p) => {
       if (!inKidModeRef.current) return;
-      push([{ kind: 'achievement', id: String(counter.current), at: '', achievementKey: p.key }]);
+      push([{ kind: 'achievement', id: '', at: '', achievementKey: p.key }]);
     });
     const unsubG = on('goal_completed', (p) => {
       if (!inKidModeRef.current) return;
-      push([{ kind: 'goal', id: String(counter.current), at: '', title: p.title }]);
+      push([{ kind: 'goal', id: '', at: '', title: p.title }]);
     });
     return () => { unsubA(); unsubG(); };
   }, []);
