@@ -1,99 +1,128 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
 import { useSegments } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { on } from '../lib/events';
+import { setCelebrationEnqueue } from '../lib/celebrations';
+import type { CelebrationItem } from '../lib/celebrationQueue';
 import { ACHIEVEMENTS, type AchievementKey } from '../constants/achievements';
 import { fireAchievementFeedback } from '../lib/feedback';
 
-type AchievementBannerItem = { id: number; kind: 'achievement'; key: AchievementKey };
-type GoalBannerItem = { id: number; kind: 'goal'; emoji: string; title: string; description: string };
-type QueuedBanner = AchievementBannerItem | GoalBannerItem;
+type Queued = (CelebrationItem & { _id: number });
 
 const DISPLAY_MS = 4000;
 
 export function AchievementBanner() {
   const { t } = useTranslation();
-  const [current, setCurrent] = useState<QueuedBanner | null>(null);
-  const [queue, setQueue] = useState<QueuedBanner[]>([]);
+  const [current, setCurrent] = useState<Queued | null>(null);
+  const [queue, setQueue] = useState<Queued[]>([]);
+  const counter = useRef(0);
 
-  // Track current route so we only fire when the user is in kid mode.
-  // The banner is for the kid celebrating their own win — not for the parent
-  // who just approved on the Approvals tab.
+  // Live realtime path is still gated to kid mode (parent who approved
+  // does not get a banner). Programmatic batches come from the kid
+  // screen hook and are already kid-context, so they bypass the gate.
   const segments = useSegments();
   const inKidMode = segments.some((s) => s === 'kid');
   const inKidModeRef = useRef(inKidMode);
   inKidModeRef.current = inKidMode;
 
-  // Subscribe once.
+  const push = (items: CelebrationItem[]) => {
+    setQueue((q) => [
+      ...q,
+      ...items.map((it) => ({ ...it, _id: (counter.current += 1) })),
+    ]);
+  };
+
+  // Programmatic batch enqueue (catch-up replay).
   useEffect(() => {
-    let counter = 0;
+    setCelebrationEnqueue(push);
+    return () => setCelebrationEnqueue(() => {});
+  }, []);
 
-    const unsubAchievement = on('achievement_unlocked', (p) => {
-      // Drop events when not in kid mode — the parent doesn't need a banner
-      // when they themselves triggered the unlock.
-      if (!inKidModeRef.current) return;
-      counter += 1;
-      const entry: AchievementBannerItem = { id: counter, kind: 'achievement', key: p.key as AchievementKey };
-      setQueue((q) => [...q, entry]);
-    });
-
-    const unsubGoal = on('goal_completed', (p) => {
-      if (!inKidModeRef.current) return;
-      counter += 1;
-      const entry: GoalBannerItem = {
-        id: counter,
-        kind: 'goal',
-        emoji: '🎉',
-        title: t('goals.completedBanner', { title: p.title }),
-        description: '',
-      };
-      setQueue((q) => [...q, entry]);
-    });
-
-    return () => {
-      unsubAchievement();
-      unsubGoal();
-    };
-  }, [t]);
-
-  // Drain the queue.
+  // Live realtime listeners (in-session wins) — unchanged behavior.
   useEffect(() => {
-    if (current !== null) return;
-    if (queue.length === 0) return;
+    const unsubA = on('achievement_unlocked', (p) => {
+      if (!inKidModeRef.current) return;
+      push([{ kind: 'achievement', id: String(counter.current), at: '', achievementKey: p.key }]);
+    });
+    const unsubG = on('goal_completed', (p) => {
+      if (!inKidModeRef.current) return;
+      push([{ kind: 'goal', id: String(counter.current), at: '', title: p.title }]);
+    });
+    return () => { unsubA(); unsubG(); };
+  }, []);
+
+  // Drain.
+  useEffect(() => {
+    if (current !== null || queue.length === 0) return;
     const next = queue[0];
     setQueue((q) => q.slice(1));
     setCurrent(next);
     fireAchievementFeedback();
-    const t = setTimeout(() => setCurrent(null), DISPLAY_MS);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setCurrent(null), DISPLAY_MS);
+    return () => clearTimeout(timer);
   }, [current, queue]);
 
   if (!current) return null;
 
-  if (current.kind === 'goal') {
-    return (
-      <View style={styles.overlay} pointerEvents="box-none">
-        <Pressable onPress={() => setCurrent(null)} style={styles.card}>
-          <Text style={styles.emoji}>{current.emoji}</Text>
-          <Text style={styles.title}>{current.title}</Text>
-        </Pressable>
-      </View>
-    );
-  }
-
-  const a = ACHIEVEMENTS[current.key];
-  if (!a) return null;
-
   return (
     <View style={styles.overlay} pointerEvents="box-none">
       <Pressable onPress={() => setCurrent(null)} style={styles.card}>
-        <Text style={styles.heading}>🏅 New Achievement!</Text>
-        <Text style={styles.emoji}>{a.emoji}</Text>
-        <Text style={styles.title}>{a.title}</Text>
-        <Text style={styles.description}>{a.description}</Text>
+        {renderBody(current, t)}
       </Pressable>
     </View>
+  );
+}
+
+function renderBody(item: Queued, t: (k: string, o?: any) => string) {
+  if (item.kind === 'chore_approved') {
+    return (
+      <>
+        <Text style={styles.heading}>⭐ Chore approved!</Text>
+        <Text style={styles.title}>{item.title}</Text>
+        <Text style={styles.description}>+{item.stars} ⭐</Text>
+      </>
+    );
+  }
+  if (item.kind === 'goal') {
+    return (
+      <>
+        <Text style={styles.emoji}>🎉</Text>
+        <Text style={styles.title}>{t('goals.completedBanner', { title: item.title })}</Text>
+      </>
+    );
+  }
+  if (item.kind === 'summary') {
+    return (
+      <>
+        <Text style={styles.emoji}>🌟</Text>
+        <Text style={styles.title}>Plus {item.moreCount} more while you were away!</Text>
+        <Text style={styles.description}>+{item.extraStars} ⭐</Text>
+      </>
+    );
+  }
+  // achievement → Confetti-Burst reveal (medallion pop; confetti already
+  // fired by fireAchievementFeedback in the drain effect).
+  const a = ACHIEVEMENTS[item.achievementKey as AchievementKey];
+  if (!a) return null;
+  return <BadgeReveal emoji={a.emoji} title={a.title} description={a.description} />;
+}
+
+function BadgeReveal({ emoji, title, description }: { emoji: string; title: string; description: string }) {
+  const scale = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.sequence([
+      Animated.spring(scale, { toValue: 1.18, useNativeDriver: true, friction: 4, tension: 120 }),
+      Animated.spring(scale, { toValue: 1, useNativeDriver: true, friction: 5 }),
+    ]).start();
+  }, [scale]);
+  return (
+    <>
+      <Text style={styles.heading}>🏅 New Achievement!</Text>
+      <Animated.Text style={[styles.emoji, { transform: [{ scale }] }]}>{emoji}</Animated.Text>
+      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.description}>{description}</Text>
+    </>
   );
 }
 
@@ -106,6 +135,6 @@ const styles = StyleSheet.create({
   card: { backgroundColor: '#fff', borderRadius: 20, padding: 32, alignItems: 'center', minWidth: 280, gap: 8 },
   heading: { fontSize: 14, fontWeight: '600', color: '#6b7280', textTransform: 'uppercase', letterSpacing: 1 },
   emoji: { fontSize: 64, marginVertical: 8 },
-  title: { fontSize: 22, fontWeight: '700', color: '#111827' },
+  title: { fontSize: 22, fontWeight: '700', color: '#111827', textAlign: 'center' },
   description: { fontSize: 14, color: '#6b7280', textAlign: 'center' },
 });
