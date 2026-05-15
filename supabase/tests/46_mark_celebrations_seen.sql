@@ -1,6 +1,6 @@
 -- supabase/tests/46_mark_celebrations_seen.sql
 begin;
-select plan(5);
+select plan(8);
 
 insert into auth.users (id, email)
   values ('11111111-1111-1111-1111-111111111111', 'p@t.local'),
@@ -24,8 +24,10 @@ set local role authenticated;
 set local "request.jwt.claims" to '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
 
 -- 1. From null, cursor is set.
-select mark_celebrations_seen('55555555-5555-5555-5555-555555555555',
-                              '2026-05-15T10:00:00Z');
+select lives_ok(
+  $$ select mark_celebrations_seen('55555555-5555-5555-5555-555555555555',
+                                   '2026-05-15T10:00:00Z') $$,
+  'parent can set kid cursor');
 select is(
   (select celebrations_seen_at from public.profiles
    where id='55555555-5555-5555-5555-555555555555'),
@@ -33,8 +35,10 @@ select is(
   'null cursor gets set');
 
 -- 2. Forward advance moves it.
-select mark_celebrations_seen('55555555-5555-5555-5555-555555555555',
-                              '2026-05-15T12:00:00Z');
+select lives_ok(
+  $$ select mark_celebrations_seen('55555555-5555-5555-5555-555555555555',
+                                   '2026-05-15T12:00:00Z') $$,
+  'forward advance call succeeds');
 select is(
   (select celebrations_seen_at from public.profiles
    where id='55555555-5555-5555-5555-555555555555'),
@@ -42,8 +46,10 @@ select is(
   'forward advance moves cursor');
 
 -- 3. Older timestamp does NOT move it backward (monotonic).
-select mark_celebrations_seen('55555555-5555-5555-5555-555555555555',
-                              '2026-05-15T09:00:00Z');
+select lives_ok(
+  $$ select mark_celebrations_seen('55555555-5555-5555-5555-555555555555',
+                                   '2026-05-15T09:00:00Z') $$,
+  'older-timestamp call still succeeds (no-op)');
 select is(
   (select celebrations_seen_at from public.profiles
    where id='55555555-5555-5555-5555-555555555555'),
@@ -57,16 +63,16 @@ set local "request.jwt.claims" to '{"sub":"22222222-2222-2222-2222-222222222222"
 select throws_ok(
   $$ select mark_celebrations_seen('55555555-5555-5555-5555-555555555555',
                                    '2026-05-15T20:00:00Z') $$,
-  NULL, NULL,
+  'P0001', 'profile_not_in_family',
   'cross-family parent rejected');
 
--- 5. Anonymous rejected.
+-- 5. Anonymous rejected (hits the not_a_parent branch).
 reset role;
 set local "request.jwt.claims" to '{}';
 select throws_ok(
   $$ select mark_celebrations_seen('55555555-5555-5555-5555-555555555555',
                                    '2026-05-15T20:00:00Z') $$,
-  NULL, NULL,
+  'P0001', 'not_a_parent',
   'anonymous rejected');
 
 select * from finish();

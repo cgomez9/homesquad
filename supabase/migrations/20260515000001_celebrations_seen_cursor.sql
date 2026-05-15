@@ -7,8 +7,11 @@ alter table public.profiles
   add column celebrations_seen_at timestamptz;
 
 -- Advance a kid profile's celebration cursor. Caller must be a parent in
--- the same family as p_profile_id. Monotonic: never moves backward, so
--- concurrent / out-of-order calls are safe.
+-- the same family as p_profile_id, and the target must be a kid profile.
+-- Monotonic: never moves backward, so concurrent / out-of-order calls are
+-- safe. p_seen_at is required (defensive: this RPC is exposed to the
+-- `authenticated` role, so reject a NULL argument explicitly rather than
+-- relying on caller discipline).
 create or replace function public.mark_celebrations_seen(
   p_profile_id uuid,
   p_seen_at    timestamptz
@@ -20,6 +23,10 @@ declare
   v_caller_family uuid;
   v_target_family uuid;
 begin
+  if p_seen_at is null then
+    raise exception 'p_seen_at_required';
+  end if;
+
   select family_id into v_caller_family
   from public.profiles
   where user_id = auth.uid() and type = 'parent';
@@ -30,7 +37,7 @@ begin
 
   select family_id into v_target_family
   from public.profiles
-  where id = p_profile_id;
+  where id = p_profile_id and type = 'kid';
 
   if v_target_family is null or v_target_family <> v_caller_family then
     raise exception 'profile_not_in_family';
