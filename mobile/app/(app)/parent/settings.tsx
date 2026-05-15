@@ -1,6 +1,6 @@
 // mobile/app/(app)/parent/settings.tsx
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Modal, Pressable, Alert, Switch } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Modal, Pressable, Alert, Switch, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as Clipboard from 'expo-clipboard';
@@ -184,7 +184,7 @@ export default function Settings() {
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
       <Text style={styles.title}>Settings</Text>
 
       {isLoading ? <ActivityIndicator /> : (
@@ -290,12 +290,13 @@ export default function Settings() {
         onSelect={onSelectLanguage}
         onCancel={() => setLangPickerOpen(false)}
       />
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, paddingTop: 48, backgroundColor: '#fff', gap: 12 },
+  screen: { flex: 1, backgroundColor: '#fff' },
+  container: { padding: 24, paddingTop: 48, backgroundColor: '#fff', gap: 12 },
   title: { fontSize: 24, fontWeight: '700', marginBottom: 8 },
   section: { paddingVertical: 8 },
   label: { fontSize: 11, color: '#6b7280', textTransform: 'uppercase', fontWeight: '600' },

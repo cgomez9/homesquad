@@ -1,6 +1,7 @@
 // mobile/app/(app)/parent/leaderboard.tsx
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import i18n from '../../../src/i18n';
 import { supabase } from '../../../src/lib/supabase';
@@ -28,9 +29,24 @@ export default function ParentLeaderboardScreen() {
 
   const { data, isLoading } = useLeaderboard(familyId ?? undefined);
 
+  function onBack() {
+    if (router.canGoBack()) router.back();
+    else router.replace('/(app)/parent/settings');
+  }
+
   return (
-    <SafeAreaView style={styles.root}>
-      <Text style={styles.title}>{i18n.t('leaderboard.title')}</Text>
+    <View style={styles.root}>
+      <View style={styles.header}>
+        <Pressable
+          onPress={onBack}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel={i18n.t('common.back', 'Back')}
+        >
+          <Text style={styles.back}>‹ {i18n.t('common.back', 'Back')}</Text>
+        </Pressable>
+        <Text style={styles.title}>{i18n.t('leaderboard.title')}</Text>
+      </View>
 
       <View style={styles.tabs}>
         <Pressable
@@ -52,14 +68,17 @@ export default function ParentLeaderboardScreen() {
       </View>
 
       {!isLoading && <LeaderboardList rows={data ?? []} scope={scope} />}
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root:         { flex: 1, backgroundColor: colors.bg, padding: spacing.lg },
-  title:        { fontSize: typography.h1, fontFamily: typography.fontFamilyBold, color: colors.text,
-                  marginBottom: spacing.md },
+  root:         { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg,
+                  paddingTop: 48, paddingBottom: spacing.lg },
+  header:       { marginBottom: spacing.md },
+  back:         { fontSize: typography.body, color: colors.primary,
+                  fontFamily: typography.fontFamilyBold, marginBottom: spacing.sm },
+  title:        { fontSize: typography.h1, fontFamily: typography.fontFamilyBold, color: colors.text },
   tabs:         { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: radii.pill,
                   padding: spacing.xs, marginBottom: spacing.md },
   tab:          { flex: 1, paddingVertical: spacing.sm, alignItems: 'center', borderRadius: radii.pill },

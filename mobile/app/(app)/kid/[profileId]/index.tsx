@@ -134,7 +134,7 @@ export default function KidHome() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Today's chores</Text>
-        <View style={{ flexDirection: 'row', gap: 16 }}>
+        <View style={styles.navRow}>
           <Pressable onPress={() => router.push(`/(app)/kid/${profileId}/badges` as never)}>
             <Text style={styles.switch}>Badges</Text>
           </Pressable>
@@ -205,7 +205,8 @@ export default function KidHome() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 24, paddingTop: 64, backgroundColor: '#fff' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  header: { marginBottom: 8 },
+  navRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginTop: 8 },
   title: { fontSize: 22, fontWeight: '700' },
   switch: { color: '#3b82f6', fontWeight: '500' },
   statsRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
