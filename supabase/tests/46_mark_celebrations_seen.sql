@@ -1,6 +1,6 @@
 -- supabase/tests/46_mark_celebrations_seen.sql
 begin;
-select plan(8);
+select plan(9);
 
 insert into auth.users (id, email)
   values ('11111111-1111-1111-1111-111111111111', 'p@t.local'),
@@ -55,6 +55,13 @@ select is(
    where id='55555555-5555-5555-5555-555555555555'),
   '2026-05-15T12:00:00Z'::timestamptz,
   'older timestamp is ignored (monotonic)');
+
+-- 3b. NULL p_seen_at is rejected (defensive input guard).
+select throws_ok(
+  $$ select mark_celebrations_seen('55555555-5555-5555-5555-555555555555',
+                                   NULL) $$,
+  'P0001', 'p_seen_at_required',
+  'null p_seen_at rejected');
 
 -- 4. A parent from a DIFFERENT family is rejected.
 reset role;
