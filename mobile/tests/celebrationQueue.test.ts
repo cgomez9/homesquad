@@ -6,11 +6,12 @@ const ach = (id: string, at: string, key = 'first_star') =>
   ({ id, unlocked_at: at, achievement_key: key });
 const goal = (id: string, at: string, title = 'Pizza Night') =>
   ({ id, completed_at: at, title });
+const day = (n: number) => new Date(Date.UTC(2026, 4, n, 10, 0, 0)).toISOString();
 
 describe('buildCelebrationQueue', () => {
   it('returns empty + null maxAt when there are no wins', () => {
     const r = buildCelebrationQueue({
-      cursor: '2026-05-01T00:00:00Z', approvals: [], achievements: [], goals: [], windowStarTotal: 0,
+      approvals: [], achievements: [], goals: [], windowStarTotal: 0,
     });
     expect(r.items).toEqual([]);
     expect(r.maxAt).toBeNull();
@@ -18,7 +19,6 @@ describe('buildCelebrationQueue', () => {
 
   it('merges all three sources sorted ascending by timestamp', () => {
     const r = buildCelebrationQueue({
-      cursor: '2026-05-01T00:00:00Z',
       approvals: [approval('a1', '2026-05-02T10:00:00Z')],
       achievements: [ach('b1', '2026-05-02T09:00:00Z')],
       goals: [goal('g1', '2026-05-02T11:00:00Z')],
@@ -30,9 +30,9 @@ describe('buildCelebrationQueue', () => {
 
   it('plays the CAP most-recent items and appends a summary when over cap', () => {
     const approvals = Array.from({ length: CELEBRATION_CAP + 3 }, (_, i) =>
-      approval(`a${i}`, `2026-05-1${i}T10:00:00Z`, 'Chore', 2));
+      approval(`a${i}`, day(10 + i), 'Chore', 2));
     const r = buildCelebrationQueue({
-      cursor: '2026-05-01T00:00:00Z', approvals, achievements: [], goals: [], windowStarTotal: 42,
+      approvals, achievements: [], goals: [], windowStarTotal: 42,
     });
     expect(r.items.length).toBe(CELEBRATION_CAP + 1);
     expect(r.items.slice(0, CELEBRATION_CAP).every((i) => i.kind === 'chore_approved')).toBe(true);
@@ -44,11 +44,22 @@ describe('buildCelebrationQueue', () => {
 
   it('does not append a summary at exactly the cap', () => {
     const approvals = Array.from({ length: CELEBRATION_CAP }, (_, i) =>
-      approval(`a${i}`, `2026-05-0${i + 1}T10:00:00Z`));
+      approval(`a${i}`, day(i + 1)));
     const r = buildCelebrationQueue({
-      cursor: '2026-05-01T00:00:00Z', approvals, achievements: [], goals: [], windowStarTotal: 0,
+      approvals, achievements: [], goals: [], windowStarTotal: 0,
     });
     expect(r.items.length).toBe(CELEBRATION_CAP);
     expect(r.items.some((i) => i.kind === 'summary')).toBe(false);
+  });
+
+  it('preserves source order for equal timestamps (stable sort)', () => {
+    const sameAt = '2026-05-02T10:00:00Z';
+    const r = buildCelebrationQueue({
+      approvals: [approval('a1', sameAt)],
+      achievements: [ach('b1', sameAt)],
+      goals: [goal('g1', sameAt)],
+      windowStarTotal: 0,
+    });
+    expect(r.items.map((i) => i.kind)).toEqual(['chore_approved', 'achievement', 'goal']);
   });
 });

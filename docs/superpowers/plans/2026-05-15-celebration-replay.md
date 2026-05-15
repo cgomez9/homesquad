@@ -673,7 +673,7 @@ export function useCelebrationCatchup(
       const goals = (gls.data ?? []) as RawGoal[];
 
       const provisional = buildCelebrationQueue({
-        cursor, approvals, achievements, goals, windowStarTotal: 0,
+        approvals, achievements, goals, windowStarTotal: 0,
       });
       if (!provisional.maxAt) return;
 
@@ -688,7 +688,7 @@ export function useCelebrationCatchup(
         (s, r) => s + (r as { delta: number }).delta, 0);
 
       const { items, maxAt } = buildCelebrationQueue({
-        cursor, approvals, achievements, goals, windowStarTotal,
+        approvals, achievements, goals, windowStarTotal,
       });
       if (cancelled || !maxAt) return;
 

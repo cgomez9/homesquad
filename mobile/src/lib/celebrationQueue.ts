@@ -1,6 +1,7 @@
 // Pure, dependency-free celebration-queue builder. All scheduling/cap/
 // summary logic lives here so it is fully unit-testable. The hook
-// (useCelebrationCatchup) supplies already-fetched rows.
+// (useCelebrationCatchup) supplies already-fetched rows (already filtered
+// by the cursor — the builder itself does not need the cursor).
 
 export type CelebrationItem =
   | { kind: 'chore_approved'; id: string; at: string; title: string; stars: number }
@@ -13,7 +14,6 @@ export type RawAchievement = { id: string; unlocked_at: string; achievement_key:
 export type RawGoal = { id: string; completed_at: string; title: string };
 
 export type BuildInput = {
-  cursor: string | null;
   approvals: RawApproval[];
   achievements: RawAchievement[];
   goals: RawGoal[];
