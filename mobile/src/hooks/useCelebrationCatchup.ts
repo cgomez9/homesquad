@@ -21,11 +21,15 @@ export function useCelebrationCatchup(
     let cancelled = false;
 
     (async () => {
-      const { data: prof } = await supabase
+      const { data: prof, error: profErr } = await supabase
         .from('profiles')
         .select('celebrations_seen_at')
         .eq('id', profileId)
         .maybeSingle();
+
+      // Transient failure: do NOT fall through to the null-cursor baseline
+      // (that would monotonically eat all missed wins). Retry next mount.
+      if (profErr) return;
 
       const cursor = (prof as { celebrations_seen_at: string | null } | null)?.celebrations_seen_at ?? null;
 
@@ -84,7 +88,7 @@ export function useCelebrationCatchup(
 
       enqueueCelebrations(items);
       await advanceCursor(profileId, maxAt);
-    })();
+    })().catch(() => {});
 
     return () => { cancelled = true; };
   }, [profileId, familyId]);
@@ -101,14 +105,16 @@ export function useCelebrationCatchup(
         filter: `completed_by=eq.${profileId}`,
       }, (p) => {
         const n = p.new as { status?: string; approved_at?: string };
-        if (n?.status === 'approved' && n.approved_at) advanceCursor(profileId, n.approved_at);
+        if (n?.status === 'approved' && n.approved_at) {
+          advanceCursor(profileId, n.approved_at).catch(() => {});
+        }
       })
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'achievements',
         filter: `profile_id=eq.${profileId}`,
       }, (p) => {
         const n = p.new as { unlocked_at?: string };
-        if (n?.unlocked_at) advanceCursor(profileId, n.unlocked_at);
+        if (n?.unlocked_at) advanceCursor(profileId, n.unlocked_at).catch(() => {});
       })
       .on('postgres_changes', {
         event: 'UPDATE', schema: 'public', table: 'family_goals',
@@ -117,7 +123,7 @@ export function useCelebrationCatchup(
         const o = p.old as { status?: string };
         const n = p.new as { status?: string; completed_at?: string };
         if (o?.status === 'active' && n?.status === 'completed' && n.completed_at) {
-          advanceCursor(profileId, n.completed_at);
+          advanceCursor(profileId, n.completed_at).catch(() => {});
         }
       })
       .subscribe();
