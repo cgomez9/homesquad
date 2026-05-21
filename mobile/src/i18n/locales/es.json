@@ -218,6 +218,7 @@
     "title": "Metas familiares",
     "active": "Meta activa",
     "noActive": "Sin meta activa — crea una para comenzar.",
+    "purposeBlurb": "Una meta familiar reúne a todos hacia un premio compartido. Define un objetivo — las estrellas de los niños se suman juntas hasta llegar.",
     "createTitle": "Crear una meta familiar",
     "titleLabel": "Nombre de la meta",
     "titlePlaceholder": "Noche de pizza",

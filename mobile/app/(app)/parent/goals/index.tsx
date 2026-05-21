@@ -107,6 +107,7 @@ export default function GoalsScreen() {
         <View style={styles.empty}>
           <Text style={styles.emptyEmoji}>🎯</Text>
           <Text style={styles.emptyText}>{i18n.t('goals.noActive')}</Text>
+          <Text style={styles.emptyBlurb}>{i18n.t('goals.purposeBlurb')}</Text>
           <CreateButton onPress={() => router.push('/(app)/parent/goals/create')} />
         </View>
       )}
@@ -285,6 +286,15 @@ const makeStyles = (colors: Palette) =>
     fontSize: typography.body,
     color: colors.textMuted,
     textAlign: 'center',
+  },
+  emptyBlurb: {
+    fontFamily: typography.fontFamilySemi,
+    fontSize: typography.small,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: spacing.xs,
+    marginHorizontal: spacing.md,
+    lineHeight: 18,
   },
 
   createBtn: {

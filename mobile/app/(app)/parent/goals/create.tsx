@@ -51,6 +51,8 @@ export default function CreateGoalScreen() {
           <Text style={styles.h1}>{i18n.t('goals.createTitle')}</Text>
         </View>
 
+        <Text style={styles.blurb}>{i18n.t('goals.purposeBlurb')}</Text>
+
         <View style={styles.card}>
           <Text style={styles.label}>{i18n.t('goals.titleLabel')}</Text>
           <TextInput
@@ -133,6 +135,13 @@ const makeStyles = (colors: Palette) =>
     },
     backIcon: { fontSize: 19, color: colors.text, fontFamily: typography.fontFamilyBold },
     h1: { fontFamily: typography.fontFamilyBold, fontSize: 26, color: colors.text, letterSpacing: -0.3 },
+    blurb: {
+      fontFamily: typography.fontFamilySemi,
+      fontSize: typography.small,
+      color: colors.textMuted,
+      marginBottom: spacing.lg,
+      lineHeight: 18,
+    },
     card: {
       backgroundColor: colors.surface, borderRadius: 24, padding: spacing.xl,
       shadowColor: '#0F766E', shadowOpacity: 0.12, shadowRadius: 24, shadowOffset: { width: 0, height: 12 }, elevation: 5,
