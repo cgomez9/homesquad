@@ -366,34 +366,8 @@ function ChoreApprovalCard({
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { t } = useTranslation();
-  const enter = useRef(new Animated.Value(1)).current;
   const a = item.kid ? AVATARS[item.kid.avatar_id as AvatarId] : null;
-
-  useEffect(() => {
-    if (!isFlashing) return;
-    Animated.sequence([
-      Animated.delay(700),
-      Animated.timing(enter, {
-        toValue: 0,
-        duration: 280,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: false,
-      }),
-    ]).start(({ finished }) => {
-      if (finished) onFlashComplete();
-    });
-  }, [isFlashing, enter, onFlashComplete]);
-
-  const animStyle = isFlashing
-    ? {
-        opacity: enter,
-        transform: [
-          { scale: enter.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] }) },
-        ],
-        maxHeight: enter.interpolate({ inputRange: [0, 1], outputRange: [0, 240] }),
-        marginBottom: enter.interpolate({ inputRange: [0, 1], outputRange: [0, spacing.md] }),
-      }
-    : null;
+  const animStyle = useFlashAnimation(isFlashing, onFlashComplete);
 
   return (
     <Animated.View style={[styles.card, isFlashing && styles.cardFlash, animStyle]}>
@@ -453,35 +427,9 @@ function RedemptionApprovalCard({
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { t } = useTranslation();
-  const enter = useRef(new Animated.Value(1)).current;
   const a = item.kid ? AVATARS[item.kid.avatar_id as AvatarId] : null;
   const icon = item.reward ? REWARD_ICONS[item.reward.icon_id as RewardIconId]?.emoji : '🎁';
-
-  useEffect(() => {
-    if (!isFlashing) return;
-    Animated.sequence([
-      Animated.delay(700),
-      Animated.timing(enter, {
-        toValue: 0,
-        duration: 280,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: false,
-      }),
-    ]).start(({ finished }) => {
-      if (finished) onFlashComplete();
-    });
-  }, [isFlashing, enter, onFlashComplete]);
-
-  const animStyle = isFlashing
-    ? {
-        opacity: enter,
-        transform: [
-          { scale: enter.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] }) },
-        ],
-        maxHeight: enter.interpolate({ inputRange: [0, 1], outputRange: [0, 240] }),
-        marginBottom: enter.interpolate({ inputRange: [0, 1], outputRange: [0, spacing.md] }),
-      }
-    : null;
+  const animStyle = useFlashAnimation(isFlashing, onFlashComplete);
 
   return (
     <Animated.View style={[styles.card, isFlashing && styles.cardFlash, animStyle]}>
@@ -514,6 +462,41 @@ function RedemptionApprovalCard({
       )}
     </Animated.View>
   );
+}
+
+/* ---------- useFlashAnimation ---------- */
+
+function useFlashAnimation(isFlashing: boolean, onComplete: () => void) {
+  const enter = useRef(new Animated.Value(1)).current;
+  const onCompleteRef = useRef(onComplete);
+  // Always point at the latest callback without triggering effect re-runs.
+  onCompleteRef.current = onComplete;
+
+  useEffect(() => {
+    if (!isFlashing) return;
+    Animated.sequence([
+      Animated.delay(700),
+      Animated.timing(enter, {
+        toValue: 0,
+        duration: 280,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }),
+    ]).start(({ finished }) => {
+      if (finished) onCompleteRef.current();
+    });
+  }, [isFlashing, enter]);
+
+  return isFlashing
+    ? {
+        opacity: enter,
+        transform: [
+          { scale: enter.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] }) },
+        ],
+        maxHeight: enter.interpolate({ inputRange: [0, 1], outputRange: [0, 240] }),
+        marginBottom: enter.interpolate({ inputRange: [0, 1], outputRange: [0, spacing.md] }),
+      }
+    : null;
 }
 
 /* ---------- action button ---------- */
