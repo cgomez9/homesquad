@@ -194,13 +194,13 @@ function BadgeCard({
 
   return (
     <Animated.View style={[styles.card, !unlocked && styles.cardLocked, animStyle]}>
-      {unlocked && (
-        <View style={styles.ribbon}>
-          <Text style={styles.ribbonText}>{t('badges.earned')}</Text>
-        </View>
-      )}
       <View style={[styles.med, !unlocked && styles.medLocked]}>
         <Text style={[styles.emoji, !unlocked && styles.emojiLocked]}>{achievement.emoji}</Text>
+        {unlocked && (
+          <View style={styles.medSeal} accessibilityLabel={t('badges.earned')}>
+            <Text style={styles.medSealText}>✓</Text>
+          </View>
+        )}
       </View>
       <Text style={[styles.cardTitle, !unlocked && styles.cardTitleLocked]}>
         {achievement.title}
@@ -313,21 +313,6 @@ const makeStyles = (colors: Palette) =>
     shadowOpacity: 0,
     elevation: 0,
   },
-  ribbon: {
-    position: 'absolute',
-    top: spacing.md,
-    right: spacing.md,
-    backgroundColor: colors.success,
-    paddingVertical: 3,
-    paddingHorizontal: spacing.sm,
-    borderRadius: radii.pill,
-  },
-  ribbonText: {
-    fontFamily: typography.fontFamilyBold,
-    fontSize: 10,
-    color: '#06382E',
-    letterSpacing: 0.5,
-  },
   med: {
     width: 74,
     height: 74,
@@ -350,6 +335,30 @@ const makeStyles = (colors: Palette) =>
     borderColor: '#C4DAD6',
     shadowOpacity: 0,
     elevation: 0,
+  },
+  medSeal: {
+    position: 'absolute',
+    bottom: -4,
+    right: -4,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.success,
+    borderWidth: 2,
+    borderColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: SHADOW,
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  medSealText: {
+    color: '#fff',
+    fontFamily: typography.fontFamilyBold,
+    fontSize: 14,
+    lineHeight: 14,
   },
   emoji: { fontSize: 36 },
   emojiLocked: { opacity: 0.4 },
