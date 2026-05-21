@@ -1,4 +1,4 @@
-import { useRef, useState, useMemo } from 'react';
+import { useRef, useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Modal,
   Image,
   Animated,
+  Easing,
   Platform,
   StatusBar,
 } from 'react-native';
@@ -20,6 +21,7 @@ import { REWARD_ICONS, type RewardIconId } from '../../../src/constants/rewardIc
 import { RejectModal } from '../../../src/components/RejectModal';
 import { TidePoolBackground } from '../../../src/components/TidePool';
 import { useTheme, type Palette, radii, spacing, typography } from '../../../src/theme';
+import { fireSmallFeedback } from '../../../src/lib/feedback';
 
 type ChoreRow = {
   kind: 'chore';
@@ -66,6 +68,7 @@ export default function Approvals() {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [rejectChoreTarget, setRejectChoreTarget] = useState<ChoreRow | null>(null);
   const [denyTarget, setDenyTarget] = useState<RedemptionPendingRow | null>(null);
+  const [flashRows, setFlashRows] = useState<Map<string, DecisionRow>>(new Map());
 
   const [chores, redPending, redApproved] = useQueries({
     queries: [
@@ -138,6 +141,24 @@ export default function Approvals() {
     }
   }
 
+  function startApprovalFlash(item: DecisionRow) {
+    fireSmallFeedback();
+    setFlashRows((prev) => {
+      const next = new Map(prev);
+      next.set(item.id, item);
+      return next;
+    });
+  }
+
+  function endApprovalFlash(id: string) {
+    setFlashRows((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Map(prev);
+      next.delete(id);
+      return next;
+    });
+  }
+
   const approveChore = useMutation({
     mutationFn: async (instanceId: string) => {
       const { error } = await supabase.rpc('approve_chore', { instance_id: instanceId });
@@ -193,6 +214,16 @@ export default function Approvals() {
     },
   });
 
+  function onApproveChoreTap(item: ChoreRow) {
+    startApprovalFlash(item);
+    approveChore.mutate(item.id);
+  }
+
+  function onApproveRedemptionTap(item: RedemptionPendingRow) {
+    startApprovalFlash(item);
+    approveRedemption.mutate(item.id);
+  }
+
   async function openPhoto(row: ChoreRow) {
     if (!row.photo_url) return;
     const path = `family/${row.family_id}/chore-proofs/${row.id}.jpg`;
@@ -200,8 +231,16 @@ export default function Approvals() {
     setPhotoUrl(data?.signedUrl ?? null);
   }
 
+  const decisionsWithFlash = useMemo<DecisionRow[]>(() => {
+    const liveIds = new Set(decisions.map((d) => d.id));
+    const orphanFlashes = Array.from(flashRows.entries())
+      .filter(([id]) => !liveIds.has(id))
+      .map(([, row]) => row);
+    return [...decisions, ...orphanFlashes];
+  }, [decisions, flashRows]);
+
   const sections = [
-    { title: t('approvals.sectionDecisions'), data: decisions as DecisionRow[] },
+    { title: t('approvals.sectionDecisions'), data: decisionsWithFlash as DecisionRow[] },
     { title: t('approvals.sectionFulfillment'), data: fulfill as unknown as DecisionRow[] },
   ].filter((s) => s.data.length > 0);
 
@@ -237,61 +276,26 @@ export default function Approvals() {
         )}
         renderItem={({ item }) => {
           if (item.kind === 'chore') {
-            const a = item.kid ? AVATARS[item.kid.avatar_id as AvatarId] : null;
             return (
-              <View style={styles.card}>
-                <View style={styles.top}>
-                  <View style={[styles.av, { backgroundColor: a?.bg ?? '#EDF3F1' }]}>
-                    <Text style={styles.avEmoji}>{a?.emoji ?? '👤'}</Text>
-                  </View>
-                  <View style={styles.who}>
-                    <Text style={styles.kn}>{item.kid?.display_name}</Text>
-                    <Text style={styles.it} numberOfLines={1}>{item.chore?.title}</Text>
-                  </View>
-                  <View style={styles.cost}>
-                    <Text style={styles.costText}>⭐ {item.chore?.star_value}</Text>
-                  </View>
-                </View>
-                <View style={styles.meta}>
-                  <Text style={styles.metaText}>{t('approvals.submitted', { time: timeAgo(item.completed_at, t) })}</Text>
-                  {item.chore?.verification_mode === 'photo' && (
-                    <Pressable onPress={() => openPhoto(item)} style={styles.photoChip}>
-                      <Text style={styles.photoChipText}>{t('approvals.viewPhoto')}</Text>
-                    </Pressable>
-                  )}
-                </View>
-                <View style={styles.acts}>
-                  <ActBtn label={t('approvals.approve')} variant="approve" onPress={() => approveChore.mutate(item.id)} />
-                  <ActBtn label={t('approvals.reject')} variant="reject" onPress={() => setRejectChoreTarget(item)} />
-                </View>
-              </View>
+              <ChoreApprovalCard
+                item={item}
+                isFlashing={flashRows.has(item.id)}
+                onApprove={() => onApproveChoreTap(item)}
+                onReject={() => setRejectChoreTarget(item)}
+                onViewPhoto={() => openPhoto(item)}
+                onFlashComplete={() => endApprovalFlash(item.id)}
+              />
             );
           }
           if (item.kind === 'redemption-pending') {
-            const a = item.kid ? AVATARS[item.kid.avatar_id as AvatarId] : null;
-            const icon = item.reward ? REWARD_ICONS[item.reward.icon_id as RewardIconId]?.emoji : '🎁';
             return (
-              <View style={styles.card}>
-                <View style={styles.top}>
-                  <View style={[styles.av, { backgroundColor: a?.bg ?? '#EDF3F1' }]}>
-                    <Text style={styles.avEmoji}>{a?.emoji ?? '👤'}</Text>
-                  </View>
-                  <View style={styles.who}>
-                    <Text style={styles.kn}>{t('approvals.wants', { name: item.kid?.display_name })}</Text>
-                    <Text style={styles.it} numberOfLines={1}>{icon} {item.reward?.title}</Text>
-                  </View>
-                  <View style={styles.cost}>
-                    <Text style={styles.costText}>⭐ {item.star_cost_snapshot}</Text>
-                  </View>
-                </View>
-                <View style={styles.meta}>
-                  <Text style={styles.metaText}>{t('approvals.requested', { time: timeAgo(item.requested_at, t) })}</Text>
-                </View>
-                <View style={styles.acts}>
-                  <ActBtn label={t('approvals.approve')} variant="approve" onPress={() => approveRedemption.mutate(item.id)} />
-                  <ActBtn label={t('approvals.deny')} variant="reject" onPress={() => setDenyTarget(item)} />
-                </View>
-              </View>
+              <RedemptionApprovalCard
+                item={item}
+                isFlashing={flashRows.has(item.id)}
+                onApprove={() => onApproveRedemptionTap(item)}
+                onDeny={() => setDenyTarget(item)}
+                onFlashComplete={() => endApprovalFlash(item.id)}
+              />
             );
           }
           // redemption-fulfill (Pending fulfillment section)
@@ -339,6 +343,176 @@ export default function Approvals() {
         }}
       />
     </View>
+  );
+}
+
+/* ---------- ChoreApprovalCard ---------- */
+
+function ChoreApprovalCard({
+  item,
+  isFlashing,
+  onApprove,
+  onReject,
+  onViewPhoto,
+  onFlashComplete,
+}: {
+  item: ChoreRow;
+  isFlashing: boolean;
+  onApprove: () => void;
+  onReject: () => void;
+  onViewPhoto: () => void;
+  onFlashComplete: () => void;
+}) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { t } = useTranslation();
+  const enter = useRef(new Animated.Value(1)).current;
+  const a = item.kid ? AVATARS[item.kid.avatar_id as AvatarId] : null;
+
+  useEffect(() => {
+    if (!isFlashing) return;
+    Animated.sequence([
+      Animated.delay(700),
+      Animated.timing(enter, {
+        toValue: 0,
+        duration: 280,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }),
+    ]).start(({ finished }) => {
+      if (finished) onFlashComplete();
+    });
+  }, [isFlashing, enter, onFlashComplete]);
+
+  const animStyle = isFlashing
+    ? {
+        opacity: enter,
+        transform: [
+          { scale: enter.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] }) },
+        ],
+        maxHeight: enter.interpolate({ inputRange: [0, 1], outputRange: [0, 240] }),
+        marginBottom: enter.interpolate({ inputRange: [0, 1], outputRange: [0, spacing.md] }),
+      }
+    : null;
+
+  return (
+    <Animated.View style={[styles.card, isFlashing && styles.cardFlash, animStyle]}>
+      <View style={styles.top}>
+        <View style={[styles.av, { backgroundColor: a?.bg ?? '#EDF3F1' }]}>
+          <Text style={styles.avEmoji}>{a?.emoji ?? '👤'}</Text>
+        </View>
+        <View style={styles.who}>
+          <Text style={styles.kn}>{item.kid?.display_name}</Text>
+          <Text style={styles.it} numberOfLines={1}>{item.chore?.title}</Text>
+        </View>
+        <View style={styles.cost}>
+          <Text style={styles.costText}>⭐ {item.chore?.star_value}</Text>
+        </View>
+      </View>
+      <View style={styles.meta}>
+        <Text style={styles.metaText}>
+          {t('approvals.submitted', { time: timeAgo(item.completed_at, t) })}
+        </Text>
+        {item.chore?.verification_mode === 'photo' && !isFlashing && (
+          <Pressable onPress={onViewPhoto} style={styles.photoChip}>
+            <Text style={styles.photoChipText}>{t('approvals.viewPhoto')}</Text>
+          </Pressable>
+        )}
+      </View>
+      {isFlashing ? (
+        <View style={styles.flashPill}>
+          <Text style={styles.flashPillText}>
+            {t('approvals.approvedFlashChore', { stars: item.chore?.star_value ?? 0 })}
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.acts}>
+          <ActBtn label={t('approvals.approve')} variant="approve" onPress={onApprove} />
+          <ActBtn label={t('approvals.reject')} variant="reject" onPress={onReject} />
+        </View>
+      )}
+    </Animated.View>
+  );
+}
+
+/* ---------- RedemptionApprovalCard ---------- */
+
+function RedemptionApprovalCard({
+  item,
+  isFlashing,
+  onApprove,
+  onDeny,
+  onFlashComplete,
+}: {
+  item: RedemptionPendingRow;
+  isFlashing: boolean;
+  onApprove: () => void;
+  onDeny: () => void;
+  onFlashComplete: () => void;
+}) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { t } = useTranslation();
+  const enter = useRef(new Animated.Value(1)).current;
+  const a = item.kid ? AVATARS[item.kid.avatar_id as AvatarId] : null;
+  const icon = item.reward ? REWARD_ICONS[item.reward.icon_id as RewardIconId]?.emoji : '🎁';
+
+  useEffect(() => {
+    if (!isFlashing) return;
+    Animated.sequence([
+      Animated.delay(700),
+      Animated.timing(enter, {
+        toValue: 0,
+        duration: 280,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }),
+    ]).start(({ finished }) => {
+      if (finished) onFlashComplete();
+    });
+  }, [isFlashing, enter, onFlashComplete]);
+
+  const animStyle = isFlashing
+    ? {
+        opacity: enter,
+        transform: [
+          { scale: enter.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] }) },
+        ],
+        maxHeight: enter.interpolate({ inputRange: [0, 1], outputRange: [0, 240] }),
+        marginBottom: enter.interpolate({ inputRange: [0, 1], outputRange: [0, spacing.md] }),
+      }
+    : null;
+
+  return (
+    <Animated.View style={[styles.card, isFlashing && styles.cardFlash, animStyle]}>
+      <View style={styles.top}>
+        <View style={[styles.av, { backgroundColor: a?.bg ?? '#EDF3F1' }]}>
+          <Text style={styles.avEmoji}>{a?.emoji ?? '👤'}</Text>
+        </View>
+        <View style={styles.who}>
+          <Text style={styles.kn}>{t('approvals.wants', { name: item.kid?.display_name })}</Text>
+          <Text style={styles.it} numberOfLines={1}>{icon} {item.reward?.title}</Text>
+        </View>
+        <View style={styles.cost}>
+          <Text style={styles.costText}>⭐ {item.star_cost_snapshot}</Text>
+        </View>
+      </View>
+      <View style={styles.meta}>
+        <Text style={styles.metaText}>
+          {t('approvals.requested', { time: timeAgo(item.requested_at, t) })}
+        </Text>
+      </View>
+      {isFlashing ? (
+        <View style={styles.flashPill}>
+          <Text style={styles.flashPillText}>{t('approvals.approvedFlashRedemption')}</Text>
+        </View>
+      ) : (
+        <View style={styles.acts}>
+          <ActBtn label={t('approvals.approve')} variant="approve" onPress={onApprove} />
+          <ActBtn label={t('approvals.deny')} variant="reject" onPress={onDeny} />
+        </View>
+      )}
+    </Animated.View>
   );
 }
 
@@ -435,6 +609,27 @@ const makeStyles = (colors: Palette) =>
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 9 },
     elevation: 4,
+  },
+  cardFlash: {
+    backgroundColor: 'rgba(52,211,153,0.13)',
+  },
+  flashPill: {
+    marginTop: spacing.md - spacing.xs,
+    alignSelf: 'center',
+    backgroundColor: colors.success,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radii.pill,
+    shadowColor: colors.success,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  flashPillText: {
+    fontFamily: typography.fontFamilyBold,
+    fontSize: typography.body,
+    color: '#06382E',
   },
   top: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   av: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },

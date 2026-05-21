@@ -351,7 +351,9 @@
     "reject": "Rechazar",
     "deny": "Denegar",
     "markGiven": "Marcar entregado",
-    "wants": "{{name}} quiere"
+    "wants": "{{name}} quiere",
+    "approvedFlashChore": "✓ Aprobada · +{{stars}} ⭐",
+    "approvedFlashRedemption": "✓ Aprobado"
   },
   "activity": {
     "title": "Actividad",

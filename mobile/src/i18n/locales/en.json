@@ -351,7 +351,9 @@
     "reject": "Reject",
     "deny": "Deny",
     "markGiven": "Mark given",
-    "wants": "{{name}} wants"
+    "wants": "{{name}} wants",
+    "approvedFlashChore": "✓ Approved · +{{stars}} ⭐",
+    "approvedFlashRedemption": "✓ Approved"
   },
   "activity": {
     "title": "Activity",
