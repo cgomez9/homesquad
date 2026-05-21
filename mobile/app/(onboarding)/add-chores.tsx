@@ -80,8 +80,9 @@ const PACKS: Pack[] = [
 ];
 
 export default function AddChoresScreen() {
-  const { colors } = useTheme();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { colors, effective } = useTheme();
+  const isDark = effective === 'dark';
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
   const { t } = useTranslation();
   const router = useRouter();
   const [selected, setSelected] = useState<Set<Pack['id']>>(new Set());
@@ -229,8 +230,9 @@ function PackCard({
   selected: boolean;
   onToggle: () => void;
 }) {
-  const { colors } = useTheme();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { colors, effective } = useTheme();
+  const isDark = effective === 'dark';
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
   const { t } = useTranslation();
   const scale = useMemo(() => new Animated.Value(1), []);
 
@@ -279,7 +281,7 @@ function PackCard({
   );
 }
 
-const makeStyles = (colors: Palette) =>
+const makeStyles = (colors: Palette, isDark: boolean) =>
   StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   container: { padding: spacing.xl, paddingTop: TOP_INSET, flexGrow: 1 },
@@ -335,7 +337,7 @@ const makeStyles = (colors: Palette) =>
     shadowOffset: { width: 0, height: 6 },
     elevation: 3,
   },
-  packOn: { borderColor: 'rgba(14,165,164,0.45)', backgroundColor: '#F2FBFA' },
+  packOn: { borderColor: 'rgba(14,165,164,0.45)', backgroundColor: isDark ? 'rgba(14,165,164,0.15)' : '#F2FBFA' },
 
   packTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   packEmoji: {
@@ -393,7 +395,7 @@ const makeStyles = (colors: Palette) =>
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#F1ECE0',
+    backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#F1ECE0',
     paddingVertical: 5,
     paddingHorizontal: 9,
     borderRadius: radii.pill,
