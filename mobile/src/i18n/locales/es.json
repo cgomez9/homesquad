@@ -377,6 +377,12 @@
     "couldNotUpdateChore": "No se pudo actualizar la tarea",
     "couldNotCreateReward": "No se pudo crear el premio",
     "couldNotUpdateReward": "No se pudo actualizar el premio",
+    "verification": {
+      "label": "Verificación",
+      "auto": { "label": "Auto", "hint": "Tocar listo = listo" },
+      "photo": { "label": "Foto", "hint": "El niño envía una foto" },
+      "approval": { "label": "Aprobación", "hint": "Un adulto confirma" }
+    },
     "errStarValue": "el valor en estrellas debe ser 1–999",
     "errStarCost": "el coste en estrellas debe ser 1–9999",
     "errNoFamily": "no se cargó la familia"

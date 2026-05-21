@@ -1,23 +1,46 @@
+import { useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { useTheme, type Palette, spacing, radii, typography } from '../theme';
 
 export type VerificationMode = 'auto' | 'photo' | 'approval';
-const MODES: { value: VerificationMode; label: string; hint: string }[] = [
-  { value: 'auto',     label: 'Auto',     hint: 'Tap done = done' },
-  { value: 'photo',    label: 'Photo',    hint: 'Kid sends a photo' },
-  { value: 'approval', label: 'Approval', hint: 'Parent confirms' },
-];
 
-export function VerificationModePicker({ value, onChange }: { value: VerificationMode; onChange: (v: VerificationMode) => void }) {
+const MODES: VerificationMode[] = ['auto', 'photo', 'approval'];
+
+export function VerificationModePicker({
+  value,
+  onChange,
+}: {
+  value: VerificationMode;
+  onChange: (v: VerificationMode) => void;
+}) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { t } = useTranslation();
+
   return (
     <View>
-      <Text style={styles.label}>Verification</Text>
+      <Text style={styles.label}>{t('forms.verification.label')}</Text>
       <View style={styles.row}>
         {MODES.map((m) => {
-          const sel = m.value === value;
+          const sel = m === value;
           return (
-            <Pressable key={m.value} onPress={() => onChange(m.value)} style={[styles.btn, sel && styles.btnSel]}>
-              <Text style={[styles.btnLabel, sel && styles.btnLabelSel]}>{m.label}</Text>
-              <Text style={[styles.btnHint, sel && styles.btnHintSel]}>{m.hint}</Text>
+            <Pressable
+              key={m}
+              onPress={() => onChange(m)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: sel }}
+              style={[styles.btn, sel && styles.btnSel]}
+            >
+              <Text style={[styles.btnLabel, sel && styles.btnLabelSel]}>
+                {t(`forms.verification.${m}.label`)}
+              </Text>
+              <Text
+                style={[styles.btnHint, sel && styles.btnHintSel]}
+                numberOfLines={2}
+              >
+                {t(`forms.verification.${m}.hint`)}
+              </Text>
             </Pressable>
           );
         })}
@@ -25,13 +48,45 @@ export function VerificationModePicker({ value, onChange }: { value: Verificatio
     </View>
   );
 }
-const styles = StyleSheet.create({
-  label: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 6 },
-  row: { flexDirection: 'row', gap: 8 },
-  btn: { flex: 1, padding: 10, borderRadius: 8, borderWidth: 1, borderColor: '#d1d5db', alignItems: 'center' },
-  btnSel: { backgroundColor: '#3b82f6', borderColor: '#3b82f6' },
-  btnLabel: { fontWeight: '600', color: '#111827' },
-  btnLabelSel: { color: '#fff' },
-  btnHint: { fontSize: 11, color: '#6b7280', marginTop: 2 },
-  btnHintSel: { color: '#dbeafe' },
-});
+
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
+    label: {
+      fontSize: typography.small,
+      fontFamily: typography.fontFamilyBold,
+      color: colors.textMuted,
+      marginBottom: spacing.xs + 2,
+    },
+    row: { flexDirection: 'row', gap: spacing.sm },
+    btn: {
+      flex: 1,
+      minHeight: 64,
+      paddingVertical: spacing.sm + 2,
+      paddingHorizontal: spacing.sm,
+      borderRadius: radii.md,
+      borderWidth: 1.5,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 2,
+    },
+    btnSel: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    btnLabel: {
+      fontFamily: typography.fontFamilyBold,
+      fontSize: typography.small + 1,
+      color: colors.text,
+    },
+    btnLabelSel: { color: '#fff' },
+    btnHint: {
+      fontFamily: typography.fontFamilySemi,
+      fontSize: typography.tiny,
+      color: colors.textMuted,
+      textAlign: 'center',
+      lineHeight: 14,
+    },
+    btnHintSel: { color: 'rgba(255,255,255,0.88)' },
+  });

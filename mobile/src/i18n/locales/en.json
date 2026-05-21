@@ -377,6 +377,12 @@
     "couldNotUpdateChore": "Could not update chore",
     "couldNotCreateReward": "Could not create reward",
     "couldNotUpdateReward": "Could not update reward",
+    "verification": {
+      "label": "Verification",
+      "auto": { "label": "Auto", "hint": "Tap done = done" },
+      "photo": { "label": "Photo", "hint": "Kid sends a photo" },
+      "approval": { "label": "Approval", "hint": "Parent confirms" }
+    },
     "errStarValue": "star value must be 1–999",
     "errStarCost": "star cost must be 1–9999",
     "errNoFamily": "no family loaded"
