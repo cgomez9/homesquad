@@ -415,7 +415,7 @@
     "choresApproved_other": "¡{{count}} tareas aprobadas!"
   },
   "achievements": {
-    "first_star": { "title": "Primera estrella", "desc": "Gana tu primera estrella" },
+    "stargazer": { "title": "Observador", "desc": "Gana 10 estrellas en total" },
     "stars_100": { "title": "Centena", "desc": "Gana 100 estrellas en total" },
     "stars_500": { "title": "Estrella mayor", "desc": "Gana 500 estrellas en total" },
     "streak_7": { "title": "Racha semanal", "desc": "Gana estrellas 7 días seguidos" },

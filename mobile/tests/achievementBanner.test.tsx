@@ -18,7 +18,7 @@ describe('AchievementBanner programmatic queue', () => {
     act(() => {
       enqueueCelebrations([
         { kind: 'chore_approved', id: 'a1', at: 'x', title: 'Dishes', stars: 3 },
-        { kind: 'achievement', id: 'b1', at: 'y', achievementKey: 'first_star' },
+        { kind: 'achievement', id: 'b1', at: 'y', achievementKey: 'stargazer' },
       ]);
     });
     await waitFor(() => expect(getByText(/Dishes/)).toBeTruthy());

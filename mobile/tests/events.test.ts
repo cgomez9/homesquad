@@ -4,8 +4,8 @@ describe('event bus', () => {
   it('delivers payload to subscriber', () => {
     const handler = jest.fn();
     const unsub = on('achievement_unlocked', handler);
-    emit('achievement_unlocked', { key: 'first_star', profile_id: 'p1' });
-    expect(handler).toHaveBeenCalledWith({ key: 'first_star', profile_id: 'p1' });
+    emit('achievement_unlocked', { key: 'stargazer', profile_id: 'p1' });
+    expect(handler).toHaveBeenCalledWith({ key: 'stargazer', profile_id: 'p1' });
     unsub();
   });
 
@@ -13,7 +13,7 @@ describe('event bus', () => {
     const handler = jest.fn();
     const unsub = on('achievement_unlocked', handler);
     unsub();
-    emit('achievement_unlocked', { key: 'first_star', profile_id: 'p1' });
+    emit('achievement_unlocked', { key: 'stargazer', profile_id: 'p1' });
     expect(handler).not.toHaveBeenCalled();
   });
 });

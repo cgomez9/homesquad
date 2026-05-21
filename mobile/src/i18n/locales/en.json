@@ -415,7 +415,7 @@
     "choresApproved_other": "{{count}} chores approved!"
   },
   "achievements": {
-    "first_star": { "title": "First Star", "desc": "Earn your first star" },
+    "stargazer": { "title": "Stargazer", "desc": "Earn 10 stars total" },
     "stars_100": { "title": "Century", "desc": "Earn 100 stars total" },
     "stars_500": { "title": "High Roller", "desc": "Earn 500 stars total" },
     "streak_7": { "title": "Week Streak", "desc": "Earn stars 7 days in a row" },

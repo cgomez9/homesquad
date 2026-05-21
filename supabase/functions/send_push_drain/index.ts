@@ -13,7 +13,7 @@ type Item = { row_id: string; event_type: string; payload: Record<string, unknow
 type Group = { recipient_id: string; items: Item[] };
 
 const ACHIEVEMENTS: Record<string, { emoji: string; title: string }> = {
-  first_star:   { emoji: '⭐', title: 'First Star' },
+  stargazer:    { emoji: '⭐', title: 'Stargazer' },
   stars_100:    { emoji: '💯', title: 'Century' },
   stars_500:    { emoji: '🏆', title: 'High Roller' },
   streak_7:     { emoji: '🔥', title: 'Week Streak' },

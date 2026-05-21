@@ -1,11 +1,11 @@
 export type AchievementKey =
-  | 'first_star' | 'stars_100' | 'stars_500'
+  | 'stargazer' | 'stars_100' | 'stars_500'
   | 'streak_7' | 'streak_30'
   | 'first_chore' | 'chores_25'
   | 'first_reward';
 
 export const ACHIEVEMENTS: Record<AchievementKey, { emoji: string; title: string; description: string }> = {
-  first_star:   { emoji: '⭐', title: 'First Star',      description: 'Earn your first star' },
+  stargazer:    { emoji: '⭐', title: 'Stargazer',      description: 'Earn 10 stars total' },
   stars_100:    { emoji: '💯', title: 'Century',         description: 'Earn 100 stars total' },
   stars_500:    { emoji: '🏆', title: 'High Roller',     description: 'Earn 500 stars total' },
   streak_7:     { emoji: '🔥', title: 'Week Streak',     description: 'Earn stars 7 days in a row' },
@@ -16,7 +16,7 @@ export const ACHIEVEMENTS: Record<AchievementKey, { emoji: string; title: string
 };
 
 export const ACHIEVEMENT_KEYS: AchievementKey[] = [
-  'first_star', 'stars_100', 'stars_500',
+  'stargazer', 'stars_100', 'stars_500',
   'streak_7', 'streak_30',
   'first_chore', 'chores_25',
   'first_reward',

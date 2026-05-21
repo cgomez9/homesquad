@@ -2,7 +2,7 @@ import { buildCelebrationQueue, CELEBRATION_CAP } from '../src/lib/celebrationQu
 
 const approval = (id: string, at: string, title = 'Dishes', stars = 3) =>
   ({ id, approved_at: at, title, stars });
-const ach = (id: string, at: string, key = 'first_star') =>
+const ach = (id: string, at: string, key = 'stargazer') =>
   ({ id, unlocked_at: at, achievement_key: key });
 const goal = (id: string, at: string, title = 'Pizza Night') =>
   ({ id, completed_at: at, title });
