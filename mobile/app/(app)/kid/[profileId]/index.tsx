@@ -434,7 +434,7 @@ const makeStyles = (colors: Palette) =>
     shadowOffset: { width: 0, height: 4 },
     elevation: 2,
   },
-  navIcon: { fontSize: 17 },
+  navIcon: { fontSize: 17, color: colors.text },
 
   scroll: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: 140 },
 
@@ -452,10 +452,11 @@ const makeStyles = (colors: Palette) =>
     shadowOffset: { width: 0, height: 10 },
     elevation: 4,
   },
+  // heroGold/heroFire backgrounds never flip in dark mode — text colors below are pinned to match.
   heroGold: { backgroundColor: '#FFF1C9' },
   heroFire: { backgroundColor: '#FFE0D0' },
-  heroBig: { fontFamily: typography.fontFamilyBold, fontSize: 30, color: colors.text },
-  heroLbl: { fontFamily: typography.fontFamilyBold, fontSize: typography.small, color: colors.textMuted },
+  heroBig: { fontFamily: typography.fontFamilyBold, fontSize: 30, color: '#134E4A' },
+  heroLbl: { fontFamily: typography.fontFamilyBold, fontSize: typography.small, color: '#5C7A78' },
 
   goalWrap: { marginTop: spacing.lg },
 
