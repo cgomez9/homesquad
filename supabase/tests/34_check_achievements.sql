@@ -16,17 +16,19 @@ select is(public.check_achievements('99999999-9999-9999-9999-999999999999'), '{}
 -- 2. No-activity kid returns empty.
 select is(public.check_achievements('a2222222-2222-2222-2222-222222222222'), '{}'::text[], 'no-activity kid returns empty');
 
--- 3. 1 star → first_star
+-- 3. 1 star → nothing (below 10-star stargazer threshold).
 insert into public.star_ledger(family_id, profile_id, delta, reason) values
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'a2222222-2222-2222-2222-222222222222', 1, 'chore_approved');
-select is(public.check_achievements('a2222222-2222-2222-2222-222222222222'), array['first_star']::text[], '1 star unlocks first_star');
+select is(public.check_achievements('a2222222-2222-2222-2222-222222222222'), '{}'::text[], '1 star unlocks nothing');
 
--- 4. Idempotency.
-select is(public.check_achievements('a2222222-2222-2222-2222-222222222222'), '{}'::text[], 'idempotent re-call returns empty');
-
--- 5. 100 stars → stars_100 only (first_star already unlocked).
+-- 4. 10 stars → stargazer.
 insert into public.star_ledger(family_id, profile_id, delta, reason) values
-  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'a2222222-2222-2222-2222-222222222222', 99, 'chore_approved');
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'a2222222-2222-2222-2222-222222222222', 9, 'chore_approved');
+select is(public.check_achievements('a2222222-2222-2222-2222-222222222222'), array['stargazer']::text[], '10 stars unlocks stargazer');
+
+-- 5. 100 stars → stars_100 only.
+insert into public.star_ledger(family_id, profile_id, delta, reason) values
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'a2222222-2222-2222-2222-222222222222', 90, 'chore_approved');
 select is(public.check_achievements('a2222222-2222-2222-2222-222222222222'), array['stars_100']::text[], '100 stars unlocks stars_100 only');
 
 -- 6. Negative ledger doesn't revoke.
@@ -39,19 +41,17 @@ insert into public.star_ledger(family_id, profile_id, delta, reason) values
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'a2222222-2222-2222-2222-222222222222', 400, 'chore_approved');
 select is(public.check_achievements('a2222222-2222-2222-2222-222222222222'), array['stars_500']::text[], '500 cumulative unlocks stars_500');
 
--- 8. Streak via longest_count (current_count reset to 1, longest is 7): Leo gets streak_7 + first_star + first_chore on first qualifying ledger.
--- Use containment check to avoid array order brittleness.
+-- 8. Streak via longest_count, with 10 stars → stargazer + streak_7.
 insert into public.streaks(profile_id, family_id, current_count, longest_count, last_completion_date)
   values ('a3333333-3333-3333-3333-333333333333', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 1, 7, current_date);
 insert into public.star_ledger(family_id, profile_id, delta, reason) values
-  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'a3333333-3333-3333-3333-333333333333', 5, 'chore_approved');
--- No chore_instance yet for Leo, so first_chore should NOT fire. Just first_star + streak_7.
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'a3333333-3333-3333-3333-333333333333', 10, 'chore_approved');
 select ok(
-  array['first_star', 'streak_7']::text[] <@ public.check_achievements('a3333333-3333-3333-3333-333333333333'),
-  'streak_7 unlocked via longest_count + first_star'
+  array['stargazer', 'streak_7']::text[] <@ public.check_achievements('a3333333-3333-3333-3333-333333333333'),
+  'streak_7 unlocked via longest_count + stargazer'
 );
 
--- 9. 25 approved chore_instances for Mia → chores_25 + first_chore.
+-- 9. 25 approved chore_instances for Mia → chores_25 + first_chore (no stargazer yet — Mia has no star_ledger rows).
 insert into public.chores(id, family_id, title, star_value, verification_mode, recurrence, assignee_profile_id, created_by) values
   ('c1111111-1111-1111-1111-111111111111', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'X', 1, 'auto', '{"type":"daily"}'::jsonb, 'a4444444-4444-4444-4444-444444444444', 'a1111111-1111-1111-1111-111111111111');
 insert into public.chore_instances(chore_id, family_id, assignee_profile_id, completed_by, due_at, status)
@@ -81,10 +81,10 @@ select is(
   1, 'first_reward row exists in achievements'
 );
 
--- 12. Sara has first_star + stars_100 + stars_500 in the table.
+-- 12. Sara has stargazer + stars_100 + stars_500 in the table.
 select is(
   (select count(*)::int from public.achievements where profile_id = 'a2222222-2222-2222-2222-222222222222'),
-  3, 'Sara has 3 achievements: first_star + stars_100 + stars_500'
+  3, 'Sara has 3 achievements: stargazer + stars_100 + stars_500'
 );
 
 select * from finish();
