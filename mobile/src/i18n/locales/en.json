@@ -410,7 +410,9 @@
   "celebration": {
     "choreApproved": "⭐ Chore approved!",
     "newAchievement": "🏅 New Achievement!",
-    "summary": "Plus {{count}} more while you were away!"
+    "summary": "Plus {{count}} more while you were away!",
+    "choresApproved_one": "{{count}} chore approved!",
+    "choresApproved_other": "{{count}} chores approved!"
   },
   "achievements": {
     "first_star": { "title": "First Star", "desc": "Earn your first star" },

@@ -410,7 +410,9 @@
   "celebration": {
     "choreApproved": "⭐ ¡Tarea aprobada!",
     "newAchievement": "🏅 ¡Nuevo logro!",
-    "summary": "¡Y {{count}} más mientras no estabas!"
+    "summary": "¡Y {{count}} más mientras no estabas!",
+    "choresApproved_one": "¡{{count}} tarea aprobada!",
+    "choresApproved_other": "¡{{count}} tareas aprobadas!"
   },
   "achievements": {
     "first_star": { "title": "Primera estrella", "desc": "Gana tu primera estrella" },
