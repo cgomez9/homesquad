@@ -101,6 +101,8 @@ function renderBody(item: Queued, t: (k: string, o?: any) => string) {
       </>
     );
   }
+  // approval_group renderer comes in Plan-Task 9; pass through as null for now.
+  if (item.kind === 'approval_group') return null;
   // achievement → Confetti-Burst reveal (medallion pop; confetti already
   // fired by fireAchievementFeedback in the drain effect).
   const a = ACHIEVEMENTS[item.achievementKey as AchievementKey];

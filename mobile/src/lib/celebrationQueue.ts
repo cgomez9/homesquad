@@ -5,6 +5,7 @@
 
 export type CelebrationItem =
   | { kind: 'chore_approved'; id: string; at: string; title: string; stars: number }
+  | { kind: 'approval_group'; count: number; stars: number; at: string }
   | { kind: 'achievement'; id: string; at: string; achievementKey: string }
   | { kind: 'goal'; id: string; at: string; title: string }
   | { kind: 'summary'; moreCount: number; extraStars: number };
@@ -27,10 +28,22 @@ export const CELEBRATION_CAP = 5;
 const ts = (s: string) => new Date(s).getTime();
 
 export function buildCelebrationQueue(input: BuildInput): BuildResult {
+  const groupApprovals = input.approvals.length >= 2;
+
   const merged: Exclude<CelebrationItem, { kind: 'summary' }>[] = [
-    ...input.approvals.map((a) => ({
-      kind: 'chore_approved' as const, id: a.id, at: a.approved_at, title: a.title, stars: a.stars,
-    })),
+    ...(groupApprovals
+      ? [{
+          kind: 'approval_group' as const,
+          count: input.approvals.length,
+          stars: input.approvals.reduce((s, a) => s + a.stars, 0),
+          at: input.approvals.reduce(
+            (latest, a) => (ts(a.approved_at) > ts(latest) ? a.approved_at : latest),
+            input.approvals[0].approved_at,
+          ),
+        }]
+      : input.approvals.map((a) => ({
+          kind: 'chore_approved' as const, id: a.id, at: a.approved_at, title: a.title, stars: a.stars,
+        }))),
     ...input.achievements.map((a) => ({
       kind: 'achievement' as const, id: a.id, at: a.unlocked_at, achievementKey: a.achievement_key,
     })),
@@ -48,7 +61,7 @@ export function buildCelebrationQueue(input: BuildInput): BuildResult {
     return { items: merged, maxAt };
   }
 
-  const played = merged.slice(merged.length - CELEBRATION_CAP); // most recent CAP, still ascending
+  const played = merged.slice(merged.length - CELEBRATION_CAP);
   const moreCount = merged.length - CELEBRATION_CAP;
   const items: CelebrationItem[] = [
     ...played,
