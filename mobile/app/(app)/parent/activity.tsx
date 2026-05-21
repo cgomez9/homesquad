@@ -1,9 +1,23 @@
 import { useState, useMemo } from 'react';
-import { View, Text, Pressable, StyleSheet, FlatList, ActivityIndicator, Modal, Image } from 'react-native';
+import {
+  View,
+  Text,
+  Pressable,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+  Modal,
+  Image,
+  Platform,
+  StatusBar,
+} from 'react-native';
 import { useQueries } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../src/lib/supabase';
 import { AVATARS, AvatarId } from '../../../src/constants/avatars';
 import { REWARD_ICONS, type RewardIconId } from '../../../src/constants/rewardIcons';
+import { TidePoolBackground } from '../../../src/components/TidePool';
+import { useTheme, type Palette, radii, spacing, typography } from '../../../src/theme';
 
 type ChoreRow = {
   kind: 'chore';
@@ -30,7 +44,14 @@ type RedemptionRow = {
 
 type ActivityRow = (ChoreRow | RedemptionRow) & { eventAt: string };
 
+const SHADOW = '#0F766E';
+const TOP_INSET =
+  Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) + spacing.lg : 56;
+
 export default function Activity() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { t } = useTranslation();
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
 
   const [chores, redemptions] = useQueries({
@@ -87,68 +108,38 @@ export default function Activity() {
     setSignedUrl(data?.signedUrl ?? null);
   }
 
+  const loading = chores.isLoading || redemptions.isLoading;
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Activity</Text>
-      {(chores.isLoading || redemptions.isLoading) && <ActivityIndicator />}
-      {chores.error && <Text style={styles.err}>{(chores.error as Error).message}</Text>}
-      {redemptions.error && <Text style={styles.err}>{(redemptions.error as Error).message}</Text>}
-      {merged && merged.length === 0 && <Text style={styles.empty}>No activity yet.</Text>}
+    <View style={styles.screen}>
+      <TidePoolBackground />
 
       <FlatList
         data={merged ?? []}
         keyExtractor={(r) => `${r.kind}-${r.id}`}
-        renderItem={({ item }) => {
-          const avatar = item.kid ? AVATARS[item.kid.avatar_id as AvatarId].emoji : '👤';
-          if (item.kind === 'chore') {
-            if (item.status === 'rejected') {
-              const reason = item.rejection_reason && item.rejection_reason.length > 0
-                ? ` — "${item.rejection_reason}"` : '';
-              return (
-                <View style={styles.row}>
-                  <Text style={styles.line}>
-                    ✗ {avatar} {item.kid?.display_name} · {item.chore?.title} · {timeAgo(item.eventAt)}{reason}
-                  </Text>
-                </View>
-              );
-            }
-            const icon = item.chore?.verification_mode === 'photo' ? '📸' : '✓';
-            return (
-              <Pressable
-                style={styles.row}
-                onPress={() => item.chore?.verification_mode === 'photo' && openPhoto(item)}
-              >
-                <Text style={styles.line}>
-                  {icon} {avatar} {item.kid?.display_name} · {item.chore?.title} · {timeAgo(item.eventAt)}
-                </Text>
-                {item.chore?.verification_mode === 'photo' && (
-                  <Text style={styles.hint}>tap to view photo</Text>
-                )}
-              </Pressable>
-            );
-          }
-          // redemption
-          const rewardEmoji = item.reward ? REWARD_ICONS[item.reward.icon_id as RewardIconId]?.emoji : '🎁';
-          if (item.status === 'fulfilled') {
-            return (
-              <View style={styles.row}>
-                <Text style={styles.line}>
-                  🎁 {avatar} {item.kid?.display_name} · {rewardEmoji} {item.reward?.title} · fulfilled {timeAgo(item.eventAt)}
-                </Text>
-              </View>
-            );
-          }
-          // denied
-          const note = item.parent_note && item.parent_note.length > 0 ? ` — "${item.parent_note}"` : '';
-          return (
-            <View style={styles.row}>
-              <Text style={styles.line}>
-                ✗ {avatar} {item.kid?.display_name} · {rewardEmoji} {item.reward?.title} · denied {timeAgo(item.eventAt)}{note}
-              </Text>
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scroll}
+        ListHeaderComponent={
+          <View>
+            <Text style={styles.title}>{t('activity.title')}</Text>
+            <Text style={styles.subtitle}>{t('activity.last30')}</Text>
+          </View>
+        }
+        renderItem={({ item }) => <EventRow item={item} onPhoto={openPhoto} />}
+        ListEmptyComponent={
+          loading ? (
+            <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xxl }} />
+          ) : chores.error || redemptions.error ? (
+            <Text style={styles.err}>
+              {((chores.error ?? redemptions.error) as Error).message}
+            </Text>
+          ) : (
+            <View style={styles.empty}>
+              <Text style={styles.emptyEmoji}>🌊</Text>
+              <Text style={styles.emptyText}>{t('activity.empty')}</Text>
             </View>
-          );
-        }}
-        ItemSeparatorComponent={() => <View style={styles.sep} />}
+          )
+        }
       />
 
       <Modal visible={!!signedUrl} transparent animationType="fade" onRequestClose={() => setSignedUrl(null)}>
@@ -160,25 +151,193 @@ export default function Activity() {
   );
 }
 
-function timeAgo(ts: string): string {
-  const diff = Date.now() - new Date(ts).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return 'just now';
-  if (m < 60) return `${m} min ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h} hr ago`;
-  return `${Math.floor(h / 24)}d ago`;
+/* ---------- event row ---------- */
+
+function EventRow({
+  item,
+  onPhoto,
+}: {
+  item: ActivityRow;
+  onPhoto: (r: ChoreRow) => void;
+}) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { t } = useTranslation();
+  const a = item.kid ? AVATARS[item.kid.avatar_id as AvatarId] : null;
+  const name = item.kid?.display_name ?? t('activity.someone');
+
+  // badge variant + content per event type
+  let badgeStyle = styles.badgeOk;
+  let badgeIcon = '✓';
+  let body: React.ReactNode = null;
+  let extra: React.ReactNode = null;
+
+  if (item.kind === 'chore') {
+    if (item.status === 'rejected') {
+      badgeStyle = styles.badgeNo;
+      badgeIcon = '✗';
+      body = (
+        <Text style={styles.body}>
+          <Text style={styles.bodyStrong}>{item.chore?.title}</Text> {t('activity.sentBack')}
+        </Text>
+      );
+      if (item.rejection_reason && item.rejection_reason.length > 0) {
+        extra = <Text style={styles.reason}>“{item.rejection_reason}”</Text>;
+      }
+    } else {
+      badgeStyle = styles.badgeOk;
+      badgeIcon = '✓';
+      body = (
+        <Text style={styles.body}>
+          {t('activity.completed')} <Text style={styles.bodyStrong}>{item.chore?.title}</Text>
+        </Text>
+      );
+      if (item.chore?.verification_mode === 'photo') {
+        extra = (
+          <Pressable
+            onPress={() => onPhoto(item)}
+            accessibilityRole="button"
+            accessibilityLabel={t('activity.viewPhotoA11y')}
+            style={styles.photoChip}
+          >
+            <Text style={styles.photoChipText}>{t('activity.viewPhoto')}</Text>
+          </Pressable>
+        );
+      }
+    }
+  } else {
+    const rewardEmoji = item.reward ? REWARD_ICONS[item.reward.icon_id as RewardIconId]?.emoji : '🎁';
+    if (item.status === 'fulfilled') {
+      badgeStyle = styles.badgeGift;
+      badgeIcon = '🎁';
+      body = (
+        <Text style={styles.body}>
+          {t('activity.got')} <Text style={styles.bodyStrong}>{rewardEmoji} {item.reward?.title}</Text>
+        </Text>
+      );
+    } else {
+      badgeStyle = styles.badgeNo;
+      badgeIcon = '✗';
+      body = (
+        <Text style={styles.body}>
+          <Text style={styles.bodyStrong}>{rewardEmoji} {item.reward?.title}</Text> {t('activity.denied')}
+        </Text>
+      );
+      if (item.parent_note && item.parent_note.length > 0) {
+        extra = <Text style={styles.reason}>“{item.parent_note}”</Text>;
+      }
+    }
+  }
+
+  return (
+    <View style={styles.ev}>
+      <View style={styles.rail} />
+      <View style={[styles.badge, badgeStyle]}>
+        <Text style={styles.badgeText}>{badgeIcon}</Text>
+      </View>
+      <View style={styles.card}>
+        <View style={styles.cardTop}>
+          <View style={[styles.av, { backgroundColor: a?.bg ?? '#EDF3F1' }]}>
+            <Text style={styles.avEmoji}>{a?.emoji ?? '👤'}</Text>
+          </View>
+          <Text style={styles.kn} numberOfLines={1}>{name}</Text>
+          <Text style={styles.tm}>{timeAgo(item.eventAt, t)}</Text>
+        </View>
+        {body}
+        {extra}
+      </View>
+    </View>
+  );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, paddingTop: 48, backgroundColor: '#fff' },
-  title: { fontSize: 24, fontWeight: '700', marginBottom: 12 },
-  err: { color: '#ef4444' },
-  empty: { color: '#6b7280', textAlign: 'center', marginTop: 64 },
-  row: { paddingVertical: 12 },
-  line: { fontSize: 15 },
-  hint: { fontSize: 11, color: '#3b82f6', marginTop: 2 },
-  sep: { height: 1, backgroundColor: '#e5e7eb' },
-  modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center' },
+function timeAgo(ts: string, t: (k: string, o?: Record<string, unknown>) => string): string {
+  const diff = Date.now() - new Date(ts).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return t('common.timeAgo.justNow');
+  if (m < 60) return t('common.timeAgo.minAgo', { count: m });
+  const h = Math.floor(m / 60);
+  if (h < 24) return t('common.timeAgo.hrAgo', { count: h });
+  return t('common.timeAgo.dayAgo', { count: Math.floor(h / 24) });
+}
+
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.bg },
+  scroll: { paddingHorizontal: spacing.xl, paddingTop: TOP_INSET, paddingBottom: spacing.xxl },
+
+  title: { fontFamily: typography.fontFamilyBold, fontSize: 30, color: colors.text, letterSpacing: -0.3 },
+  subtitle: {
+    fontFamily: typography.fontFamilySemi,
+    fontSize: typography.small,
+    color: colors.textMuted,
+    marginTop: 2,
+    marginBottom: spacing.xl,
+  },
+
+  err: { color: colors.error, fontFamily: typography.fontFamilySemi, marginTop: spacing.lg },
+  empty: { alignItems: 'center', marginTop: spacing.xxl + spacing.lg, gap: spacing.xs },
+  emptyEmoji: { fontSize: 48 },
+  emptyText: { fontFamily: typography.fontFamilySemi, fontSize: typography.body, color: colors.textMuted },
+
+  ev: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.md },
+  rail: {
+    position: 'absolute',
+    left: 16,
+    top: 0,
+    bottom: -spacing.md,
+    width: 2,
+    backgroundColor: '#DCEBE7',
+  },
+  badge: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: colors.bg,
+  },
+  badgeOk: { backgroundColor: colors.primary },
+  badgeNo: { backgroundColor: '#FFE4E8' },
+  badgeGift: { backgroundColor: '#FFE3A0' },
+  badgeText: { fontFamily: typography.fontFamilyBold, fontSize: 15, color: '#fff' },
+
+  card: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: spacing.md + 1,
+    shadowColor: SHADOW,
+    shadowOpacity: 0.1,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 7 },
+    elevation: 3,
+  },
+  cardTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  av: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  avEmoji: { fontSize: 14 },
+  kn: { fontFamily: typography.fontFamilyBold, fontSize: typography.small + 1, color: colors.text, flexShrink: 1 },
+  tm: { marginLeft: 'auto', fontFamily: typography.fontFamilyBold, fontSize: typography.tiny, color: '#94A8A4' },
+
+  body: { fontFamily: typography.fontFamilySemi, fontSize: typography.body, color: colors.textMuted, marginTop: spacing.xs + 1 },
+  bodyStrong: { fontFamily: typography.fontFamilyBold, color: colors.text },
+  reason: {
+    fontFamily: typography.fontFamilySemi,
+    fontSize: typography.small,
+    color: colors.error,
+    fontStyle: 'italic',
+    marginTop: spacing.xs,
+  },
+  photoChip: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#EAF7F4',
+    paddingVertical: 4,
+    paddingHorizontal: spacing.sm + 2,
+    borderRadius: radii.pill,
+    marginTop: spacing.sm,
+  },
+  photoChipText: { fontFamily: typography.fontFamilyBold, fontSize: typography.tiny, color: colors.primaryDark },
+
+  modalBg: { flex: 1, backgroundColor: 'rgba(6,40,38,0.92)', justifyContent: 'center', alignItems: 'center' },
   modalImg: { width: '100%', height: '80%' },
-});
+  });

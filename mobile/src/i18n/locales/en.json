@@ -2,6 +2,7 @@
   "auth": {
     "login": {
       "title": "Welcome back",
+      "subtitle": "Sign in to keep the family quest going.",
       "email": "Email",
       "password": "Password",
       "submit": "Log in",
@@ -10,6 +11,7 @@
     },
     "signup": {
       "title": "Create your account",
+      "subtitle": "Set up your family captain login.",
       "email": "Email",
       "password": "Password",
       "confirmPassword": "Confirm password",
@@ -25,6 +27,16 @@
       "backToLogin": "Back to login",
       "checkEmail": "Check your email",
       "checkEmailBody": "If that email is registered, we've sent a reset link."
+    },
+    "welcome": {
+      "title": "Welcome aboard!",
+      "subtitle": "Shores turns everyday chores into a little adventure for your whole family.",
+      "getStarted": "Get started"
+    },
+    "steps": {
+      "family": "Family",
+      "kids": "Kids",
+      "chores": "Chores"
     },
     "createFamily": {
       "title": "Create your family",
@@ -46,9 +58,53 @@
       "avatar": "Avatar",
       "pin": "PIN (optional, 4 digits)",
       "addAnother": "Add and add another",
-      "finish": "Add and finish",
+      "finish": "Add and continue",
       "errorNameRequired": "Kid name required",
       "errorPinFormat": "PIN must be exactly 4 digits, or empty"
+    },
+    "addChores": {
+      "title": "Add a starter pack",
+      "subtitle": "Tap a pack to add its chores in one go. Pick more than one — you can always add, edit, or remove chores later in Chores.",
+      "counterEmpty": "No packs picked yet",
+      "counter": "{{packsText}} · {{choresText}} added",
+      "packsCount_one": "1 pack",
+      "packsCount_other": "{{count}} packs",
+      "choresCount_one": "1 chore",
+      "choresCount_other": "{{count}} chores",
+      "reset": "Reset",
+      "submit_zero": "Continue without chores",
+      "submit_one": "Add 1 chore to my family",
+      "submit_other": "Add {{count}} chores to my family",
+      "skip": "Skip for now",
+      "errorPartial": "Some chores couldn't be added — you can add them later in Chores.",
+      "packs": {
+        "morning": "Morning routine",
+        "tidy": "Tidy crew",
+        "pet": "Pet care",
+        "school": "School ready"
+      },
+      "chores": {
+        "makeBed": "Make bed",
+        "brushTeeth": "Brush teeth",
+        "takeShower": "Take a shower",
+        "tidyRoom": "Tidy room",
+        "putClothesAway": "Put clothes away",
+        "feedPet": "Feed pet",
+        "walkPet": "Walk pet",
+        "homework": "Homework",
+        "setTable": "Set the table",
+        "takeOutTrash": "Take out trash"
+      }
+    },
+    "joinFamily": {
+      "title": "Join a family",
+      "subtitle": "Enter the 6-digit code shared by an existing parent.",
+      "codeLabel": "Invite code",
+      "codePlaceholder": "123456",
+      "nameLabel": "Your name (parent)",
+      "namePlaceholder": "Sam",
+      "submit": "Join family",
+      "errCode": "Code must be 6 digits"
     },
     "social": {
       "google": "Continue with Google",
@@ -78,9 +134,37 @@
       "spanish": "Español",
       "system": "System default"
     },
+    "theme": {
+      "label": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System default"
+    },
     "account": {
       "label": "Account",
       "deleteAccount": "Delete account"
+    },
+    "title": "Settings",
+    "familyFallback": "Family",
+    "memberCount_one": "{{count}} member",
+    "memberCount_other": "{{count}} members",
+    "parentCount_one": "{{count}} parent",
+    "parentCount_other": "{{count}} parents",
+    "coParents": "Co-parents",
+    "inviteCoParent": "Invite a co-parent",
+    "feedback": "Feedback",
+    "soundsHaptics": "Sounds & haptics on this device",
+    "subscriptionSoon": "Subscription — coming soon",
+    "more": "More",
+    "switchProfile": "Switch profile",
+    "signOut": "Sign out",
+    "invite": {
+      "couldNotGenerate": "Could not generate code",
+      "codeTitle": "Co-parent invite code",
+      "codeSub": "Expires in 24 hours. Share it with your co-parent — they enter it on the join-family screen when they sign up.",
+      "copy": "Copy code",
+      "copied": "✓ Copied",
+      "done": "Done"
     }
   },
   "deleteModal": {
@@ -152,5 +236,187 @@
       "alreadyActive": "There's already an active goal. Cancel it before creating a new one.",
       "createFailed": "Couldn't create the goal — try again."
     }
+  },
+  "tabs": {
+    "chores": "Chores",
+    "rewards": "Rewards",
+    "approvals": "Approvals",
+    "activity": "Activity",
+    "settings": "Settings"
+  },
+  "picker": {
+    "title": "Who's here today?",
+    "subtitle": "Tap your tile to dive in",
+    "parents": "Grown-ups",
+    "kids": "Kids",
+    "pinBadge": "🔒 PIN",
+    "wrongPin": "Wrong PIN"
+  },
+  "common": {
+    "days": {
+      "sun": "Sunday",
+      "mon": "Monday",
+      "tue": "Tuesday",
+      "wed": "Wednesday",
+      "thu": "Thursday",
+      "fri": "Friday",
+      "sat": "Saturday"
+    },
+    "back": "Back",
+    "cancel": "Cancel",
+    "archive": "Archive",
+    "timeAgo": {
+      "justNow": "just now",
+      "minAgo": "{{count}} min ago",
+      "hrAgo": "{{count}} hr ago",
+      "dayAgo": "{{count}}d ago"
+    }
+  },
+  "kid": {
+    "greeting": "Hi, {{name}}!",
+    "greetingNoName": "Hi!",
+    "today": "Today",
+    "toGo": "{{count}} to go",
+    "stars": "⭐ Stars",
+    "dayStreak": "🔥 Day streak",
+    "waiting": "Waiting for a grown-up",
+    "notApproved": "Not approved — give it another go",
+    "rejectedReason": "✗ {{reason}}",
+    "tryAgain": "Try again",
+    "tryAgainA11y": "Try {{title}} again",
+    "markDoneA11y": "Mark {{title}} done",
+    "allDone": "All done!",
+    "goPlay": "Great job — go play.",
+    "photo": "📷 photo",
+    "choreFallback": "chore",
+    "nav": {
+      "badges": "Badges",
+      "rewards": "Rewards",
+      "leaderboard": "Leaderboard",
+      "switch": "Switch profile"
+    }
+  },
+  "badges": {
+    "title": "Badges",
+    "collection": "Your collection",
+    "collected": "{{collected}} of {{total}} collected",
+    "earned": "EARNED"
+  },
+  "kidRewards": {
+    "title": "Rewards",
+    "subtitle": "The star shop",
+    "yourStars": "Your stars",
+    "empty": "No rewards yet.",
+    "requested": "✋ Requested",
+    "coming": "🎁 Coming!",
+    "needMore": "{{count}} more",
+    "request": "Request",
+    "requestA11y": "Request {{title}} for {{count}} stars",
+    "confirmTitle": "Spend ⭐{{count}} on {{title}}?",
+    "spend": "Spend",
+    "couldNotRequest": "Could not request"
+  },
+  "parent": {
+    "choresTitle": "Chores",
+    "activeChores_one": "{{count}} active chore",
+    "activeChores_other": "{{count}} active chores",
+    "choresEmpty": "No chores yet — tap + to add one.",
+    "anyone": "Anyone",
+    "newChoreA11y": "New chore",
+    "rowA11y": "{{title}}. Tap to edit, hold to archive.",
+    "archiveChoreTitle": "Archive chore?",
+    "rewardsTitle": "Rewards",
+    "rewardsCount_one": "{{count}} reward in the shop",
+    "rewardsCount_other": "{{count}} rewards in the shop",
+    "rewardsEmpty": "No rewards yet — tap + to add one.",
+    "newRewardA11y": "New reward",
+    "archiveRewardTitle": "Archive reward?"
+  },
+  "approvals": {
+    "title": "Approvals",
+    "waiting": "{{count}} waiting on you",
+    "empty": "No pending approvals — nice work!",
+    "sectionDecisions": "Decisions needed",
+    "sectionFulfillment": "Pending fulfillment",
+    "submitted": "submitted {{time}}",
+    "requested": "requested {{time}}",
+    "approvedAgo": "approved {{time}}",
+    "viewPhoto": "📷 View photo",
+    "approve": "✓ Approve",
+    "reject": "Reject",
+    "deny": "Deny",
+    "markGiven": "Mark given",
+    "wants": "{{name}} wants"
+  },
+  "activity": {
+    "title": "Activity",
+    "last30": "Last 30 days",
+    "empty": "No activity yet.",
+    "completed": "completed",
+    "sentBack": "sent back",
+    "got": "got",
+    "denied": "denied",
+    "viewPhoto": "📷 View photo",
+    "viewPhotoA11y": "View photo proof",
+    "someone": "Someone"
+  },
+  "forms": {
+    "newChore": "New chore",
+    "editChore": "Edit chore",
+    "newReward": "New reward",
+    "editReward": "Edit reward",
+    "title": "Title",
+    "descriptionOptional": "Description (optional)",
+    "stars": "Stars",
+    "starCost": "Star cost",
+    "save": "Save",
+    "saveChanges": "Save changes",
+    "choreTitlePlaceholder": "Make bed",
+    "rewardTitlePlaceholder": "Ice Cream",
+    "couldNotCreateChore": "Could not create chore",
+    "couldNotUpdateChore": "Could not update chore",
+    "couldNotCreateReward": "Could not create reward",
+    "couldNotUpdateReward": "Could not update reward",
+    "errStarValue": "star value must be 1–999",
+    "errStarCost": "star cost must be 1–9999",
+    "errNoFamily": "no family loaded"
+  },
+  "recurrence": {
+    "daily": "Daily",
+    "everyDay": "Every day",
+    "unknown": "Unknown",
+    "onceOn": "Once on {{date}}",
+    "dayShort": {
+      "sun": "Sun",
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat"
+    }
+  },
+  "celebration": {
+    "choreApproved": "⭐ Chore approved!",
+    "newAchievement": "🏅 New Achievement!",
+    "summary": "Plus {{count}} more while you were away!"
+  },
+  "achievements": {
+    "first_star": { "title": "First Star", "desc": "Earn your first star" },
+    "stars_100": { "title": "Century", "desc": "Earn 100 stars total" },
+    "stars_500": { "title": "High Roller", "desc": "Earn 500 stars total" },
+    "streak_7": { "title": "Week Streak", "desc": "Earn stars 7 days in a row" },
+    "streak_30": { "title": "Month Streak", "desc": "Earn stars 30 days in a row" },
+    "first_chore": { "title": "Getting Started", "desc": "Get your first chore approved" },
+    "chores_25": { "title": "Quarter Century", "desc": "Get 25 chores approved" },
+    "first_reward": { "title": "First Reward", "desc": "Redeem your first reward" }
+  },
+  "photo": {
+    "permissionTitle": "Camera permission needed",
+    "permissionBody": "Please enable camera access in settings.",
+    "uploadFailed": "Upload failed: {{error}}",
+    "retake": "Retake",
+    "send": "Send",
+    "sending": "Sending…"
   }
 }

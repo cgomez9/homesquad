@@ -1,10 +1,25 @@
-import { useState } from 'react';
-import { View, Text, Pressable, StyleSheet, SectionList, ActivityIndicator, Modal, Image } from 'react-native';
+import { useRef, useState, useMemo } from 'react';
+import {
+  View,
+  Text,
+  Pressable,
+  StyleSheet,
+  SectionList,
+  ActivityIndicator,
+  Modal,
+  Image,
+  Animated,
+  Platform,
+  StatusBar,
+} from 'react-native';
 import { useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../src/lib/supabase';
 import { AVATARS, AvatarId } from '../../../src/constants/avatars';
 import { REWARD_ICONS, type RewardIconId } from '../../../src/constants/rewardIcons';
 import { RejectModal } from '../../../src/components/RejectModal';
+import { TidePoolBackground } from '../../../src/components/TidePool';
+import { useTheme, type Palette, radii, spacing, typography } from '../../../src/theme';
 
 type ChoreRow = {
   kind: 'chore';
@@ -39,7 +54,14 @@ type RedemptionFulfillRow = {
 
 type DecisionRow = ChoreRow | RedemptionPendingRow;
 
+const SHADOW = '#0F766E';
+const TOP_INSET =
+  Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) + spacing.lg : 56;
+
 export default function Approvals() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [rejectChoreTarget, setRejectChoreTarget] = useState<ChoreRow | null>(null);
@@ -179,23 +201,37 @@ export default function Approvals() {
   }
 
   const sections = [
-    { title: 'Decisions needed', data: decisions as DecisionRow[] },
-    { title: 'Pending fulfillment', data: fulfill as unknown as DecisionRow[] },
+    { title: t('approvals.sectionDecisions'), data: decisions as DecisionRow[] },
+    { title: t('approvals.sectionFulfillment'), data: fulfill as unknown as DecisionRow[] },
   ].filter((s) => s.data.length > 0);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Approvals</Text>
+    <View style={styles.screen}>
+      <TidePoolBackground />
 
-      {isLoading && <ActivityIndicator />}
+      <View style={styles.header}>
+        <Text style={styles.title}>{t('approvals.title')}</Text>
+        {!isLoading && !errorAny && decisions.length > 0 && (
+          <Text style={styles.subtitle}>
+            {t('approvals.waiting', { count: decisions.length })}
+          </Text>
+        )}
+      </View>
+
+      {isLoading && <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xxl }} />}
       {errorAny && <Text style={styles.err}>{errorAny.message}</Text>}
-      {!isLoading && sections.length === 0 && (
-        <Text style={styles.empty}>No pending approvals — nice work 🌟</Text>
+      {!isLoading && !errorAny && sections.length === 0 && (
+        <View style={styles.empty}>
+          <Text style={styles.emptyEmoji}>🌊</Text>
+          <Text style={styles.emptyText}>{t('approvals.empty')}</Text>
+        </View>
       )}
 
       <SectionList
         sections={sections}
         keyExtractor={(item) => `${item.kind}-${item.id}`}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scroll}
         renderSectionHeader={({ section }) => (
           <Text style={styles.sectionHeader}>{section.title}</Text>
         )}
@@ -203,24 +239,31 @@ export default function Approvals() {
           if (item.kind === 'chore') {
             const a = item.kid ? AVATARS[item.kid.avatar_id as AvatarId] : null;
             return (
-              <View style={styles.row}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.line}>
-                    {a?.emoji ?? '👤'} {item.kid?.display_name} · {item.chore?.title} · ⭐ {item.chore?.star_value}
-                  </Text>
-                  <Text style={styles.sub}>
-                    submitted {timeAgo(item.completed_at)}
-                    {item.chore?.verification_mode === 'photo' && (
-                      <Text onPress={() => openPhoto(item)} style={styles.viewPhoto}>  ·  view photo</Text>
-                    )}
-                  </Text>
+              <View style={styles.card}>
+                <View style={styles.top}>
+                  <View style={[styles.av, { backgroundColor: a?.bg ?? '#EDF3F1' }]}>
+                    <Text style={styles.avEmoji}>{a?.emoji ?? '👤'}</Text>
+                  </View>
+                  <View style={styles.who}>
+                    <Text style={styles.kn}>{item.kid?.display_name}</Text>
+                    <Text style={styles.it} numberOfLines={1}>{item.chore?.title}</Text>
+                  </View>
+                  <View style={styles.cost}>
+                    <Text style={styles.costText}>⭐ {item.chore?.star_value}</Text>
+                  </View>
                 </View>
-                <Pressable onPress={() => approveChore.mutate(item.id)} style={[styles.btn, styles.btnApprove]}>
-                  <Text style={styles.btnTextLight}>Approve</Text>
-                </Pressable>
-                <Pressable onPress={() => setRejectChoreTarget(item)} style={[styles.btn, styles.btnSecondary]}>
-                  <Text style={styles.btnTextDark}>Reject</Text>
-                </Pressable>
+                <View style={styles.meta}>
+                  <Text style={styles.metaText}>{t('approvals.submitted', { time: timeAgo(item.completed_at, t) })}</Text>
+                  {item.chore?.verification_mode === 'photo' && (
+                    <Pressable onPress={() => openPhoto(item)} style={styles.photoChip}>
+                      <Text style={styles.photoChipText}>{t('approvals.viewPhoto')}</Text>
+                    </Pressable>
+                  )}
+                </View>
+                <View style={styles.acts}>
+                  <ActBtn label={t('approvals.approve')} variant="approve" onPress={() => approveChore.mutate(item.id)} />
+                  <ActBtn label={t('approvals.reject')} variant="reject" onPress={() => setRejectChoreTarget(item)} />
+                </View>
               </View>
             );
           }
@@ -228,19 +271,26 @@ export default function Approvals() {
             const a = item.kid ? AVATARS[item.kid.avatar_id as AvatarId] : null;
             const icon = item.reward ? REWARD_ICONS[item.reward.icon_id as RewardIconId]?.emoji : '🎁';
             return (
-              <View style={styles.row}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.line}>
-                    {a?.emoji ?? '👤'} {item.kid?.display_name} · {icon} {item.reward?.title} · ⭐ {item.star_cost_snapshot}
-                  </Text>
-                  <Text style={styles.sub}>requested {timeAgo(item.requested_at)}</Text>
+              <View style={styles.card}>
+                <View style={styles.top}>
+                  <View style={[styles.av, { backgroundColor: a?.bg ?? '#EDF3F1' }]}>
+                    <Text style={styles.avEmoji}>{a?.emoji ?? '👤'}</Text>
+                  </View>
+                  <View style={styles.who}>
+                    <Text style={styles.kn}>{t('approvals.wants', { name: item.kid?.display_name })}</Text>
+                    <Text style={styles.it} numberOfLines={1}>{icon} {item.reward?.title}</Text>
+                  </View>
+                  <View style={styles.cost}>
+                    <Text style={styles.costText}>⭐ {item.star_cost_snapshot}</Text>
+                  </View>
                 </View>
-                <Pressable onPress={() => approveRedemption.mutate(item.id)} style={[styles.btn, styles.btnApprove]}>
-                  <Text style={styles.btnTextLight}>Approve</Text>
-                </Pressable>
-                <Pressable onPress={() => setDenyTarget(item)} style={[styles.btn, styles.btnSecondary]}>
-                  <Text style={styles.btnTextDark}>Deny</Text>
-                </Pressable>
+                <View style={styles.meta}>
+                  <Text style={styles.metaText}>{t('approvals.requested', { time: timeAgo(item.requested_at, t) })}</Text>
+                </View>
+                <View style={styles.acts}>
+                  <ActBtn label={t('approvals.approve')} variant="approve" onPress={() => approveRedemption.mutate(item.id)} />
+                  <ActBtn label={t('approvals.deny')} variant="reject" onPress={() => setDenyTarget(item)} />
+                </View>
               </View>
             );
           }
@@ -249,16 +299,17 @@ export default function Approvals() {
           const a = fulfillItem.kid ? AVATARS[fulfillItem.kid.avatar_id as AvatarId] : null;
           const icon = fulfillItem.reward ? REWARD_ICONS[fulfillItem.reward.icon_id as RewardIconId]?.emoji : '🎁';
           return (
-            <View style={styles.row}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.line}>
-                  {a?.emoji ?? '👤'} {fulfillItem.kid?.display_name} · {icon} {fulfillItem.reward?.title}
-                </Text>
-                <Text style={styles.sub}>approved {timeAgo(fulfillItem.resolved_at ?? new Date().toISOString())}</Text>
+            <View style={styles.ffCard}>
+              <View style={[styles.av, { backgroundColor: a?.bg ?? '#EDF3F1' }]}>
+                <Text style={styles.avEmoji}>{a?.emoji ?? '👤'}</Text>
               </View>
-              <Pressable onPress={() => fulfillRedemption.mutate(fulfillItem.id)} style={[styles.btn, styles.btnApprove]}>
-                <Text style={styles.btnTextLight}>Fulfilled</Text>
-              </Pressable>
+              <View style={styles.who}>
+                <Text style={styles.ffTitle} numberOfLines={1}>
+                  {icon} {fulfillItem.reward?.title} · {fulfillItem.kid?.display_name}
+                </Text>
+                <Text style={styles.ffSub}>{t('approvals.approvedAgo', { time: timeAgo(fulfillItem.resolved_at ?? new Date().toISOString(), t) })}</Text>
+              </View>
+              <ActBtn label={t('approvals.markGiven')} variant="give" onPress={() => fulfillRedemption.mutate(fulfillItem.id)} />
             </View>
           );
         }}
@@ -291,31 +342,149 @@ export default function Approvals() {
   );
 }
 
-function timeAgo(ts: string): string {
-  const diff = Date.now() - new Date(ts).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return 'just now';
-  if (m < 60) return `${m} min ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h} hr ago`;
-  return `${Math.floor(h / 24)}d ago`;
+/* ---------- action button ---------- */
+
+function ActBtn({
+  label,
+  variant,
+  onPress,
+}: {
+  label: string;
+  variant: 'approve' | 'reject' | 'give';
+  onPress: () => void;
+}) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const scale = useRef(new Animated.Value(1)).current;
+  return (
+    <Animated.View style={[variant === 'give' ? undefined : styles.actFlex, { transform: [{ scale }] }]}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={() =>
+          Animated.spring(scale, { toValue: 0.95, useNativeDriver: true, speed: 40, bounciness: 0 }).start()
+        }
+        onPressOut={() =>
+          Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 20, bounciness: 8 }).start()
+        }
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        style={[
+          styles.btn,
+          variant === 'approve' && styles.btnApprove,
+          variant === 'reject' && styles.btnReject,
+          variant === 'give' && styles.btnGive,
+        ]}
+      >
+        <Text
+          style={[
+            styles.btnText,
+            variant === 'approve' && styles.btnTextApprove,
+            variant === 'reject' && styles.btnTextReject,
+            variant === 'give' && styles.btnTextGive,
+          ]}
+        >
+          {label}
+        </Text>
+      </Pressable>
+    </Animated.View>
+  );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, paddingTop: 48, backgroundColor: '#fff' },
-  title: { fontSize: 24, fontWeight: '700', marginBottom: 12 },
-  sectionHeader: { fontSize: 12, fontWeight: '700', color: '#6b7280', textTransform: 'uppercase', letterSpacing: 1, marginTop: 12, marginBottom: 4, paddingVertical: 4 },
-  err: { color: '#ef4444' },
-  empty: { color: '#6b7280', textAlign: 'center', marginTop: 64 },
-  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: 8 },
-  line: { fontSize: 15 },
-  sub: { fontSize: 12, color: '#6b7280', marginTop: 2 },
-  viewPhoto: { color: '#3b82f6' },
-  btn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999 },
-  btnApprove: { backgroundColor: '#10b981' },
-  btnSecondary: { backgroundColor: '#f3f4f6' },
-  btnTextLight: { color: '#fff', fontWeight: '600', fontSize: 13 },
-  btnTextDark: { color: '#374151', fontWeight: '500', fontSize: 13 },
-  photoBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center' },
+function timeAgo(ts: string, t: (k: string, o?: Record<string, unknown>) => string): string {
+  const diff = Date.now() - new Date(ts).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return t('common.timeAgo.justNow');
+  if (m < 60) return t('common.timeAgo.minAgo', { count: m });
+  const h = Math.floor(m / 60);
+  if (h < 24) return t('common.timeAgo.hrAgo', { count: h });
+  return t('common.timeAgo.dayAgo', { count: Math.floor(h / 24) });
+}
+
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.bg },
+
+  header: { paddingHorizontal: spacing.xl, paddingTop: TOP_INSET },
+  title: { fontFamily: typography.fontFamilyBold, fontSize: 30, color: colors.text, letterSpacing: -0.3 },
+  subtitle: { fontFamily: typography.fontFamilySemi, fontSize: typography.small, color: colors.textMuted, marginTop: 2 },
+
+  scroll: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: spacing.xxl },
+
+  err: { color: colors.error, fontFamily: typography.fontFamilySemi, marginTop: spacing.lg, paddingHorizontal: spacing.xl },
+  empty: { alignItems: 'center', marginTop: spacing.xxl + spacing.xl, gap: spacing.xs },
+  emptyEmoji: { fontSize: 48 },
+  emptyText: { fontFamily: typography.fontFamilySemi, fontSize: typography.body, color: colors.textMuted },
+
+  sectionHeader: {
+    fontFamily: typography.fontFamilyBold,
+    fontSize: typography.tiny,
+    color: colors.textMuted,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+    marginTop: spacing.lg,
+    marginBottom: spacing.md,
+  },
+
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: 20,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    shadowColor: SHADOW,
+    shadowOpacity: 0.11,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 9 },
+    elevation: 4,
+  },
+  top: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  av: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  avEmoji: { fontSize: 23 },
+  who: { flex: 1, minWidth: 0 },
+  kn: { fontFamily: typography.fontFamilyBold, fontSize: typography.small, color: colors.textMuted },
+  it: { fontFamily: typography.fontFamilyBold, fontSize: 17, color: colors.text, marginTop: 1 },
+  cost: { backgroundColor: '#FFF1C9', paddingVertical: 5, paddingHorizontal: spacing.md, borderRadius: radii.pill },
+  costText: { fontFamily: typography.fontFamilyBold, fontSize: typography.small, color: '#7A5200' },
+
+  meta: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginVertical: spacing.md },
+  metaText: { fontFamily: typography.fontFamilySemi, fontSize: typography.small, color: colors.textMuted },
+  photoChip: {
+    backgroundColor: '#EAF7F4',
+    paddingVertical: 5,
+    paddingHorizontal: spacing.md - 2,
+    borderRadius: radii.pill,
+  },
+  photoChipText: { fontFamily: typography.fontFamilyBold, fontSize: typography.tiny, color: colors.primaryDark },
+
+  acts: { flexDirection: 'row', gap: spacing.md },
+  actFlex: { flex: 1 },
+  btn: { paddingVertical: spacing.md + 1, borderRadius: radii.pill, alignItems: 'center' },
+  btnApprove: {
+    backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
+  },
+  btnReject: { backgroundColor: colors.surface, borderWidth: 2, borderColor: '#FBD5DD' },
+  btnGive: { backgroundColor: colors.success, paddingHorizontal: spacing.lg },
+  btnText: { fontFamily: typography.fontFamilyBold, fontSize: typography.body },
+  btnTextApprove: { color: '#fff' },
+  btnTextReject: { color: colors.error },
+  btnTextGive: { color: '#06382E' },
+
+  ffCard: {
+    backgroundColor: 'rgba(52,211,153,0.13)',
+    borderRadius: 20,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  ffTitle: { fontFamily: typography.fontFamilyBold, fontSize: typography.body, color: colors.primaryDark },
+  ffSub: { fontFamily: typography.fontFamilySemi, fontSize: typography.tiny, color: '#5C9B8E', marginTop: 2 },
+
+  photoBg: { flex: 1, backgroundColor: 'rgba(6,40,38,0.92)', justifyContent: 'center', alignItems: 'center' },
   photoImg: { width: '100%', height: '80%' },
-});
+  });

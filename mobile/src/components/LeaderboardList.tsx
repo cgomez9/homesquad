@@ -1,8 +1,8 @@
 // mobile/src/components/LeaderboardList.tsx
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
 import i18n from '../i18n';
-import { colors, spacing, radii, typography } from '../theme';
+import { spacing, radii, typography, useTheme, type Palette } from '../theme';
 import type { LeaderboardRow } from '../hooks/useLeaderboard';
 
 type Props = {
@@ -13,6 +13,8 @@ type Props = {
 const MEDALS: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' };
 
 export function LeaderboardList({ rows, scope }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   if (rows.length === 0) {
     return (
       <View style={styles.empty}>
@@ -55,15 +57,16 @@ export function LeaderboardList({ rows, scope }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  row:    { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface,
-            padding: spacing.md, borderRadius: radii.md, marginBottom: spacing.sm, gap: spacing.md },
-  medal:  { fontSize: typography.h1 },
-  name:   { flex: 1, fontSize: typography.body, fontFamily: typography.fontFamilyBold, color: colors.text },
-  stars:  { fontSize: typography.body, color: colors.textMuted, fontFamily: typography.fontFamily },
-  solo:   { fontSize: typography.body, color: colors.textMuted, textAlign: 'center',
-            padding: spacing.md, fontFamily: typography.fontFamily },
-  empty:  { padding: spacing.xl, alignItems: 'center' },
-  emptyText: { fontSize: typography.body, color: colors.textMuted, textAlign: 'center',
-               fontFamily: typography.fontFamily },
-});
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
+    row:    { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface,
+              padding: spacing.md, borderRadius: radii.md, marginBottom: spacing.sm, gap: spacing.md },
+    medal:  { fontSize: typography.h1 },
+    name:   { flex: 1, fontSize: typography.body, fontFamily: typography.fontFamilyBold, color: colors.text },
+    stars:  { fontSize: typography.body, color: colors.textMuted, fontFamily: typography.fontFamily },
+    solo:   { fontSize: typography.body, color: colors.textMuted, textAlign: 'center',
+              padding: spacing.md, fontFamily: typography.fontFamily },
+    empty:  { padding: spacing.xl, alignItems: 'center' },
+    emptyText: { fontSize: typography.body, color: colors.textMuted, textAlign: 'center',
+                 fontFamily: typography.fontFamily },
+  });

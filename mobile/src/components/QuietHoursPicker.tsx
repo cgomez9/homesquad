@@ -1,8 +1,8 @@
 // mobile/src/components/QuietHoursPicker.tsx
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, Switch, Pressable, StyleSheet, TextInput } from 'react-native';
 import i18n from '../i18n';
-import { colors, spacing, radii, typography } from '../theme';
+import { spacing, radii, typography, useTheme, type Palette } from '../theme';
 
 type Props = {
   enabled:   boolean;
@@ -13,6 +13,8 @@ type Props = {
 };
 
 export function QuietHoursPicker({ enabled, start, end, timezone, onSave }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [vEnabled,  setVEnabled]  = useState(enabled);
   const [vStart,    setVStart]    = useState(start);
   const [vEnd,      setVEnd]      = useState(end);
@@ -95,15 +97,16 @@ export function QuietHoursPicker({ enabled, start, end, timezone, onSave }: Prop
   );
 }
 
-const styles = StyleSheet.create({
-  root:       { backgroundColor: colors.surface, padding: spacing.lg, borderRadius: radii.md, gap: spacing.sm },
-  heading:    { fontSize: typography.h2, fontFamily: typography.fontFamilyBold, color: colors.text },
-  help:       { fontSize: typography.small, color: colors.textMuted },
-  row:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: spacing.xs },
-  label:      { fontSize: typography.body, color: colors.text, fontFamily: typography.fontFamily },
-  input:      { borderWidth: 1, borderColor: colors.border, borderRadius: radii.sm, paddingHorizontal: spacing.md, paddingVertical: spacing.xs, minWidth: 120, fontFamily: typography.fontFamily, color: colors.text },
-  button:     { backgroundColor: colors.primary, borderRadius: radii.pill, paddingVertical: spacing.md, alignItems: 'center', marginTop: spacing.sm },
-  buttonDisabled: { backgroundColor: colors.primaryDark },
-  buttonText: { color: '#fff', fontFamily: typography.fontFamilyBold, fontSize: typography.body },
-  error:      { color: colors.error, fontSize: typography.small },
-});
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
+    root:       { backgroundColor: colors.surface, padding: spacing.lg, borderRadius: radii.md, gap: spacing.sm },
+    heading:    { fontSize: typography.h2, fontFamily: typography.fontFamilyBold, color: colors.text },
+    help:       { fontSize: typography.small, color: colors.textMuted },
+    row:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: spacing.xs },
+    label:      { fontSize: typography.body, color: colors.text, fontFamily: typography.fontFamily },
+    input:      { borderWidth: 1, borderColor: colors.border, borderRadius: radii.sm, paddingHorizontal: spacing.md, paddingVertical: spacing.xs, minWidth: 120, fontFamily: typography.fontFamily, color: colors.text },
+    button:     { backgroundColor: colors.primary, borderRadius: radii.pill, paddingVertical: spacing.md, alignItems: 'center', marginTop: spacing.sm },
+    buttonDisabled: { backgroundColor: colors.primaryDark },
+    buttonText: { color: '#fff', fontFamily: typography.fontFamilyBold, fontSize: typography.body },
+    error:      { color: colors.error, fontSize: typography.small },
+  });

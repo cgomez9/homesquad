@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { TextInput, View, Text, StyleSheet, Pressable, TextInputProps } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radii, spacing, typography } from '../theme';
+import { radii, spacing, typography, useTheme, type Palette } from '../theme';
 import { PasswordStrengthMeter } from './PasswordStrengthMeter';
 
 type Props = TextInputProps & {
@@ -11,6 +11,8 @@ type Props = TextInputProps & {
 };
 
 export function PasswordField({ label, error, style, showStrength, onFocus, onBlur, value, ...rest }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [visible, setVisible] = useState(false);
   const [focused, setFocused] = useState(false);
 
@@ -52,39 +54,40 @@ export function PasswordField({ label, error, style, showStrength, onFocus, onBl
   );
 }
 
-const styles = StyleSheet.create({
-  label: {
-    fontFamily: typography.fontFamilySemi,
-    fontSize: typography.small,
-    marginBottom: spacing.xs,
-    color: colors.text,
-  },
-  inputWrap: { position: 'relative' },
-  input: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.lg,
-    paddingHorizontal: spacing.md,
-    paddingRight: 44,
-    fontSize: typography.body,
-    fontFamily: typography.fontFamily,
-    color: colors.text,
-    backgroundColor: colors.surface,
-  },
-  inputFocused: { borderColor: colors.primary },
-  inputError: { borderColor: colors.error },
-  eyeBtn: {
-    position: 'absolute',
-    right: spacing.md,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-  },
-  error: {
-    color: colors.error,
-    fontSize: typography.small,
-    fontFamily: typography.fontFamily,
-    marginTop: spacing.xs,
-  },
-});
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
+    label: {
+      fontFamily: typography.fontFamilySemi,
+      fontSize: typography.small,
+      marginBottom: spacing.xs,
+      color: colors.text,
+    },
+    inputWrap: { position: 'relative' },
+    input: {
+      height: 48,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radii.lg,
+      paddingHorizontal: spacing.md,
+      paddingRight: 44,
+      fontSize: typography.body,
+      fontFamily: typography.fontFamily,
+      color: colors.text,
+      backgroundColor: colors.surface,
+    },
+    inputFocused: { borderColor: colors.primary },
+    inputError: { borderColor: colors.error },
+    eyeBtn: {
+      position: 'absolute',
+      right: spacing.md,
+      top: 0,
+      bottom: 0,
+      justifyContent: 'center',
+    },
+    error: {
+      color: colors.error,
+      fontSize: typography.small,
+      fontFamily: typography.fontFamily,
+      marginTop: spacing.xs,
+    },
+  });

@@ -3,7 +3,12 @@ import { render, act, waitFor } from '@testing-library/react-native';
 import { AchievementBanner } from '../src/components/AchievementBanner';
 import { enqueueCelebrations } from '../src/lib/celebrations';
 
-jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string, o?: any) => o?.title ?? k }) }));
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (k: string, o?: any) =>
+      o == null ? k : (o.title ?? `${k} ${Object.values(o).join(' ')}`),
+  }),
+}));
 jest.mock('expo-router', () => ({ useSegments: () => ['(app)', 'kid', '[profileId]'] }));
 jest.mock('../src/lib/feedback', () => ({ fireAchievementFeedback: jest.fn() }));
 

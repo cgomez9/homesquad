@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View, Text, Pressable, Image, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { supabase } from '../../../../../../src/lib/supabase';
@@ -9,6 +10,7 @@ const MAX_RETRIES = 3;
 
 export default function PhotoCapture() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { profileId, instanceId } = useLocalSearchParams<{ profileId: string; instanceId: string }>();
   const [uri, setUri] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -18,7 +20,7 @@ export default function PhotoCapture() {
     (async () => {
       const perm = await ImagePicker.requestCameraPermissionsAsync();
       if (!perm.granted) {
-        Alert.alert('Camera permission needed', 'Please enable camera access in settings.');
+        Alert.alert(t('photo.permissionTitle'), t('photo.permissionBody'));
         router.back();
         return;
       }
@@ -57,7 +59,7 @@ export default function PhotoCapture() {
       lastErr = upErr.message;
       await new Promise((r) => setTimeout(r, 1000 * Math.pow(3, attempt)));
     }
-    if (lastErr) { setError(`Upload failed: ${lastErr}`); setBusy(false); return; }
+    if (lastErr) { setError(t('photo.uploadFailed', { error: lastErr })); setBusy(false); return; }
 
     const { data: { publicUrl } } = supabase.storage.from('chore-proofs').getPublicUrl(path);
     const { error: rpcErr } = await supabase.rpc('complete_chore', {
@@ -90,10 +92,10 @@ export default function PhotoCapture() {
             setError(null);
           }
         }} style={[styles.btn, styles.btnSecondary]}>
-          <Text style={styles.btnTextSecondary}>Retake</Text>
+          <Text style={styles.btnTextSecondary}>{t('photo.retake')}</Text>
         </Pressable>
         <Pressable onPress={send} disabled={busy} style={[styles.btn, styles.btnPrimary, busy && { opacity: 0.5 }]}>
-          <Text style={styles.btnText}>{busy ? 'Sending…' : 'Send'}</Text>
+          <Text style={styles.btnText}>{busy ? t('photo.sending') : t('photo.send')}</Text>
         </Pressable>
       </View>
     </View>

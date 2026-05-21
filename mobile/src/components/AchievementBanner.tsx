@@ -78,7 +78,7 @@ function renderBody(item: Queued, t: (k: string, o?: any) => string) {
   if (item.kind === 'chore_approved') {
     return (
       <>
-        <Text style={styles.heading}>⭐ Chore approved!</Text>
+        <Text style={styles.heading}>{t('celebration.choreApproved')}</Text>
         <Text style={styles.title}>{item.title}</Text>
         <Text style={styles.description}>+{item.stars} ⭐</Text>
       </>
@@ -96,7 +96,7 @@ function renderBody(item: Queued, t: (k: string, o?: any) => string) {
     return (
       <>
         <Text style={styles.emoji}>🌟</Text>
-        <Text style={styles.title}>Plus {item.moreCount} more while you were away!</Text>
+        <Text style={styles.title}>{t('celebration.summary', { count: item.moreCount })}</Text>
         <Text style={styles.description}>+{item.extraStars} ⭐</Text>
       </>
     );
@@ -105,10 +105,17 @@ function renderBody(item: Queued, t: (k: string, o?: any) => string) {
   // fired by fireAchievementFeedback in the drain effect).
   const a = ACHIEVEMENTS[item.achievementKey as AchievementKey];
   if (!a) return null;
-  return <BadgeReveal emoji={a.emoji} title={a.title} description={a.description} />;
+  return (
+    <BadgeReveal
+      heading={t('celebration.newAchievement')}
+      emoji={a.emoji}
+      title={t(`achievements.${item.achievementKey}.title`)}
+      description={t(`achievements.${item.achievementKey}.desc`)}
+    />
+  );
 }
 
-function BadgeReveal({ emoji, title, description }: { emoji: string; title: string; description: string }) {
+function BadgeReveal({ heading, emoji, title, description }: { heading: string; emoji: string; title: string; description: string }) {
   const scale = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.sequence([
@@ -118,7 +125,7 @@ function BadgeReveal({ emoji, title, description }: { emoji: string; title: stri
   }, [scale]);
   return (
     <>
-      <Text style={styles.heading}>🏅 New Achievement!</Text>
+      <Text style={styles.heading}>{heading}</Text>
       <Animated.Text style={[styles.emoji, { transform: [{ scale }] }]}>{emoji}</Animated.Text>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.description}>{description}</Text>

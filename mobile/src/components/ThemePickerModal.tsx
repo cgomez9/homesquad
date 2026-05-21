@@ -1,37 +1,35 @@
 import { useMemo } from 'react';
 import { Modal, View, Text, Pressable, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { radii, spacing, typography, useTheme, type Palette } from '../theme';
-
-type Lang = 'en' | 'es' | 'system';
+import { radii, spacing, typography, useTheme, type Palette, type ThemeMode } from '../theme';
 
 type Props = {
   visible: boolean;
-  current: Lang;
-  onSelect: (lang: Lang) => void;
+  current: ThemeMode;
+  onSelect: (mode: ThemeMode) => void;
   onCancel: () => void;
 };
 
-export function LanguagePickerModal({ visible, current, onSelect, onCancel }: Props) {
+export function ThemePickerModal({ visible, current, onSelect, onCancel }: Props) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const { t } = useTranslation();
 
-  const options: { value: Lang; labelKey: string }[] = [
-    { value: 'en', labelKey: 'settings.language.english' },
-    { value: 'es', labelKey: 'settings.language.spanish' },
-    { value: 'system', labelKey: 'settings.language.system' },
+  const options: { value: ThemeMode; labelKey: string }[] = [
+    { value: 'light', labelKey: 'settings.theme.light' },
+    { value: 'dark', labelKey: 'settings.theme.dark' },
+    { value: 'system', labelKey: 'settings.theme.system' },
   ];
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <Pressable style={styles.overlay} onPress={onCancel}>
         <Pressable style={styles.card} onPress={(e) => e.stopPropagation()}>
-          <Text style={styles.title}>{t('settings.language.label')}</Text>
+          <Text style={styles.title}>{t('settings.theme.label')}</Text>
           {options.map((opt) => (
             <Pressable
               key={opt.value}
-              testID={`lang-option-${opt.value}`}
+              testID={`theme-option-${opt.value}`}
               onPress={() => onSelect(opt.value)}
               style={styles.row}
             >

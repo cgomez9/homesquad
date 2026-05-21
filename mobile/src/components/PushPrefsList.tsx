@@ -1,8 +1,8 @@
 // mobile/src/components/PushPrefsList.tsx
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, Switch, StyleSheet } from 'react-native';
 import i18n from '../i18n';
-import { colors, spacing, radii, typography } from '../theme';
+import { spacing, radii, typography, useTheme, type Palette } from '../theme';
 
 export const EVENT_TYPES = [
   'chore_submitted',
@@ -25,6 +25,8 @@ type Props = {
 };
 
 export function PushPrefsList({ prefs, onTogglePref }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [pending, setPending] = useState<Record<string, boolean>>({});
 
   const isEnabled = (e: EventType) => prefs[e] !== false; // missing = true
@@ -60,10 +62,11 @@ export function PushPrefsList({ prefs, onTogglePref }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  root:    { backgroundColor: colors.surface, padding: spacing.lg, borderRadius: radii.md, marginTop: spacing.lg },
-  heading: { fontSize: typography.h2, fontFamily: typography.fontFamilyBold, color: colors.text },
-  help:    { fontSize: typography.small, color: colors.textMuted, marginBottom: spacing.md },
-  row:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border },
-  label:   { fontSize: typography.body, color: colors.text, fontFamily: typography.fontFamily, flex: 1 },
-});
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
+    root:    { backgroundColor: colors.surface, padding: spacing.lg, borderRadius: radii.md, marginTop: spacing.lg },
+    heading: { fontSize: typography.h2, fontFamily: typography.fontFamilyBold, color: colors.text },
+    help:    { fontSize: typography.small, color: colors.textMuted, marginBottom: spacing.md },
+    row:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border },
+    label:   { fontSize: typography.body, color: colors.text, fontFamily: typography.fontFamily, flex: 1 },
+  });

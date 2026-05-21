@@ -1,10 +1,13 @@
+import { useMemo } from 'react';
 import { Platform, View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { useTranslation } from 'react-i18next';
 import { signInWithApple, signInWithGoogle } from '../lib/auth';
-import { colors, radii, spacing, typography } from '../theme';
+import { radii, spacing, typography, useTheme, type Palette } from '../theme';
 
 export function SocialAuthRow() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { t } = useTranslation();
   const googleConfigured =
     !!process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID &&
@@ -39,6 +42,13 @@ export function SocialAuthRow() {
 
   return (
     <View style={styles.container}>
+      {hasAnySocial && (
+        <View style={styles.divider}>
+          <View style={styles.line} />
+          <Text style={styles.or}>{t('auth.social.or')}</Text>
+          <View style={styles.line} />
+        </View>
+      )}
       {Platform.OS === 'ios' && (
         <AppleAuthentication.AppleAuthenticationButton
           buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
@@ -54,34 +64,28 @@ export function SocialAuthRow() {
           <Text style={styles.googleText}>{t('auth.social.google')}</Text>
         </Pressable>
       )}
-      {hasAnySocial && (
-        <View style={styles.divider}>
-          <View style={styles.line} />
-          <Text style={styles.or}>{t('auth.social.or')}</Text>
-          <View style={styles.line} />
-        </View>
-      )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { width: '100%', gap: spacing.md, marginBottom: spacing.md },
-  appleBtn: { height: 48 },
-  googleBtn: {
-    height: 48,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.md,
-  },
-  googleG: { fontSize: 18, fontFamily: typography.fontFamilyBold, color: '#4285F4' },
-  googleText: { fontSize: typography.body, color: colors.text, fontFamily: typography.fontFamilySemi },
-  divider: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  line: { flex: 1, height: 1, backgroundColor: colors.border },
-  or: { color: colors.textMuted, fontFamily: typography.fontFamily, fontSize: typography.small },
-});
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
+    container: { width: '100%', gap: spacing.md, marginBottom: spacing.md },
+    appleBtn: { height: 48 },
+    googleBtn: {
+      height: 48,
+      borderRadius: radii.lg,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.md,
+    },
+    googleG: { fontSize: 18, fontFamily: typography.fontFamilyBold, color: '#4285F4' },
+    googleText: { fontSize: typography.body, color: colors.text, fontFamily: typography.fontFamilySemi },
+    divider: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+    line: { flex: 1, height: 1, backgroundColor: colors.border },
+    or: { color: colors.textMuted, fontFamily: typography.fontFamily, fontSize: typography.small },
+  });

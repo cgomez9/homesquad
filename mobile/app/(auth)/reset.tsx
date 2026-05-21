@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Link } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../../src/components/Button';
 import { TextField } from '../../src/components/TextField';
 import { requestPasswordReset } from '../../src/lib/auth';
-import { colors, spacing, typography } from '../../src/theme';
+import { spacing, typography, useTheme, type Palette } from '../../src/theme';
 
 export default function ResetScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
@@ -55,7 +57,8 @@ export default function ResetScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
   container: { flex: 1, padding: spacing.xl, justifyContent: 'center', backgroundColor: colors.bg },
   title: {
     fontFamily: typography.fontFamilyBold,

@@ -13,6 +13,8 @@ import { ConfettiHost } from '../src/components/ConfettiHost';
 import { AchievementBanner } from '../src/components/AchievementBanner';
 import { useFonts, Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold } from '@expo-google-fonts/nunito';
 import { initI18n } from '../src/i18n';
+import { ThemeProvider, useTheme } from '../src/theme';
+import { StatusBar } from 'expo-status-bar';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -22,6 +24,13 @@ Notifications.setNotificationHandler({
     shouldSetBadge: false,
   }),
 });
+
+// Status-bar icons follow the active theme: light icons on dark bg, dark icons
+// on light bg. Lives inside ThemeProvider so it can read the effective scheme.
+function ThemedStatusBar() {
+  const { effective } = useTheme();
+  return <StatusBar style={effective === 'dark' ? 'light' : 'dark'} />;
+}
 
 function RealtimeBridge() {
   const auth = useAuth();
@@ -67,7 +76,7 @@ export default function RootLayout() {
     if (auth.status === 'unauthenticated' && !inAuthGroup) {
       router.replace('/(auth)/login');
     } else if (auth.status === 'authenticated' && family.status === 'no-family' && !inOnboardingGroup) {
-      router.replace('/(onboarding)/create-family');
+      router.replace('/(onboarding)/welcome');
     } else if (auth.status === 'authenticated' && family.status === 'has-family' && inAuthGroup) {
       router.replace('/(app)');
     }
@@ -82,11 +91,14 @@ export default function RootLayout() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <RealtimeBridge />
-      <Slot />
-      <ConfettiHost />
-      <AchievementBanner />
-    </QueryClientProvider>
+    <ThemeProvider>
+      <ThemedStatusBar />
+      <QueryClientProvider client={queryClient}>
+        <RealtimeBridge />
+        <Slot />
+        <ConfettiHost />
+        <AchievementBanner />
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }

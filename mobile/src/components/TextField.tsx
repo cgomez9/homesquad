@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { TextInput, View, Text, StyleSheet, TextInputProps } from 'react-native';
-import { colors, radii, spacing, typography } from '../theme';
+import { radii, spacing, typography, useTheme, type Palette } from '../theme';
 
 type Props = TextInputProps & { label: string; error?: string };
 
 export function TextField({ label, error, style, onFocus, onBlur, ...rest }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [focused, setFocused] = useState(false);
   return (
     <View style={{ marginBottom: spacing.xl }}>
@@ -21,30 +23,31 @@ export function TextField({ label, error, style, onFocus, onBlur, ...rest }: Pro
   );
 }
 
-const styles = StyleSheet.create({
-  label: {
-    fontFamily: typography.fontFamilySemi,
-    fontSize: typography.small,
-    marginBottom: spacing.xs,
-    color: colors.text,
-  },
-  input: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.lg,
-    paddingHorizontal: spacing.md,
-    fontSize: typography.body,
-    fontFamily: typography.fontFamily,
-    color: colors.text,
-    backgroundColor: colors.surface,
-  },
-  inputFocused: { borderColor: colors.primary },
-  inputError: { borderColor: colors.error },
-  error: {
-    color: colors.error,
-    fontSize: typography.small,
-    fontFamily: typography.fontFamily,
-    marginTop: spacing.xs,
-  },
-});
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
+    label: {
+      fontFamily: typography.fontFamilySemi,
+      fontSize: typography.small,
+      marginBottom: spacing.xs,
+      color: colors.text,
+    },
+    input: {
+      height: 48,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radii.lg,
+      paddingHorizontal: spacing.md,
+      fontSize: typography.body,
+      fontFamily: typography.fontFamily,
+      color: colors.text,
+      backgroundColor: colors.surface,
+    },
+    inputFocused: { borderColor: colors.primary },
+    inputError: { borderColor: colors.error },
+    error: {
+      color: colors.error,
+      fontSize: typography.small,
+      fontFamily: typography.fontFamily,
+      marginTop: spacing.xs,
+    },
+  });

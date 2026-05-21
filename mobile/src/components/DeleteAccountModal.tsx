@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Modal, View, Text, TextInput, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { colors, radii, spacing, typography } from '../theme';
+import { radii, spacing, typography, useTheme, type Palette } from '../theme';
 
 type Props = {
   visible: boolean;
@@ -12,6 +12,8 @@ type Props = {
 };
 
 export function DeleteAccountModal({ visible, loading, error, onCancel, onConfirm }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { t } = useTranslation();
   const [confirmText, setConfirmText] = useState('');
 
@@ -60,22 +62,23 @@ export function DeleteAccountModal({ visible, loading, error, onCancel, onConfir
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: spacing.xl },
-  card: { backgroundColor: colors.surface, borderRadius: radii.lg, padding: spacing.xl, width: '100%', maxWidth: 400, gap: spacing.md },
-  title: { fontFamily: typography.fontFamilyBold, fontSize: typography.h2, color: colors.text },
-  body: { fontFamily: typography.fontFamily, fontSize: typography.body, color: colors.text, lineHeight: 22 },
-  label: { fontFamily: typography.fontFamilySemi, fontSize: typography.small, color: colors.textMuted, marginTop: spacing.sm },
-  input: {
-    borderWidth: 1, borderColor: colors.border, borderRadius: radii.md,
-    padding: spacing.md, fontSize: typography.body, fontFamily: typography.fontFamily,
-    color: colors.text, backgroundColor: colors.surface,
-  },
-  error: { color: colors.error, fontFamily: typography.fontFamily, fontSize: typography.small },
-  row: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.sm },
-  cancelBtn: { flex: 1, paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center', backgroundColor: '#f3f4f6' },
-  cancelText: { color: colors.text, fontFamily: typography.fontFamilySemi, fontSize: typography.body },
-  confirmBtn: { flex: 1, paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center', backgroundColor: colors.error },
-  confirmBtnDisabled: { backgroundColor: '#fca5a5' },
-  confirmText: { color: '#fff', fontFamily: typography.fontFamilyBold, fontSize: typography.body },
-});
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
+    overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: spacing.xl },
+    card: { backgroundColor: colors.surface, borderRadius: radii.lg, padding: spacing.xl, width: '100%', maxWidth: 400, gap: spacing.md },
+    title: { fontFamily: typography.fontFamilyBold, fontSize: typography.h2, color: colors.text },
+    body: { fontFamily: typography.fontFamily, fontSize: typography.body, color: colors.text, lineHeight: 22 },
+    label: { fontFamily: typography.fontFamilySemi, fontSize: typography.small, color: colors.textMuted, marginTop: spacing.sm },
+    input: {
+      borderWidth: 1, borderColor: colors.border, borderRadius: radii.md,
+      padding: spacing.md, fontSize: typography.body, fontFamily: typography.fontFamily,
+      color: colors.text, backgroundColor: colors.surface,
+    },
+    error: { color: colors.error, fontFamily: typography.fontFamily, fontSize: typography.small },
+    row: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.sm },
+    cancelBtn: { flex: 1, paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center', backgroundColor: '#f3f4f6' },
+    cancelText: { color: colors.text, fontFamily: typography.fontFamilySemi, fontSize: typography.body },
+    confirmBtn: { flex: 1, paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center', backgroundColor: colors.error },
+    confirmBtnDisabled: { backgroundColor: '#fca5a5' },
+    confirmText: { color: '#fff', fontFamily: typography.fontFamilyBold, fontSize: typography.body },
+  });

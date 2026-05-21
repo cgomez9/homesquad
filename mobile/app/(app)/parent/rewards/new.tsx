@@ -1,15 +1,24 @@
-import { useState, useEffect } from 'react';
-import { ScrollView, Text, StyleSheet, Alert } from 'react-native';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { View, Text, Pressable, ScrollView, StyleSheet, Alert, Animated, Platform, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../../src/lib/supabase';
 import { Button } from '../../../../src/components/Button';
 import { TextField } from '../../../../src/components/TextField';
 import { RewardIconPicker } from '../../../../src/components/RewardIconPicker';
+import { TidePoolBackground } from '../../../../src/components/TidePool';
+import { useTheme, type Palette, spacing, typography } from '../../../../src/theme';
 import type { RewardIconId } from '../../../../src/constants/rewardIcons';
 
+const TOP_INSET =
+  Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) + spacing.lg : 56;
+
 export default function NewReward() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
+  const { t } = useTranslation();
   const qc = useQueryClient();
 
   const [title, setTitle] = useState('');
@@ -27,9 +36,9 @@ export default function NewReward() {
 
   const create = useMutation({
     mutationFn: async () => {
-      if (!familyId) throw new Error('no family loaded');
+      if (!familyId) throw new Error(t('forms.errNoFamily'));
       const sc = parseInt(cost, 10);
-      if (!Number.isFinite(sc) || sc < 1 || sc > 9999) throw new Error('star cost must be 1–9999');
+      if (!Number.isFinite(sc) || sc < 1 || sc > 9999) throw new Error(t('forms.errStarCost'));
       const { error } = await supabase.rpc('create_reward', {
         family_id: familyId,
         title: title.trim(),
@@ -43,23 +52,68 @@ export default function NewReward() {
       qc.invalidateQueries({ queryKey: ['parent-rewards'] });
       router.back();
     },
-    onError: (e) => Alert.alert('Could not create reward', (e as Error).message),
+    onError: (e) => Alert.alert(t('forms.couldNotCreateReward'), (e as Error).message),
   });
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>New reward</Text>
-      <TextField label="Title" value={title} onChangeText={setTitle} placeholder="Ice Cream" />
-      <TextField label="Description (optional)" value={description} onChangeText={setDescription} />
-      <TextField label="Star cost" value={cost} onChangeText={setCost} keyboardType="number-pad" />
-      <RewardIconPicker value={iconId} onChange={setIconId} />
-      <Button label="Save" loading={create.isPending} onPress={() => create.mutate()} />
-      <Button label="Cancel" variant="secondary" onPress={() => router.back()} style={{ marginTop: 8 }} />
-    </ScrollView>
+    <View style={styles.screen}>
+      <TidePoolBackground />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.container}>
+        <View style={styles.topbar}>
+          <BackButton onPress={() => router.back()} />
+          <Text style={styles.h1}>{t('forms.newReward')}</Text>
+        </View>
+        <View style={styles.card}>
+          <TextField label={t('forms.title')} value={title} onChangeText={setTitle} placeholder={t('forms.rewardTitlePlaceholder')} />
+          <TextField label={t('forms.descriptionOptional')} value={description} onChangeText={setDescription} />
+          <TextField label={t('forms.starCost')} value={cost} onChangeText={setCost} keyboardType="number-pad" />
+          <RewardIconPicker value={iconId} onChange={setIconId} />
+          <View style={styles.actions}>
+            <Button label={t('forms.save')} loading={create.isPending} onPress={() => create.mutate()} />
+            <Button label={t('common.cancel')} variant="secondary" onPress={() => router.back()} style={{ marginTop: spacing.sm }} />
+          </View>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { padding: 24, paddingTop: 64, gap: 12 },
-  title: { fontSize: 22, fontWeight: '700', marginBottom: 8 },
-});
+function BackButton({ onPress }: { onPress: () => void }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { t } = useTranslation();
+  const scale = useRef(new Animated.Value(1)).current;
+  return (
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={() => Animated.spring(scale, { toValue: 0.9, useNativeDriver: true, speed: 40, bounciness: 0 }).start()}
+        onPressOut={() => Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 20, bounciness: 8 }).start()}
+        accessibilityRole="button"
+        accessibilityLabel={t('common.back')}
+        style={styles.back}
+      >
+        <Text style={styles.backIcon}>←</Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg },
+    container: { padding: spacing.xl, paddingTop: TOP_INSET, flexGrow: 1 },
+    topbar: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.lg },
+    back: {
+      width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface,
+      alignItems: 'center', justifyContent: 'center',
+      shadowColor: '#0F766E', shadowOpacity: 0.1, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 2,
+    },
+    backIcon: { fontSize: 19, color: colors.text, fontFamily: typography.fontFamilyBold },
+    h1: { fontFamily: typography.fontFamilyBold, fontSize: 26, color: colors.text, letterSpacing: -0.3 },
+    card: {
+      backgroundColor: colors.surface, borderRadius: 24, padding: spacing.xl, gap: spacing.md,
+      shadowColor: '#0F766E', shadowOpacity: 0.12, shadowRadius: 24, shadowOffset: { width: 0, height: 12 }, elevation: 5,
+    },
+    actions: { marginTop: spacing.md },
+  });

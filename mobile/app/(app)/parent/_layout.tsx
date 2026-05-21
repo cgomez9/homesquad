@@ -1,8 +1,13 @@
 import { Tabs } from 'expo-router';
+import { ParentTabBar } from '../../../src/components/ParentTabBar';
 
 export default function ParentLayout() {
   return (
-    <Tabs screenOptions={{ headerShown: false }}>
+    <Tabs
+      backBehavior="history"
+      screenOptions={{ headerShown: false }}
+      tabBar={(props) => <ParentTabBar {...props} />}
+    >
       <Tabs.Screen name="index"       options={{ title: 'Chores' }} />
       <Tabs.Screen name="rewards"     options={{ title: 'Rewards' }} />
       <Tabs.Screen name="approvals"   options={{ title: 'Approvals' }} />

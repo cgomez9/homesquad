@@ -2,6 +2,7 @@
   "auth": {
     "login": {
       "title": "Bienvenido de nuevo",
+      "subtitle": "Inicia sesión y sigue la aventura familiar.",
       "email": "Correo electrónico",
       "password": "Contraseña",
       "submit": "Iniciar sesión",
@@ -10,6 +11,7 @@
     },
     "signup": {
       "title": "Crea tu cuenta",
+      "subtitle": "Configura el acceso del capitán de la familia.",
       "email": "Correo electrónico",
       "password": "Contraseña",
       "confirmPassword": "Confirma la contraseña",
@@ -25,6 +27,16 @@
       "backToLogin": "Volver al inicio de sesión",
       "checkEmail": "Revisa tu correo",
       "checkEmailBody": "Si ese correo está registrado, te enviamos un enlace para restablecer tu contraseña."
+    },
+    "welcome": {
+      "title": "¡Bienvenido a bordo!",
+      "subtitle": "Shores convierte las tareas de cada día en una pequeña aventura para toda la familia.",
+      "getStarted": "Empezar"
+    },
+    "steps": {
+      "family": "Familia",
+      "kids": "Niños",
+      "chores": "Tareas"
     },
     "createFamily": {
       "title": "Crea tu familia",
@@ -46,9 +58,53 @@
       "avatar": "Avatar",
       "pin": "PIN (opcional, 4 dígitos)",
       "addAnother": "Agregar y agregar otro",
-      "finish": "Agregar y terminar",
+      "finish": "Agregar y continuar",
       "errorNameRequired": "El nombre del niño es obligatorio",
       "errorPinFormat": "El PIN debe tener exactamente 4 dígitos, o estar vacío"
+    },
+    "addChores": {
+      "title": "Añade un pack inicial",
+      "subtitle": "Toca un pack para añadir todas sus tareas de una vez. Puedes elegir más de uno — siempre podrás añadir, editar o eliminar tareas más tarde en Tareas.",
+      "counterEmpty": "Aún no has elegido ningún pack",
+      "counter": "{{packsText}} · {{choresText}} añadidas",
+      "packsCount_one": "1 pack",
+      "packsCount_other": "{{count}} packs",
+      "choresCount_one": "1 tarea",
+      "choresCount_other": "{{count}} tareas",
+      "reset": "Limpiar",
+      "submit_zero": "Continuar sin tareas",
+      "submit_one": "Añadir 1 tarea a mi familia",
+      "submit_other": "Añadir {{count}} tareas a mi familia",
+      "skip": "Saltar por ahora",
+      "errorPartial": "No se pudieron añadir algunas tareas — puedes añadirlas más tarde en Tareas.",
+      "packs": {
+        "morning": "Rutina de mañana",
+        "tidy": "Equipo de orden",
+        "pet": "Cuidado de la mascota",
+        "school": "Listos para la escuela"
+      },
+      "chores": {
+        "makeBed": "Hacer la cama",
+        "brushTeeth": "Cepillarse los dientes",
+        "takeShower": "Ducharse",
+        "tidyRoom": "Ordenar la habitación",
+        "putClothesAway": "Guardar la ropa",
+        "feedPet": "Dar de comer a la mascota",
+        "walkPet": "Pasear a la mascota",
+        "homework": "Tarea de la escuela",
+        "setTable": "Poner la mesa",
+        "takeOutTrash": "Sacar la basura"
+      }
+    },
+    "joinFamily": {
+      "title": "Únete a una familia",
+      "subtitle": "Introduce el código de 6 dígitos que compartió un adulto.",
+      "codeLabel": "Código de invitación",
+      "codePlaceholder": "123456",
+      "nameLabel": "Tu nombre (adulto)",
+      "namePlaceholder": "Sam",
+      "submit": "Unirme",
+      "errCode": "El código debe tener 6 dígitos"
     },
     "social": {
       "google": "Continuar con Google",
@@ -78,9 +134,37 @@
       "spanish": "Español",
       "system": "Predeterminado del dispositivo"
     },
+    "theme": {
+      "label": "Tema",
+      "light": "Claro",
+      "dark": "Oscuro",
+      "system": "Predeterminado del dispositivo"
+    },
     "account": {
       "label": "Cuenta",
       "deleteAccount": "Eliminar cuenta"
+    },
+    "title": "Ajustes",
+    "familyFallback": "Familia",
+    "memberCount_one": "{{count}} miembro",
+    "memberCount_other": "{{count}} miembros",
+    "parentCount_one": "{{count}} adulto",
+    "parentCount_other": "{{count}} adultos",
+    "coParents": "Co-tutores",
+    "inviteCoParent": "Invitar a un co-tutor",
+    "feedback": "Sonidos",
+    "soundsHaptics": "Sonidos y vibración en este dispositivo",
+    "subscriptionSoon": "Suscripción — próximamente",
+    "more": "Más",
+    "switchProfile": "Cambiar perfil",
+    "signOut": "Cerrar sesión",
+    "invite": {
+      "couldNotGenerate": "No se pudo generar el código",
+      "codeTitle": "Código de invitación",
+      "codeSub": "Caduca en 24 horas. Compártelo con el otro adulto — lo introduce en la pantalla de unirse a la familia al registrarse.",
+      "copy": "Copiar código",
+      "copied": "✓ Copiado",
+      "done": "Listo"
     }
   },
   "deleteModal": {
@@ -152,5 +236,187 @@
       "alreadyActive": "Ya hay una meta activa. Cancélala antes de crear otra.",
       "createFailed": "No pudimos crear la meta — vuelve a intentarlo."
     }
+  },
+  "tabs": {
+    "chores": "Tareas",
+    "rewards": "Premios",
+    "approvals": "Aprobar",
+    "activity": "Actividad",
+    "settings": "Ajustes"
+  },
+  "picker": {
+    "title": "¿Quién está hoy?",
+    "subtitle": "Toca tu ficha para entrar",
+    "parents": "Adultos",
+    "kids": "Niños",
+    "pinBadge": "🔒 PIN",
+    "wrongPin": "PIN incorrecto"
+  },
+  "common": {
+    "days": {
+      "sun": "Domingo",
+      "mon": "Lunes",
+      "tue": "Martes",
+      "wed": "Miércoles",
+      "thu": "Jueves",
+      "fri": "Viernes",
+      "sat": "Sábado"
+    },
+    "back": "Atrás",
+    "cancel": "Cancelar",
+    "archive": "Archivar",
+    "timeAgo": {
+      "justNow": "ahora mismo",
+      "minAgo": "hace {{count}} min",
+      "hrAgo": "hace {{count}} h",
+      "dayAgo": "hace {{count}} d"
+    }
+  },
+  "kid": {
+    "greeting": "¡Hola, {{name}}!",
+    "greetingNoName": "¡Hola!",
+    "today": "Hoy",
+    "toGo": "Faltan {{count}}",
+    "stars": "⭐ Estrellas",
+    "dayStreak": "🔥 Racha",
+    "waiting": "Esperando a un adulto",
+    "notApproved": "No aprobada — inténtalo de nuevo",
+    "rejectedReason": "✗ {{reason}}",
+    "tryAgain": "Reintentar",
+    "tryAgainA11y": "Reintentar {{title}}",
+    "markDoneA11y": "Marcar {{title}} como hecha",
+    "allDone": "¡Todo listo!",
+    "goPlay": "¡Buen trabajo — a jugar!",
+    "photo": "📷 foto",
+    "choreFallback": "tarea",
+    "nav": {
+      "badges": "Insignias",
+      "rewards": "Premios",
+      "leaderboard": "Clasificación",
+      "switch": "Cambiar perfil"
+    }
+  },
+  "badges": {
+    "title": "Insignias",
+    "collection": "Tu colección",
+    "collected": "{{collected}} de {{total}} conseguidas",
+    "earned": "GANADA"
+  },
+  "kidRewards": {
+    "title": "Premios",
+    "subtitle": "La tienda de estrellas",
+    "yourStars": "Tus estrellas",
+    "empty": "Aún no hay premios.",
+    "requested": "✋ Pedido",
+    "coming": "🎁 ¡En camino!",
+    "needMore": "Faltan {{count}}",
+    "request": "Pedir",
+    "requestA11y": "Pedir {{title}} por {{count}} estrellas",
+    "confirmTitle": "¿Gastar ⭐{{count}} en {{title}}?",
+    "spend": "Gastar",
+    "couldNotRequest": "No se pudo pedir"
+  },
+  "parent": {
+    "choresTitle": "Tareas",
+    "activeChores_one": "{{count}} tarea activa",
+    "activeChores_other": "{{count}} tareas activas",
+    "choresEmpty": "Aún no hay tareas — toca + para crear una.",
+    "anyone": "Cualquiera",
+    "newChoreA11y": "Nueva tarea",
+    "rowA11y": "{{title}}. Toca para editar, mantén para archivar.",
+    "archiveChoreTitle": "¿Archivar tarea?",
+    "rewardsTitle": "Premios",
+    "rewardsCount_one": "{{count}} premio en la tienda",
+    "rewardsCount_other": "{{count}} premios en la tienda",
+    "rewardsEmpty": "Aún no hay premios — toca + para crear uno.",
+    "newRewardA11y": "Nuevo premio",
+    "archiveRewardTitle": "¿Archivar premio?"
+  },
+  "approvals": {
+    "title": "Aprobaciones",
+    "waiting": "{{count}} esperan tu revisión",
+    "empty": "Sin aprobaciones pendientes — ¡bien hecho!",
+    "sectionDecisions": "Decisiones pendientes",
+    "sectionFulfillment": "Por entregar",
+    "submitted": "enviado {{time}}",
+    "requested": "pedido {{time}}",
+    "approvedAgo": "aprobado {{time}}",
+    "viewPhoto": "📷 Ver foto",
+    "approve": "✓ Aprobar",
+    "reject": "Rechazar",
+    "deny": "Denegar",
+    "markGiven": "Marcar entregado",
+    "wants": "{{name}} quiere"
+  },
+  "activity": {
+    "title": "Actividad",
+    "last30": "Últimos 30 días",
+    "empty": "Aún no hay actividad.",
+    "completed": "completó",
+    "sentBack": "rechazada",
+    "got": "consiguió",
+    "denied": "denegado",
+    "viewPhoto": "📷 Ver foto",
+    "viewPhotoA11y": "Ver foto de prueba",
+    "someone": "Alguien"
+  },
+  "forms": {
+    "newChore": "Nueva tarea",
+    "editChore": "Editar tarea",
+    "newReward": "Nuevo premio",
+    "editReward": "Editar premio",
+    "title": "Título",
+    "descriptionOptional": "Descripción (opcional)",
+    "stars": "Estrellas",
+    "starCost": "Coste en estrellas",
+    "save": "Guardar",
+    "saveChanges": "Guardar cambios",
+    "choreTitlePlaceholder": "Hacer la cama",
+    "rewardTitlePlaceholder": "Helado",
+    "couldNotCreateChore": "No se pudo crear la tarea",
+    "couldNotUpdateChore": "No se pudo actualizar la tarea",
+    "couldNotCreateReward": "No se pudo crear el premio",
+    "couldNotUpdateReward": "No se pudo actualizar el premio",
+    "errStarValue": "el valor en estrellas debe ser 1–999",
+    "errStarCost": "el coste en estrellas debe ser 1–9999",
+    "errNoFamily": "no se cargó la familia"
+  },
+  "recurrence": {
+    "daily": "Diaria",
+    "everyDay": "Todos los días",
+    "unknown": "Desconocida",
+    "onceOn": "Una vez el {{date}}",
+    "dayShort": {
+      "sun": "Dom",
+      "mon": "Lun",
+      "tue": "Mar",
+      "wed": "Mié",
+      "thu": "Jue",
+      "fri": "Vie",
+      "sat": "Sáb"
+    }
+  },
+  "celebration": {
+    "choreApproved": "⭐ ¡Tarea aprobada!",
+    "newAchievement": "🏅 ¡Nuevo logro!",
+    "summary": "¡Y {{count}} más mientras no estabas!"
+  },
+  "achievements": {
+    "first_star": { "title": "Primera estrella", "desc": "Gana tu primera estrella" },
+    "stars_100": { "title": "Centena", "desc": "Gana 100 estrellas en total" },
+    "stars_500": { "title": "Estrella mayor", "desc": "Gana 500 estrellas en total" },
+    "streak_7": { "title": "Racha semanal", "desc": "Gana estrellas 7 días seguidos" },
+    "streak_30": { "title": "Racha mensual", "desc": "Gana estrellas 30 días seguidos" },
+    "first_chore": { "title": "Primeros pasos", "desc": "Consigue que aprueben tu primera tarea" },
+    "chores_25": { "title": "Veinticinco", "desc": "Consigue 25 tareas aprobadas" },
+    "first_reward": { "title": "Primer premio", "desc": "Canjea tu primer premio" }
+  },
+  "photo": {
+    "permissionTitle": "Se necesita permiso de cámara",
+    "permissionBody": "Activa el acceso a la cámara en los ajustes.",
+    "uploadFailed": "Error al subir: {{error}}",
+    "retake": "Repetir",
+    "send": "Enviar",
+    "sending": "Enviando…"
   }
 }

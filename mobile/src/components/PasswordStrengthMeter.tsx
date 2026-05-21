@@ -1,7 +1,8 @@
+import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import zxcvbn from 'zxcvbn';
-import { colors, spacing, typography } from '../theme';
+import { spacing, typography, useTheme, type Palette } from '../theme';
 
 type Props = { value: string };
 
@@ -13,7 +14,7 @@ function scoreFor(value: string): { score: number; isTooShort: boolean } {
   return { score: result.score, isTooShort: false };
 }
 
-function colorAt(scoreOrTooShort: { score: number; isTooShort: boolean }): string {
+function colorAt(scoreOrTooShort: { score: number; isTooShort: boolean }, colors: Palette): string {
   if (scoreOrTooShort.isTooShort) return colors.strengthVeryWeak;
   switch (scoreOrTooShort.score) {
     case 0: return colors.strengthVeryWeak;
@@ -38,11 +39,13 @@ function labelKeyFor(scoreOrTooShort: { score: number; isTooShort: boolean }): s
 }
 
 export function PasswordStrengthMeter({ value }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { t } = useTranslation();
   if (value.length === 0) return null;
 
   const s = scoreFor(value);
-  const color = colorAt(s);
+  const color = colorAt(s, colors);
   const filledCount = s.isTooShort ? 1 : s.score + 1;
 
   return (
@@ -68,9 +71,10 @@ export function isAcceptable(value: string): boolean {
   return zxcvbn(value).score >= 2;
 }
 
-const styles = StyleSheet.create({
-  container: { marginTop: spacing.sm, gap: spacing.xs },
-  barRow: { flexDirection: 'row', gap: spacing.xs },
-  segment: { flex: 1, height: 4, borderRadius: 2 },
-  label: { fontFamily: typography.fontFamily, fontSize: typography.small },
-});
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
+    container: { marginTop: spacing.sm, gap: spacing.xs },
+    barRow: { flexDirection: 'row', gap: spacing.xs },
+    segment: { flex: 1, height: 4, borderRadius: 2 },
+    label: { fontFamily: typography.fontFamily, fontSize: typography.small },
+  });

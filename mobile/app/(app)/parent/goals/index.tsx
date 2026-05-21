@@ -1,13 +1,24 @@
 // mobile/app/(app)/parent/goals/index.tsx
-import React from 'react';
-import { View, Text, FlatList, Pressable, StyleSheet, SafeAreaView, Alert } from 'react-native';
+import React, { useRef, useMemo } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Alert,
+  Animated,
+  Platform,
+  StatusBar,
+} from 'react-native';
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import i18n from '../../../../src/i18n';
 import { useActiveGoal } from '../../../../src/hooks/useActiveGoal';
 import { GoalCard } from '../../../../src/components/GoalCard';
+import { TidePoolBackground } from '../../../../src/components/TidePool';
 import { supabase } from '../../../../src/lib/supabase';
-import { colors, spacing, radii, typography } from '../../../../src/theme';
+import { useTheme, type Palette, spacing, radii, typography } from '../../../../src/theme';
 
 type ArchivedGoal = {
   id: string;
@@ -18,7 +29,13 @@ type ArchivedGoal = {
   created_at: string;
 };
 
+const SHADOW = '#0F766E';
+const TOP_INSET =
+  Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) + spacing.lg : 56;
+
 export default function GoalsScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   // Resolve familyId from the logged-in parent profile
   const { data: familyId } = useQuery({
     queryKey: ['parent-family-id-goals'],
@@ -72,64 +89,264 @@ export default function GoalsScreen() {
     );
   };
 
-  return (
-    <SafeAreaView style={styles.root}>
-      <Text style={styles.title}>{i18n.t('goals.title')}</Text>
+  const header = (
+    <View>
+      <View style={styles.topbar}>
+        <BackButton onPress={() => router.back()} />
+        <Text style={styles.title}>{i18n.t('goals.title')}</Text>
+      </View>
 
       {active.data ? (
-        <View style={styles.activeSection}>
-          <GoalCard goal={active.data} />
-          <Pressable onPress={cancelGoal} style={styles.cancelBtn}>
-            <Text style={styles.cancelText}>{i18n.t('goals.cancelButton')}</Text>
-          </Pressable>
+        <View style={styles.hero}>
+          <View style={styles.goalElev}>
+            <GoalCard goal={active.data} />
+          </View>
+          <CancelButton onPress={cancelGoal} />
         </View>
       ) : (
-        <View style={styles.emptySection}>
-          <Text style={styles.empty}>{i18n.t('goals.noActive')}</Text>
-          <Pressable
-            onPress={() => router.push('/(app)/parent/goals/create')}
-            style={styles.createBtn}
-          >
-            <Text style={styles.createText}>{i18n.t('goals.createButton')}</Text>
-          </Pressable>
+        <View style={styles.empty}>
+          <Text style={styles.emptyEmoji}>🎯</Text>
+          <Text style={styles.emptyText}>{i18n.t('goals.noActive')}</Text>
+          <CreateButton onPress={() => router.push('/(app)/parent/goals/create')} />
         </View>
       )}
 
       <Text style={styles.archiveTitle}>{i18n.t('goals.archiveTitle')}</Text>
+    </View>
+  );
+
+  return (
+    <View style={styles.screen}>
+      <TidePoolBackground />
+
       <FlatList
         data={archive.data ?? []}
         keyExtractor={(g) => g.id}
-        ListEmptyComponent={<Text style={styles.empty}>{i18n.t('goals.archiveEmpty')}</Text>}
-        renderItem={({ item }) => (
-          <View style={styles.archiveRow}>
-            <Text style={styles.archiveItemTitle}>{item.title}</Text>
-            <Text style={styles.archiveItemMeta}>
-              {item.status} · {item.target_stars}⭐
-            </Text>
-          </View>
-        )}
+        ListHeaderComponent={header}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scroll}
+        ListEmptyComponent={
+          <Text style={styles.archiveEmpty}>{i18n.t('goals.archiveEmpty')}</Text>
+        }
+        renderItem={({ item }) => {
+          const done = item.status === 'completed';
+          return (
+            <View style={styles.archiveRow}>
+              <View style={styles.archiveMain}>
+                <Text style={styles.archiveItemTitle} numberOfLines={1}>{item.title}</Text>
+                <Text style={styles.archiveItemMeta}>
+                  {item.target_stars}⭐ target
+                  {done && item.completed_at
+                    ? ` · ${new Date(item.completed_at).toLocaleDateString()}`
+                    : ''}
+                </Text>
+              </View>
+              <View style={[styles.pill, done ? styles.pillDone : styles.pillCanceled]}>
+                <Text style={done ? styles.pillDoneText : styles.pillCanceledText}>
+                  {done ? '✓ Completed' : 'Canceled'}
+                </Text>
+              </View>
+            </View>
+          );
+        }}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  root:             { flex: 1, backgroundColor: colors.bg, padding: spacing.lg },
-  title:            { fontSize: typography.h1, fontFamily: typography.fontFamilyBold,
-                      color: colors.text, marginBottom: spacing.md },
-  activeSection:    { marginBottom: spacing.md },
-  emptySection:     { marginBottom: spacing.md },
-  empty:            { fontSize: typography.body, color: colors.textMuted, fontFamily: typography.fontFamily,
-                      padding: spacing.lg, textAlign: 'center' },
-  createBtn:        { backgroundColor: colors.primary, borderRadius: radii.pill,
-                      paddingVertical: spacing.md, alignItems: 'center', marginTop: spacing.md },
-  createText:       { color: colors.surface, fontFamily: typography.fontFamilyBold, fontSize: typography.body },
-  cancelBtn:        { padding: spacing.md, alignItems: 'center', marginTop: spacing.sm },
-  cancelText:       { color: colors.error, fontFamily: typography.fontFamilyBold, fontSize: typography.body },
-  archiveTitle:     { fontSize: typography.h2, fontFamily: typography.fontFamilyBold, color: colors.text,
-                      marginTop: spacing.xl, marginBottom: spacing.md },
-  archiveRow:       { backgroundColor: colors.surface, padding: spacing.md, borderRadius: radii.md,
-                      marginBottom: spacing.sm },
-  archiveItemTitle: { fontSize: typography.body, fontFamily: typography.fontFamilyBold, color: colors.text },
-  archiveItemMeta:  { fontSize: typography.small, color: colors.textMuted, fontFamily: typography.fontFamily },
-});
+/* ---------- buttons ---------- */
+
+function BackButton({ onPress }: { onPress: () => void }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { scale, onPressIn, onPressOut } = usePressScale();
+  return (
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        accessibilityRole="button"
+        accessibilityLabel={i18n.t('common.back')}
+        style={styles.back}
+      >
+        <Text style={styles.backIcon}>←</Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+function CancelButton({ onPress }: { onPress: () => void }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { scale, onPressIn, onPressOut } = usePressScale();
+  return (
+    <Animated.View style={{ transform: [{ scale }], marginTop: spacing.md }}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        accessibilityRole="button"
+        accessibilityLabel={i18n.t('goals.cancelButton')}
+        style={styles.cancelBtn}
+      >
+        <Text style={styles.cancelText}>{i18n.t('goals.cancelButton')}</Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+function CreateButton({ onPress }: { onPress: () => void }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { scale, onPressIn, onPressOut } = usePressScale();
+  return (
+    <Animated.View style={{ transform: [{ scale }], alignSelf: 'stretch', marginTop: spacing.lg }}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        accessibilityRole="button"
+        accessibilityLabel={i18n.t('goals.createButton')}
+        style={styles.createBtn}
+      >
+        <Text style={styles.createText}>{i18n.t('goals.createButton')}</Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+/* ---------- shared press-scale ---------- */
+
+function usePressScale() {
+  const scale = useRef(new Animated.Value(1)).current;
+  function onPressIn() {
+    Animated.spring(scale, { toValue: 0.94, useNativeDriver: true, speed: 40, bounciness: 0 }).start();
+  }
+  function onPressOut() {
+    Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 20, bounciness: 8 }).start();
+  }
+  return { scale, onPressIn, onPressOut };
+}
+
+/* ---------- styles ---------- */
+
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.bg },
+  scroll: { paddingHorizontal: spacing.xl, paddingTop: TOP_INSET, paddingBottom: spacing.xxl },
+
+  topbar: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.xl },
+  back: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: SHADOW,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
+  backIcon: { fontSize: 19, color: colors.text, fontFamily: typography.fontFamilyBold },
+  title: { fontFamily: typography.fontFamilyBold, fontSize: 26, color: colors.text },
+
+  // The (untouched) GoalCard, given a clean elevated lift — no faux-glow blobs
+  // (RN can't soft-blur, so a refined teal shadow reads better than a smudge).
+  hero: { marginBottom: spacing.sm },
+  goalElev: {
+    borderRadius: radii.md,
+    backgroundColor: colors.surface,
+    shadowColor: SHADOW,
+    shadowOpacity: 0.18,
+    shadowRadius: 28,
+    shadowOffset: { width: 0, height: 16 },
+    elevation: 7,
+  },
+
+  empty: {
+    backgroundColor: colors.surface,
+    borderRadius: 24,
+    paddingVertical: spacing.xxl,
+    paddingHorizontal: spacing.xl,
+    alignItems: 'center',
+    gap: spacing.sm,
+    shadowColor: SHADOW,
+    shadowOpacity: 0.12,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 5,
+  },
+  emptyEmoji: { fontSize: 52 },
+  emptyText: {
+    fontFamily: typography.fontFamilySemi,
+    fontSize: typography.body,
+    color: colors.textMuted,
+    textAlign: 'center',
+  },
+
+  createBtn: {
+    backgroundColor: colors.primary,
+    borderRadius: radii.pill,
+    paddingVertical: spacing.md + 2,
+    alignItems: 'center',
+    shadowColor: colors.primary,
+    shadowOpacity: 0.34,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 7 },
+    elevation: 4,
+  },
+  createText: { color: '#fff', fontFamily: typography.fontFamilyBold, fontSize: typography.body },
+
+  cancelBtn: {
+    borderWidth: 2,
+    borderColor: '#FBD5DD',
+    backgroundColor: colors.surface,
+    borderRadius: radii.pill,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+  },
+  cancelText: { color: colors.error, fontFamily: typography.fontFamilyBold, fontSize: typography.body },
+
+  archiveTitle: {
+    fontFamily: typography.fontFamilyBold,
+    fontSize: typography.tiny,
+    color: colors.textMuted,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+    marginTop: spacing.xxl,
+    marginBottom: spacing.md,
+    marginLeft: spacing.xs,
+  },
+  archiveEmpty: {
+    fontFamily: typography.fontFamilySemi,
+    fontSize: typography.body,
+    color: colors.textMuted,
+    textAlign: 'center',
+    padding: spacing.lg,
+  },
+  archiveRow: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginBottom: spacing.sm + 2,
+    shadowColor: SHADOW,
+    shadowOpacity: 0.09,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 7 },
+    elevation: 3,
+  },
+  archiveMain: { flex: 1, minWidth: 0 },
+  archiveItemTitle: { fontFamily: typography.fontFamilyBold, fontSize: typography.body, color: colors.text },
+  archiveItemMeta: { fontFamily: typography.fontFamilySemi, fontSize: typography.small, color: colors.textMuted, marginTop: 2 },
+  pill: { paddingVertical: 5, paddingHorizontal: spacing.md, borderRadius: radii.pill },
+  pillDone: { backgroundColor: 'rgba(52,211,153,0.18)' },
+  pillDoneText: { fontFamily: typography.fontFamilyBold, fontSize: typography.tiny, color: colors.primaryDark },
+  pillCanceled: { backgroundColor: '#F3EEE9' },
+  pillCanceledText: { fontFamily: typography.fontFamilyBold, fontSize: typography.tiny, color: '#9A8466' },
+  });

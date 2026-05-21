@@ -1,6 +1,18 @@
 // mobile/app/(app)/parent/settings.tsx
-import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Modal, Pressable, Alert, Switch, ScrollView } from 'react-native';
+import { useState, useEffect, useMemo } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  Alert,
+  Switch,
+  ScrollView,
+  Platform,
+  StatusBar,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as Clipboard from 'expo-clipboard';
@@ -11,12 +23,23 @@ import { isEnabled, setEnabled } from '../../../src/lib/feedback';
 import { DeleteAccountModal } from '../../../src/components/DeleteAccountModal';
 import { useTranslation } from 'react-i18next';
 import { LanguagePickerModal } from '../../../src/components/LanguagePickerModal';
+import { ThemePickerModal } from '../../../src/components/ThemePickerModal';
 import { setLanguage as setI18nLanguage, getCurrentLanguagePref } from '../../../src/i18n';
 import { QuietHoursPicker } from '../../../src/components/QuietHoursPicker';
 import { PushPrefsList } from '../../../src/components/PushPrefsList';
 import type { EventType } from '../../../src/components/PushPrefsList';
+import { AVATARS, AvatarId } from '../../../src/constants/avatars';
+import { TidePoolBackground } from '../../../src/components/TidePool';
+import { useTheme, type Palette, radii, spacing, typography } from '../../../src/theme';
+
+const SHADOW = '#0F766E';
+const TOP_INSET =
+  Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) + spacing.lg : 56;
 
 export default function Settings() {
+  const { colors, mode: themeMode, setMode: setThemeMode } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const [themePickerOpen, setThemePickerOpen] = useState(false);
   const router = useRouter();
   const qc = useQueryClient();
   const [code, setCode] = useState<string | null>(null);
@@ -36,10 +59,13 @@ export default function Settings() {
     queryKey: ['family-summary'],
     queryFn: async () => {
       const { data: fam } = await supabase.from('families').select('name').limit(1).maybeSingle();
-      const { data: profs } = await supabase.from('profiles').select('id, type');
+      const { data: profs } = await supabase.from('profiles').select('id, type, avatar_id');
+      const members = (profs ?? []) as { id: string; type: string; avatar_id: number }[];
       return {
-        familyName: (fam as { name: string } | null)?.name ?? 'Family',
-        memberCount: profs?.length ?? 0,
+        familyName: (fam as { name: string } | null)?.name ?? '',
+        memberCount: members.length,
+        parentCount: members.filter((m) => m.type === 'parent').length,
+        avatars: members.map((m) => m.avatar_id),
       };
     },
   });
@@ -138,7 +164,7 @@ export default function Settings() {
       return data as string;
     },
     onSuccess: (c) => { setCopied(false); setCode(c); },
-    onError: (e) => Alert.alert('Could not generate code', (e as Error).message),
+    onError: (e) => Alert.alert(t('settings.invite.couldNotGenerate'), (e as Error).message),
   });
 
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -177,100 +203,169 @@ export default function Settings() {
     return t('settings.language.english');
   }
 
+  function currentThemeLabel(): string {
+    if (themeMode === 'system') return t('settings.theme.system');
+    if (themeMode === 'dark') return t('settings.theme.dark');
+    return t('settings.theme.light');
+  }
+
   async function onCopy() {
     if (!code) return;
     await Clipboard.setStringAsync(code);
     setCopied(true);
   }
 
+  const clusterAvatars = (data?.avatars ?? []).slice(0, 5);
+  const overflow = (data?.memberCount ?? 0) - clusterAvatars.length;
+
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Settings</Text>
+    <View style={styles.screen}>
+      <TidePoolBackground />
 
-      {isLoading ? <ActivityIndicator /> : (
-        <View style={styles.section}>
-          <Text style={styles.label}>Family</Text>
-          <Text style={styles.value}>{data?.familyName} · {data?.memberCount} member{data?.memberCount === 1 ? '' : 's'}</Text>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+        <Text style={styles.title}>{t('settings.title')}</Text>
+
+        {/* family hero */}
+        <View style={styles.hero}>
+          <View style={styles.heroGlow} />
+          {isLoading ? (
+            <ActivityIndicator color={colors.primary} />
+          ) : (
+            <>
+              <View style={styles.cluster}>
+                {clusterAvatars.map((id, i) => {
+                  const av = AVATARS[id as AvatarId] ?? AVATARS[1];
+                  return (
+                    <View
+                      key={i}
+                      style={[
+                        styles.clusterAv,
+                        { backgroundColor: av.bg, marginLeft: i === 0 ? 0 : -12, zIndex: 5 - i },
+                      ]}
+                    >
+                      <Text style={styles.clusterEmoji}>{av.emoji}</Text>
+                    </View>
+                  );
+                })}
+                {overflow > 0 && (
+                  <View style={[styles.clusterAv, styles.clusterMore, { marginLeft: -12 }]}>
+                    <Text style={styles.clusterMoreText}>+{overflow}</Text>
+                  </View>
+                )}
+              </View>
+              <View style={styles.heroText}>
+                <Text style={styles.heroName} numberOfLines={1}>{data?.familyName || t('settings.familyFallback')}</Text>
+                <Text style={styles.heroMeta}>
+                  {t('settings.memberCount', { count: data?.memberCount ?? 0 })}
+                  {(data?.parentCount ?? 0) > 0 ? ` · ${t('settings.parentCount', { count: data?.parentCount ?? 0 })}` : ''}
+                </Text>
+              </View>
+            </>
+          )}
         </View>
-      )}
 
-      <View style={styles.section}>
-        <Text style={styles.label}>Co-parents</Text>
-        <Button label="Invite a co-parent" onPress={() => invite.mutate()} loading={invite.isPending} variant="secondary" />
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.label}>Feedback</Text>
-        <View style={styles.toggleRow}>
-          <Text style={styles.toggleLabel}>Sounds & haptics on this device</Text>
-          <Switch value={feedbackOn} onValueChange={onToggleFeedback} />
+        {/* co-parents */}
+        <Text style={styles.label}>{t('settings.coParents')}</Text>
+        <View style={styles.card}>
+          <View style={styles.cardPad}>
+            <Button label={t('settings.inviteCoParent')} onPress={() => invite.mutate()} loading={invite.isPending} variant="secondary" />
+          </View>
         </View>
-      </View>
 
-      <View style={styles.stub}><Text style={styles.stubText}>Subscription — coming soon</Text></View>
+        {/* feedback */}
+        <Text style={styles.label}>{t('settings.feedback')}</Text>
+        <View style={styles.card}>
+          <View style={styles.row}>
+            <Text style={styles.rowKey}>{t('settings.soundsHaptics')}</Text>
+            <Switch value={feedbackOn} onValueChange={onToggleFeedback} />
+          </View>
+        </View>
 
-      <View style={styles.section}>
+        <View style={styles.stub}>
+          <Text style={styles.stubText}>{t('settings.subscriptionSoon')}</Text>
+        </View>
+
+        {/* language */}
         <Text style={styles.label}>{t('settings.language.label')}</Text>
-        <View style={styles.languageRow}>
-          <Text style={styles.value}>{currentLanguageLabel()}</Text>
-          <Pressable onPress={() => setLangPickerOpen(true)}>
-            <Text style={styles.languageChange}>{t('settings.language.change')}</Text>
+        <View style={styles.card}>
+          <Pressable onPress={() => setLangPickerOpen(true)} style={styles.row}>
+            <Text style={styles.rowKey}>{currentLanguageLabel()}</Text>
+            <Text style={styles.changeText}>{t('settings.language.change')}</Text>
           </Pressable>
         </View>
-      </View>
 
-      <View style={styles.section}>
+        {/* theme */}
+        <Text style={styles.label}>{t('settings.theme.label')}</Text>
+        <View style={styles.card}>
+          <Pressable onPress={() => setThemePickerOpen(true)} style={styles.row}>
+            <Text style={styles.rowKey}>{currentThemeLabel()}</Text>
+            <Text style={styles.changeText}>{t('settings.language.change')}</Text>
+          </Pressable>
+        </View>
+
+        {/* notifications — embeds untouched QuietHoursPicker + PushPrefsList */}
         <Text style={styles.label}>{t('settings.notifications.label', 'Notifications')}</Text>
-        {familyData ? (
-          <QuietHoursPicker
-            enabled={familyData.quiet_hours_enabled}
-            start={familyData.quiet_hours_start}
-            end={familyData.quiet_hours_end}
-            timezone={familyData.timezone}
-            onSave={(values) => setQuietHours.mutateAsync(values)}
-          />
-        ) : null}
-        <PushPrefsList
-          prefs={pushPrefsData ?? {}}
-          onTogglePref={(event, enabled) => setPushPref.mutateAsync({ event, enabled })}
-        />
-      </View>
+        <View style={styles.card}>
+          <View style={styles.cardPad}>
+            {familyData ? (
+              <QuietHoursPicker
+                enabled={familyData.quiet_hours_enabled}
+                start={familyData.quiet_hours_start}
+                end={familyData.quiet_hours_end}
+                timezone={familyData.timezone}
+                onSave={(values) => setQuietHours.mutateAsync(values)}
+              />
+            ) : null}
+            <PushPrefsList
+              prefs={pushPrefsData ?? {}}
+              onTogglePref={(event, enabled) => setPushPref.mutateAsync({ event, enabled })}
+            />
+          </View>
+        </View>
 
-      <View style={styles.section}>
-        <Pressable onPress={() => router.push('/(app)/parent/leaderboard')} style={styles.linkRow}>
-          <Text style={styles.linkText}>{t('leaderboard.title')}</Text>
-          <Text style={styles.linkChevron}>›</Text>
-        </Pressable>
-      </View>
+        {/* more */}
+        <Text style={styles.label}>{t('settings.more')}</Text>
+        <View style={styles.card}>
+          <Pressable onPress={() => router.push('/(app)/parent/leaderboard')} style={styles.linkRow}>
+            <Text style={styles.rowKey}>{t('leaderboard.title')}</Text>
+            <Text style={styles.chevron}>›</Text>
+          </Pressable>
+          <View style={styles.divider} />
+          <Pressable onPress={() => router.push('/(app)/parent/goals')} style={styles.linkRow}>
+            <Text style={styles.rowKey}>{t('goals.title')}</Text>
+            <Text style={styles.chevron}>›</Text>
+          </Pressable>
+        </View>
 
-      <View style={styles.section}>
-        <Pressable onPress={() => router.push('/(app)/parent/goals')} style={styles.linkRow}>
-          <Text style={styles.linkText}>{t('goals.title')}</Text>
-          <Text style={styles.linkChevron}>›</Text>
-        </Pressable>
-      </View>
-
-      <View style={styles.section}>
+        {/* account */}
         <Text style={styles.label}>{t('settings.account.label')}</Text>
-        <Pressable onPress={() => { setDeleteError(null); setDeleteOpen(true); }} style={styles.dangerBtn}>
-          <Text style={styles.dangerText}>{t('settings.account.deleteAccount')}</Text>
+        <Pressable
+          onPress={() => { setDeleteError(null); setDeleteOpen(true); }}
+          style={[styles.card, styles.dangerCard]}
+        >
+          <View style={styles.linkRow}>
+            <Text style={styles.dangerText}>{t('settings.account.deleteAccount')}</Text>
+            <Text style={[styles.chevron, { color: '#F0A6B4' }]}>›</Text>
+          </View>
         </Pressable>
-      </View>
 
-      <Button label="Switch profile" variant="secondary" onPress={() => router.replace('/(app)')} />
-      <Button label="Sign out" variant="secondary" onPress={signOut} style={{ marginTop: 8 }} />
+        <View style={styles.bottomBtns}>
+          <Button label={t('settings.switchProfile')} variant="secondary" onPress={() => router.replace('/(app)')} />
+          <Button label={t('settings.signOut')} variant="secondary" onPress={signOut} style={{ marginTop: spacing.sm }} />
+        </View>
+      </ScrollView>
 
       <Modal visible={!!code} transparent animationType="fade" onRequestClose={() => setCode(null)}>
         <View style={styles.modalBg}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Co-parent invite code</Text>
+            <Text style={styles.modalTitle}>{t('settings.invite.codeTitle')}</Text>
             <Text style={styles.codeBig}>{code}</Text>
-            <Text style={styles.modalSub}>Expires in 24 hours. Share it with your co-parent — they enter it on the join-family screen when they sign up.</Text>
+            <Text style={styles.modalSub}>{t('settings.invite.codeSub')}</Text>
             <Pressable onPress={onCopy} style={styles.copyBtn}>
-              <Text style={styles.copyText}>{copied ? '✓ Copied' : 'Copy code'}</Text>
+              <Text style={styles.copyText}>{copied ? t('settings.invite.copied') : t('settings.invite.copy')}</Text>
             </Pressable>
-            <Pressable onPress={() => setCode(null)} style={styles.doneBtn}>
-              <Text style={styles.doneText}>Done</Text>
+            <Pressable onPress={() => setCode(null)} style={styles.modalDone}>
+              <Text style={styles.modalDoneText}>{t('settings.invite.done')}</Text>
             </Pressable>
           </View>
         </View>
@@ -290,35 +385,150 @@ export default function Settings() {
         onSelect={onSelectLanguage}
         onCancel={() => setLangPickerOpen(false)}
       />
-    </ScrollView>
+
+      <ThemePickerModal
+        visible={themePickerOpen}
+        current={themeMode}
+        onSelect={async (m) => {
+          setThemePickerOpen(false);
+          await setThemeMode(m);
+        }}
+        onCancel={() => setThemePickerOpen(false)}
+      />
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#fff' },
-  container: { padding: 24, paddingTop: 48, backgroundColor: '#fff', gap: 12 },
-  title: { fontSize: 24, fontWeight: '700', marginBottom: 8 },
-  section: { paddingVertical: 8 },
-  label: { fontSize: 11, color: '#6b7280', textTransform: 'uppercase', fontWeight: '600' },
-  value: { fontSize: 16, marginTop: 4 },
-  toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
-  toggleLabel: { fontSize: 15, flex: 1 },
-  stub: { padding: 12, backgroundColor: '#f3f4f6', borderRadius: 8 },
-  stubText: { color: '#6b7280' },
-  modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' },
-  modalCard: { backgroundColor: '#fff', borderRadius: 16, padding: 24, width: 320, gap: 12, alignItems: 'center' },
-  modalTitle: { fontSize: 17, fontWeight: '600' },
-  codeBig: { fontSize: 36, fontWeight: '700', letterSpacing: 8, color: '#111827', marginVertical: 8 },
-  modalSub: { fontSize: 13, color: '#6b7280', textAlign: 'center' },
-  copyBtn: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 999, backgroundColor: '#3b82f6' },
-  copyText: { color: '#fff', fontWeight: '600' },
-  doneBtn: { paddingVertical: 8 },
-  doneText: { color: '#6b7280', fontWeight: '500' },
-  dangerBtn: { paddingVertical: 12, paddingHorizontal: 16, borderRadius: 8, backgroundColor: '#fff', borderWidth: 1, borderColor: '#ef4444', alignItems: 'center', marginTop: 8 },
-  dangerText: { color: '#ef4444', fontWeight: '600', fontSize: 15 },
-  languageRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
-  languageChange: { color: '#3b82f6', fontSize: 14, fontWeight: '600' },
-  linkRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 8, backgroundColor: '#f9fafb' },
-  linkText: { fontSize: 15, fontWeight: '500', color: '#111827' },
-  linkChevron: { fontSize: 18, color: '#9ca3af' },
-});
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.bg },
+  scroll: { paddingHorizontal: spacing.xl, paddingTop: TOP_INSET, paddingBottom: spacing.xxl },
+
+  title: { fontFamily: typography.fontFamilyBold, fontSize: 30, color: colors.text, letterSpacing: -0.3, marginBottom: spacing.lg },
+
+  hero: {
+    backgroundColor: colors.surface,
+    borderRadius: 24,
+    padding: spacing.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.lg,
+    minHeight: 88,
+    overflow: 'hidden',
+    shadowColor: SHADOW,
+    shadowOpacity: 0.14,
+    shadowRadius: 26,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 5,
+  },
+  heroGlow: {
+    position: 'absolute',
+    right: -30,
+    top: -30,
+    width: 130,
+    height: 130,
+    borderRadius: 65,
+    backgroundColor: 'rgba(14,165,164,0.12)',
+  },
+  cluster: { flexDirection: 'row' },
+  clusterAv: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: colors.surface,
+  },
+  clusterEmoji: { fontSize: 21 },
+  clusterMore: { backgroundColor: '#E3EAE8' },
+  clusterMoreText: { fontFamily: typography.fontFamilyBold, fontSize: typography.small, color: colors.textMuted },
+  heroText: { flex: 1, minWidth: 0 },
+  heroName: { fontFamily: typography.fontFamilyBold, fontSize: 21, color: colors.text },
+  heroMeta: { fontFamily: typography.fontFamilySemi, fontSize: typography.small, color: colors.textMuted, marginTop: 2 },
+
+  label: {
+    fontFamily: typography.fontFamilyBold,
+    fontSize: typography.tiny,
+    color: colors.textMuted,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+    marginTop: spacing.xl,
+    marginBottom: spacing.sm + 1,
+    marginLeft: spacing.xs,
+  },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: 18,
+    overflow: 'hidden',
+    shadowColor: SHADOW,
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 3,
+  },
+  cardPad: { padding: spacing.lg },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  rowKey: { fontFamily: typography.fontFamilyBold, fontSize: typography.body, color: colors.text, flex: 1 },
+  changeText: { fontFamily: typography.fontFamilyBold, fontSize: typography.small, color: colors.primary },
+  linkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing.lg,
+  },
+  chevron: { fontSize: 20, color: '#BBD2CD', fontFamily: typography.fontFamilyBold },
+  divider: { height: 1, backgroundColor: '#F1F6F4', marginHorizontal: spacing.lg },
+
+  stub: {
+    backgroundColor: 'rgba(15,118,110,0.05)',
+    borderRadius: 14,
+    paddingVertical: spacing.md + 1,
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing.lg,
+  },
+  stubText: { fontFamily: typography.fontFamilyBold, fontSize: typography.small, color: '#7E938F', textAlign: 'center' },
+
+  dangerCard: { borderWidth: 1.5, borderColor: '#F7C9D2', backgroundColor: '#FFF5F6' },
+  dangerText: { fontFamily: typography.fontFamilyBold, fontSize: typography.body, color: colors.error },
+
+  bottomBtns: { marginTop: spacing.xl },
+
+  modalBg: { flex: 1, backgroundColor: 'rgba(6,40,38,0.55)', justifyContent: 'center', alignItems: 'center', padding: spacing.xl },
+  modalCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 24,
+    padding: spacing.xl,
+    width: 320,
+    gap: spacing.md,
+    alignItems: 'center',
+    shadowColor: SHADOW,
+    shadowOpacity: 0.25,
+    shadowRadius: 30,
+    shadowOffset: { width: 0, height: 16 },
+    elevation: 12,
+  },
+  modalTitle: { fontFamily: typography.fontFamilyBold, fontSize: typography.h2, color: colors.text },
+  codeBig: { fontFamily: typography.fontFamilyBold, fontSize: 36, letterSpacing: 8, color: colors.primaryDark, marginVertical: spacing.sm },
+  modalSub: { fontFamily: typography.fontFamilySemi, fontSize: typography.small, color: colors.textMuted, textAlign: 'center' },
+  copyBtn: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: radii.pill,
+    backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
+  },
+  copyText: { color: '#fff', fontFamily: typography.fontFamilyBold, fontSize: typography.body },
+  modalDone: { paddingVertical: spacing.sm },
+  modalDoneText: { fontFamily: typography.fontFamilySemi, fontSize: typography.body, color: colors.textMuted },
+  });
