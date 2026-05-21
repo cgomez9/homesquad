@@ -29,8 +29,9 @@ const TOP_INSET =
   Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) + spacing.lg : 56;
 
 export default function KidBadges() {
-  const { colors } = useTheme();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { colors, effective } = useTheme();
+  const isDark = effective === 'dark';
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
   const router = useRouter();
   const { t } = useTranslation();
   const { profileId } = useLocalSearchParams<{ profileId: string }>();
@@ -133,8 +134,9 @@ export default function KidBadges() {
 /* ---------- back button ---------- */
 
 function BackButton({ onPress }: { onPress: () => void }) {
-  const { colors } = useTheme();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { colors, effective } = useTheme();
+  const isDark = effective === 'dark';
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
   const { t } = useTranslation();
   const scale = useRef(new Animated.Value(1)).current;
   return (
@@ -168,8 +170,9 @@ function BadgeCard({
   unlockedAt: string | undefined;
   index: number;
 }) {
-  const { colors } = useTheme();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { colors, effective } = useTheme();
+  const isDark = effective === 'dark';
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
   const { t } = useTranslation();
   const enter = useRef(new Animated.Value(0)).current;
   const unlocked = !!unlockedAt;
@@ -216,7 +219,7 @@ function BadgeCard({
 
 /* ---------- styles ---------- */
 
-const makeStyles = (colors: Palette) =>
+const makeStyles = (colors: Palette, isDark: boolean) =>
   StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   content: { flex: 1, paddingTop: TOP_INSET },
@@ -306,10 +309,10 @@ const makeStyles = (colors: Palette) =>
     elevation: 4,
   },
   cardLocked: {
-    backgroundColor: 'rgba(255,255,255,0.55)',
+    backgroundColor: isDark ? 'rgba(19,36,59,0.55)' : 'rgba(255,255,255,0.55)',
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: '#C4DAD6',
+    borderColor: colors.border,
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -329,10 +332,10 @@ const makeStyles = (colors: Palette) =>
     borderColor: GOLD_RING,
   },
   medLocked: {
-    backgroundColor: '#EDF3F1',
+    backgroundColor: isDark ? 'rgba(34,50,75,0.6)' : '#EDF3F1',
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: '#C4DAD6',
+    borderColor: colors.border,
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -368,12 +371,12 @@ const makeStyles = (colors: Palette) =>
     color: colors.text,
     textAlign: 'center',
   },
-  cardTitleLocked: { color: '#7E938F' },
+  cardTitleLocked: { color: colors.textMuted },
   cardDate: { fontFamily: typography.fontFamilySemi, fontSize: typography.tiny, color: colors.textMuted },
   cardDesc: {
     fontFamily: typography.fontFamilySemi,
     fontSize: typography.tiny,
-    color: '#8A9C98',
+    color: colors.textMuted,
     textAlign: 'center',
     fontStyle: 'italic',
     lineHeight: 15,
