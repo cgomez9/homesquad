@@ -20,6 +20,9 @@ export function GoalCard({ goal, onPress }: Props) {
     <View style={styles.card}>
       <Text style={styles.label}>{i18n.t('goals.active')}</Text>
       <Text style={styles.title}>{goal.title}</Text>
+      {goal.description ? (
+        <Text style={styles.description}>{goal.description}</Text>
+      ) : null}
       <View style={styles.barTrack}>
         <View testID="goal-progress-fill" style={StyleSheet.flatten([styles.barFill, { width: `${pct}%` }])} />
       </View>
@@ -40,6 +43,8 @@ const makeStyles = (colors: Palette) =>
     label:      { fontSize: typography.tiny, color: colors.textMuted, textTransform: 'uppercase',
                   fontFamily: typography.fontFamilyBold, letterSpacing: 1 },
     title:      { fontSize: typography.h2, fontFamily: typography.fontFamilyBold, color: colors.text },
+    description: { fontSize: typography.small, fontFamily: typography.fontFamilySemi, fontStyle: 'italic',
+                   color: colors.textMuted, lineHeight: 18 },
     barTrack:   { height: 10, backgroundColor: colors.border, borderRadius: radii.pill, overflow: 'hidden' },
     barFill:    { height: 10, backgroundColor: colors.primary, borderRadius: radii.pill },
     progressText: { fontSize: typography.small, color: colors.textMuted, fontFamily: typography.fontFamily },
