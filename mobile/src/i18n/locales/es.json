@@ -330,7 +330,11 @@
     "rewardsCount_other": "{{count}} premios en la tienda",
     "rewardsEmpty": "Aún no hay premios — toca + para crear uno.",
     "newRewardA11y": "Nuevo premio",
-    "archiveRewardTitle": "¿Archivar premio?"
+    "archiveRewardTitle": "¿Archivar premio?",
+    "setGoalCta": {
+      "title": "Crea una meta familiar",
+      "blurb": "Reúnan a todos por un premio compartido — pizza, una peli, lo que sea."
+    }
   },
   "approvals": {
     "title": "Aprobaciones",

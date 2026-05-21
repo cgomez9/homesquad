@@ -330,7 +330,11 @@
     "rewardsCount_other": "{{count}} rewards in the shop",
     "rewardsEmpty": "No rewards yet — tap + to add one.",
     "newRewardA11y": "New reward",
-    "archiveRewardTitle": "Archive reward?"
+    "archiveRewardTitle": "Archive reward?",
+    "setGoalCta": {
+      "title": "Set a family goal",
+      "blurb": "Rally everyone toward a shared treat — pizza, a movie, anything."
+    }
   },
   "approvals": {
     "title": "Approvals",

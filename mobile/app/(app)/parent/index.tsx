@@ -95,14 +95,28 @@ export default function ChoresList() {
         <Fab onPress={() => router.push('/(app)/parent/chores/new' as never)} />
       </View>
 
-      {activeGoal.data && (
+      {activeGoal.data ? (
         <Pressable
           onPress={() => router.push('/(app)/parent/goals' as never)}
           style={styles.goalWrap}
         >
           <GoalCard goal={activeGoal.data} />
         </Pressable>
-      )}
+      ) : familyId && !activeGoal.isLoading ? (
+        <Pressable
+          onPress={() => router.push('/(app)/parent/goals/create' as never)}
+          accessibilityRole="button"
+          accessibilityLabel={t('parent.setGoalCta.title')}
+          style={styles.goalCta}
+        >
+          <Text style={styles.goalCtaEmoji}>🎯</Text>
+          <View style={styles.goalCtaText}>
+            <Text style={styles.goalCtaTitle}>{t('parent.setGoalCta.title')}</Text>
+            <Text style={styles.goalCtaBlurb}>{t('parent.setGoalCta.blurb')}</Text>
+          </View>
+          <Text style={styles.goalCtaChevron}>›</Text>
+        </Pressable>
+      ) : null}
 
       {chores.length > 0 && (
         <Text style={styles.section}>{t('parent.activeChores', { count: chores.length })}</Text>
@@ -270,6 +284,37 @@ const makeStyles = (colors: Palette) =>
   fabText: { color: '#fff', fontSize: 30, fontFamily: typography.fontFamilyBold, lineHeight: 34 },
 
   goalWrap: { marginBottom: spacing.sm },
+  goalCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: 18,
+    paddingVertical: spacing.md + 2,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+  },
+  goalCtaEmoji: { fontSize: 26 },
+  goalCtaText: { flex: 1, minWidth: 0 },
+  goalCtaTitle: {
+    fontFamily: typography.fontFamilyBold,
+    fontSize: typography.body,
+    color: colors.text,
+  },
+  goalCtaBlurb: {
+    fontFamily: typography.fontFamilySemi,
+    fontSize: typography.small,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  goalCtaChevron: {
+    fontSize: 22,
+    color: colors.textMuted,
+    fontFamily: typography.fontFamilyBold,
+  },
   section: {
     fontFamily: typography.fontFamilyBold,
     fontSize: typography.tiny,
