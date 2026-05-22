@@ -15,6 +15,7 @@ export const EVENT_TYPES = [
   'achievement_unlocked',
   'streak_milestone',
   'goal_completed',
+  'chore_reminder',
 ] as const;
 
 export type EventType = (typeof EVENT_TYPES)[number];

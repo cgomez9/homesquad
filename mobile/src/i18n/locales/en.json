@@ -194,7 +194,8 @@
       "redemption_fulfilled": "Reward delivered",
       "achievement_unlocked": "Badge unlocked",
       "streak_milestone": "Streak milestone",
-      "goal_completed": "Family goal reached"
+      "goal_completed": "Family goal reached",
+      "chore_reminder": "Chore reminders"
     },
     "errors": {
       "invalidTimezone": "We couldn't recognize that timezone.",

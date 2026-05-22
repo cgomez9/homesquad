@@ -194,7 +194,8 @@
       "redemption_fulfilled": "Premio entregado",
       "achievement_unlocked": "Insignia ganada",
       "streak_milestone": "Racha lograda",
-      "goal_completed": "Meta familiar lograda"
+      "goal_completed": "Meta familiar lograda",
+      "chore_reminder": "Recordatorios de tareas"
     },
     "errors": {
       "invalidTimezone": "No reconocemos esa zona horaria.",
