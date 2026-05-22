@@ -267,6 +267,7 @@
     },
     "back": "Back",
     "cancel": "Cancel",
+    "ok": "OK",
     "archive": "Archive",
     "timeAgo": {
       "justNow": "just now",
@@ -407,7 +408,8 @@
     "addTime": "+ Add",
     "invalidTime": "Use 24h format like 08:00",
     "assignee": "Assignee",
-    "anyone": "Anyone"
+    "anyone": "Anyone",
+    "pickTimeTitle": "Pick a time"
   },
   "recurrence": {
     "daily": "Daily",

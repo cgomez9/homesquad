@@ -267,6 +267,7 @@
     },
     "back": "Atrás",
     "cancel": "Cancelar",
+    "ok": "Aceptar",
     "archive": "Archivar",
     "timeAgo": {
       "justNow": "ahora mismo",
@@ -407,7 +408,8 @@
     "addTime": "+ Añadir",
     "invalidTime": "Usa formato 24h como 08:00",
     "assignee": "Asignado",
-    "anyone": "Cualquiera"
+    "anyone": "Cualquiera",
+    "pickTimeTitle": "Elige una hora"
   },
   "recurrence": {
     "daily": "Diaria",
