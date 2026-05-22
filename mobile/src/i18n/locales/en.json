@@ -407,7 +407,9 @@
       "thu": "Thu",
       "fri": "Fri",
       "sat": "Sat"
-    }
+    },
+    "timesSuffix": " · {{times}}",
+    "timesJoin": ", "
   },
   "celebration": {
     "choreApproved": "⭐ Chore approved!",

@@ -1,31 +1,53 @@
 export type Recurrence =
-  | { type: 'once'; due: string }
-  | { type: 'daily' }
-  | { type: 'weekly'; days: number[] };
+  | { type: 'once'; due: string; time?: string }
+  | { type: 'daily'; times?: string[] }
+  | { type: 'weekly'; days: number[]; times?: string[] };
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
 type TFn = (key: string, opts?: Record<string, unknown>) => string;
 
-// `t` is optional: without it (e.g. unit tests) the original English strings
-// are returned verbatim; with it, output is localized via i18n.
+function formatTimes(times: string[] | undefined, t?: TFn): string {
+  if (!times || times.length === 0) return '';
+  const sorted = [...times].sort();
+  const labels = sorted.map((hhmm) => {
+    const [h, m] = hhmm.split(':').map((s) => parseInt(s, 10));
+    const d = new Date(2000, 0, 1, h, m);
+    return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  });
+  const join = t ? t('recurrence.timesJoin') : ', ';
+  const joined = labels.join(join);
+  return t ? t('recurrence.timesSuffix', { times: joined }) : ` · ${joined}`;
+}
+
 export function formatRecurrence(rec: Recurrence, t?: TFn): string {
   if (rec.type === 'once') {
     const d = new Date(rec.due + 'T00:00:00Z');
-    if (!t) {
-      return `Once on ${d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}`;
-    }
-    const date = d.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
-    return t('recurrence.onceOn', { date });
+    const date = d.toLocaleDateString(
+      t ? undefined : 'en-US',
+      { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' },
+    );
+    const base = t
+      ? t('recurrence.onceOn', { date })
+      : `Once on ${date}`;
+    return base + formatTimes(rec.time ? [rec.time] : undefined, t);
   }
-  if (rec.type === 'daily') return t ? t('recurrence.daily') : 'Daily';
+  if (rec.type === 'daily') {
+    const base = t ? t('recurrence.daily') : 'Daily';
+    return base + formatTimes(rec.times, t);
+  }
   if (rec.type === 'weekly') {
-    if (rec.days.length === 7) return t ? t('recurrence.everyDay') : 'Every day';
-    return [...rec.days]
-      .sort((a, b) => a - b)
-      .map((d) => (t ? t(`recurrence.dayShort.${DAY_KEYS[d]}`) : DAY_LABELS[d]))
-      .join(' · ');
+    let base: string;
+    if (rec.days.length === 7) {
+      base = t ? t('recurrence.everyDay') : 'Every day';
+    } else {
+      base = [...rec.days]
+        .sort((a, b) => a - b)
+        .map((d) => (t ? t(`recurrence.dayShort.${DAY_KEYS[d]}`) : DAY_LABELS[d]))
+        .join(' · ');
+    }
+    return base + formatTimes(rec.times, t);
   }
   return t ? t('recurrence.unknown') : 'Unknown';
 }

@@ -407,7 +407,9 @@
       "thu": "Jue",
       "fri": "Vie",
       "sat": "Sáb"
-    }
+    },
+    "timesSuffix": " · {{times}}",
+    "timesJoin": ", "
   },
   "celebration": {
     "choreApproved": "⭐ ¡Tarea aprobada!",
