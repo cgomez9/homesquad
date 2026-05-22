@@ -404,7 +404,9 @@
     "specificTimesToggle": "At specific times",
     "addTimePlaceholder": "HH:MM",
     "addTime": "+ Add",
-    "invalidTime": "Use 24h format like 08:00"
+    "invalidTime": "Use 24h format like 08:00",
+    "assignee": "Assignee",
+    "anyone": "Anyone"
   },
   "recurrence": {
     "daily": "Daily",

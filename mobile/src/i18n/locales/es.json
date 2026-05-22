@@ -404,7 +404,9 @@
     "specificTimesToggle": "A horas específicas",
     "addTimePlaceholder": "HH:MM",
     "addTime": "+ Añadir",
-    "invalidTime": "Usa formato 24h como 08:00"
+    "invalidTime": "Usa formato 24h como 08:00",
+    "assignee": "Asignado",
+    "anyone": "Cualquiera"
   },
   "recurrence": {
     "daily": "Diaria",
