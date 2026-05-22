@@ -96,6 +96,24 @@ async function formatMessage(
     };
   }
 
+  if (it.event_type === 'chore_reminder') {
+    const choreId = p.chore_id as string | undefined;
+    const kidId = p.kid_profile_id as string | undefined;
+    let choreTitle = 'a chore';
+    let kidName = 'A kid';
+    if (choreId) {
+      const { data } = await supabase
+        .from('chores').select('title').eq('id', choreId).single();
+      choreTitle = (data as { title?: string } | null)?.title ?? choreTitle;
+    }
+    if (kidId) {
+      const { data } = await supabase
+        .from('profiles').select('display_name').eq('id', kidId).single();
+      kidName = (data as { display_name?: string } | null)?.display_name ?? kidName;
+    }
+    return { title: '⏰ Reminder', body: `${kidName} — time for ${choreTitle} in 10 min` };
+  }
+
   return { title: 'Shores', body: 'New activity in your family.' };
 }
 
