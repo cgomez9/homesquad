@@ -10,8 +10,9 @@ const TOP_INSET =
   Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) + spacing.lg : 56;
 
 export default function CreateGoalScreen() {
-  const { colors } = useTheme();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { colors, effective } = useTheme();
+  const isDark = effective === 'dark';
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
   const [title,       setTitle]       = useState('');
   const [targetStr,   setTargetStr]   = useState('');
   const [description, setDescription] = useState('');
@@ -61,7 +62,7 @@ export default function CreateGoalScreen() {
             value={title}
             onChangeText={setTitle}
             placeholder={i18n.t('goals.titlePlaceholder')}
-            placeholderTextColor="#9DB0AC"
+            placeholderTextColor={colors.textMuted}
           />
 
           <Text style={styles.label}>{i18n.t('goals.targetLabel')}</Text>
@@ -80,7 +81,7 @@ export default function CreateGoalScreen() {
             value={description}
             onChangeText={setDescription}
             placeholder={i18n.t('goals.descriptionPlaceholder')}
-            placeholderTextColor="#9DB0AC"
+            placeholderTextColor={colors.textMuted}
             multiline
           />
 
@@ -104,8 +105,9 @@ export default function CreateGoalScreen() {
 }
 
 function BackButton({ onPress }: { onPress: () => void }) {
-  const { colors } = useTheme();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { colors, effective } = useTheme();
+  const isDark = effective === 'dark';
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
   const scale = useRef(new Animated.Value(1)).current;
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
@@ -123,7 +125,7 @@ function BackButton({ onPress }: { onPress: () => void }) {
   );
 }
 
-const makeStyles = (colors: Palette) =>
+const makeStyles = (colors: Palette, isDark: boolean) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: colors.bg },
     container: { padding: spacing.xl, paddingTop: TOP_INSET, flexGrow: 1 },
@@ -154,7 +156,7 @@ const makeStyles = (colors: Palette) =>
     input: {
       borderWidth: 1.5, borderColor: colors.border, borderRadius: 12,
       paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 2,
-      backgroundColor: '#FBFDFC', color: colors.text,
+      backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#FBFDFC', color: colors.text,
       fontFamily: typography.fontFamilySemi, fontSize: typography.body,
     },
     multiline: { minHeight: 84, textAlignVertical: 'top', paddingTop: spacing.sm + 2 },
