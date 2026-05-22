@@ -1,6 +1,6 @@
 // mobile/app/_layout.tsx — full file
 import { Slot, useRouter, useSegments } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import * as Notifications from 'expo-notifications';
@@ -37,10 +37,11 @@ function RealtimeBridge() {
   const userId = auth.status === 'authenticated' ? auth.session.user.id : undefined;
   const family = useFamily(userId);
   const qc = useQueryClient();
+  const channelKey = useRef(Math.random().toString(36).slice(2, 10)).current;
 
   useEffect(() => {
     if (family.status !== 'has-family') return;
-    const channel = subscribeToFamily(family.familyId, qc);
+    const channel = subscribeToFamily(family.familyId, qc, channelKey);
     return () => { supabase.removeChannel(channel); };
   }, [family, qc]);
 

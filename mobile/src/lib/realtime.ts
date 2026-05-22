@@ -3,9 +3,13 @@ import { QueryClient } from '@tanstack/react-query';
 import { emit } from './events';
 import { supabase } from './supabase';
 
-export function subscribeToFamily(familyId: string, queryClient: QueryClient): RealtimeChannel {
+export function subscribeToFamily(
+  familyId: string,
+  queryClient: QueryClient,
+  channelKey: string,
+): RealtimeChannel {
   const channel = supabase
-    .channel(`family-${familyId}`)
+    .channel(`family-${familyId}-${channelKey}`)
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'chore_instances', filter: `family_id=eq.${familyId}` },

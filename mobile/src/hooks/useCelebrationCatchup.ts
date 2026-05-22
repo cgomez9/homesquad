@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { buildCelebrationQueue } from '../lib/celebrationQueue';
 import type { RawApproval, RawAchievement, RawGoal } from '../lib/celebrationQueue';
@@ -15,6 +15,8 @@ export function useCelebrationCatchup(
   profileId: string | undefined,
   familyId: string | undefined,
 ) {
+  const channelKey = useRef(Math.random().toString(36).slice(2, 10)).current;
+
   // On-mount catch-up.
   useEffect(() => {
     if (!profileId || !familyId) return;
@@ -99,7 +101,7 @@ export function useCelebrationCatchup(
   useEffect(() => {
     if (!profileId || !familyId) return;
     const ch = supabase
-      .channel(`celebration-cursor-${profileId}`)
+      .channel(`celebration-cursor-${profileId}-${channelKey}`)
       .on('postgres_changes', {
         event: 'UPDATE', schema: 'public', table: 'chore_instances',
         filter: `completed_by=eq.${profileId}`,

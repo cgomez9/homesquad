@@ -65,6 +65,8 @@ export default function KidHome() {
   const { profileId } = useLocalSearchParams<{ profileId: string }>();
   const qc = useQueryClient();
 
+  const channelKey = useRef(Math.random().toString(36).slice(2, 10)).current;
+
   const { data: meta } = useQuery({
     queryKey: ['kid-profile-meta', profileId],
     enabled: !!profileId,
@@ -149,7 +151,7 @@ export default function KidHome() {
   useEffect(() => {
     if (!profileId) return;
     const choreChannel = supabase
-      .channel(`kid-feedback-chore-${profileId}`)
+      .channel(`kid-feedback-chore-${profileId}-${channelKey}`)
       .on('postgres_changes', {
         event: 'UPDATE', schema: 'public', table: 'chore_instances',
         filter: `completed_by=eq.${profileId}`,
@@ -160,7 +162,7 @@ export default function KidHome() {
       })
       .subscribe();
     const redChannel = supabase
-      .channel(`kid-feedback-red-${profileId}`)
+      .channel(`kid-feedback-red-${profileId}-${channelKey}`)
       .on('postgres_changes', {
         event: 'UPDATE', schema: 'public', table: 'redemptions',
         filter: `kid_profile_id=eq.${profileId}`,
