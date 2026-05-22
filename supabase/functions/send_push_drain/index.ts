@@ -12,6 +12,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 type Item = { row_id: string; event_type: string; payload: Record<string, unknown> };
 type Group = { recipient_id: string; items: Item[] };
 
+const BRAND = 'HomeSquad';
+
 const ACHIEVEMENTS: Record<string, { emoji: string; title: string }> = {
   stargazer:    { emoji: '⭐', title: 'Stargazer' },
   stars_100:    { emoji: '💯', title: 'Century' },
@@ -34,7 +36,7 @@ async function formatMessage(
 ): Promise<{ title: string; body: string }> {
   if (items.length >= 2) {
     return {
-      title: 'Shores',
+      title: BRAND,
       body: `${items.length} updates in your family. Tap to review.`,
     };
   }
@@ -51,11 +53,11 @@ async function formatMessage(
     const choreTitle = (data as any)?.chores?.title ?? 'a chore';
     const kidName    = (data as any)?.profiles?.display_name ?? 'A kid';
     if (it.event_type === 'chore_submitted')
-      return { title: 'Shores', body: `${kidName} submitted "${choreTitle}" 📸` };
+      return { title: BRAND, body: `${kidName} submitted "${choreTitle}" 📸` };
     if (it.event_type === 'chore_approved')
-      return { title: 'Shores', body: `Chore approved: "${choreTitle}" ⭐` };
+      return { title: BRAND, body: `Chore approved: "${choreTitle}" ⭐` };
     if (it.event_type === 'chore_rejected')
-      return { title: 'Shores', body: `Chore needs rework: "${choreTitle}"` };
+      return { title: BRAND, body: `Chore needs rework: "${choreTitle}"` };
   }
 
   if (it.event_type.startsWith('redemption_')) {
@@ -67,31 +69,31 @@ async function formatMessage(
     const rewardTitle = (data as any)?.rewards?.title ?? 'a reward';
     const kidName     = (data as any)?.profiles?.display_name ?? 'A kid';
     if (it.event_type === 'redemption_requested')
-      return { title: 'Shores', body: `${kidName} requested "${rewardTitle}" 🎁` };
+      return { title: BRAND, body: `${kidName} requested "${rewardTitle}" 🎁` };
     if (it.event_type === 'redemption_approved')
-      return { title: 'Shores', body: `Reward approved: "${rewardTitle}"` };
+      return { title: BRAND, body: `Reward approved: "${rewardTitle}"` };
     if (it.event_type === 'redemption_denied')
-      return { title: 'Shores', body: `Reward denied: "${rewardTitle}"` };
+      return { title: BRAND, body: `Reward denied: "${rewardTitle}"` };
     if (it.event_type === 'redemption_fulfilled')
-      return { title: 'Shores', body: `Reward delivered: "${rewardTitle}" ✨` };
+      return { title: BRAND, body: `Reward delivered: "${rewardTitle}" ✨` };
   }
 
   if (it.event_type === 'achievement_unlocked') {
     const meta = ACHIEVEMENTS[p.achievement_key as string];
-    if (meta) return { title: 'Shores', body: `${meta.emoji} ${meta.title} unlocked!` };
-    return { title: 'Shores', body: 'New badge unlocked!' };
+    if (meta) return { title: BRAND, body: `${meta.emoji} ${meta.title} unlocked!` };
+    return { title: BRAND, body: 'New badge unlocked!' };
   }
 
   if (it.event_type === 'streak_milestone') {
     return {
-      title: 'Shores',
+      title: BRAND,
       body: `${p.kid_name} hit a ${p.streak_days}-day streak! 🔥`,
     };
   }
 
   if (it.event_type === 'goal_completed') {
     return {
-      title: 'Shores',
+      title: BRAND,
       body: `Family goal reached: ${p.goal_title} 🎉`,
     };
   }
@@ -114,7 +116,7 @@ async function formatMessage(
     return { title: '⏰ Reminder', body: `${kidName} — time for ${choreTitle} in 10 min` };
   }
 
-  return { title: 'Shores', body: 'New activity in your family.' };
+  return { title: BRAND, body: 'New activity in your family.' };
 }
 
 Deno.serve(async (req) => {

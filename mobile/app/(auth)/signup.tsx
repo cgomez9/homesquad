@@ -94,7 +94,7 @@ export default function SignupScreen() {
               <Text style={styles.backChevron}>‹</Text>
             </Pressable>
             <Text style={styles.wordmark}>
-              Shores<Text style={styles.wordmarkDot}>·</Text>
+              {t('app.brandName')}<Text style={styles.wordmarkDot}>·</Text>
             </Text>
             <View style={styles.backBtnSpacer} />
           </View>

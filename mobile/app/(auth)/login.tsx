@@ -81,7 +81,7 @@ export default function LoginScreen() {
         >
           <View style={styles.topBar}>
             <Text style={styles.wordmark}>
-              Shores<Text style={styles.wordmarkDot}>·</Text>
+              {t('app.brandName')}<Text style={styles.wordmarkDot}>·</Text>
             </Text>
           </View>
 

@@ -30,7 +30,7 @@
     },
     "welcome": {
       "title": "¡Bienvenido a bordo!",
-      "subtitle": "Shores convierte las tareas de cada día en una pequeña aventura para toda la familia.",
+      "subtitle": "HomeSquad convierte las tareas de cada día en una pequeña aventura para toda la familia.",
       "getStarted": "Empezar"
     },
     "steps": {
@@ -466,5 +466,8 @@
   },
   "pin": {
     "title": "Introduce tu PIN"
+  },
+  "app": {
+    "brandName": "HomeSquad"
   }
 }
