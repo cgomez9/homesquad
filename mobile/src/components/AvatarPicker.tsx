@@ -1,9 +1,13 @@
+import { useMemo } from 'react';
 import { Pressable, Text, View, StyleSheet } from 'react-native';
 import { AVATAR_IDS, AVATARS, AvatarId } from '../constants/avatars';
+import { useTheme, type Palette, spacing, radii } from '../theme';
 
 type Props = { value: AvatarId; onChange: (id: AvatarId) => void };
 
 export function AvatarPicker({ value, onChange }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.row}>
       {AVATAR_IDS.map((id) => {
@@ -13,6 +17,8 @@ export function AvatarPicker({ value, onChange }: Props) {
           <Pressable
             key={id}
             onPress={() => onChange(id)}
+            accessibilityRole="button"
+            accessibilityState={{ selected }}
             style={[styles.tile, { backgroundColor: a.bg }, selected && styles.selected]}
           >
             <Text style={styles.emoji}>{a.emoji}</Text>
@@ -23,9 +29,10 @@ export function AvatarPicker({ value, onChange }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginVertical: 16 },
-  tile: { width: 64, height: 64, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'transparent' },
-  selected: { borderColor: '#111' },
-  emoji: { fontSize: 32 },
-});
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
+    row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, justifyContent: 'center', marginVertical: spacing.lg },
+    tile: { width: 64, height: 64, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: 'transparent' },
+    selected: { borderColor: colors.primary },
+    emoji: { fontSize: 32 },
+  });
