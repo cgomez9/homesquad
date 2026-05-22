@@ -447,5 +447,16 @@
     "retake": "Repetir",
     "send": "Enviar",
     "sending": "Enviando…"
+  },
+  "rewardIcons": {
+    "label": "Icono",
+    "gift": "Regalo",
+    "treat": "Postre",
+    "game": "Juego",
+    "cash": "Dinero",
+    "time": "Tiempo",
+    "snack": "Snack",
+    "movie": "Peli",
+    "toy": "Peluche"
   }
 }

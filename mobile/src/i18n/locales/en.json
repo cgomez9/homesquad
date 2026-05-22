@@ -447,5 +447,16 @@
     "retake": "Retake",
     "send": "Send",
     "sending": "Sending…"
+  },
+  "rewardIcons": {
+    "label": "Icon",
+    "gift": "Gift",
+    "treat": "Treat",
+    "game": "Game",
+    "cash": "Cash",
+    "time": "Time",
+    "snack": "Snack",
+    "movie": "Movie",
+    "toy": "Toy"
   }
 }
