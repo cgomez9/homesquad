@@ -42,7 +42,7 @@ async function formatMessage(
   const it = items[0];
   const p = it.payload as Record<string, string>;
 
-  if (it.event_type.startsWith('chore_')) {
+  if (it.event_type.startsWith('chore_') && it.event_type !== 'chore_reminder') {
     const { data } = await supabase
       .from('chore_instances')
       .select('chore_id, completed_by, chores!inner(title), profiles:completed_by(display_name)')
