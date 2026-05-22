@@ -404,9 +404,7 @@
     "recurrenceDaily": "Daily",
     "recurrenceWeekly": "Weekly",
     "specificTimesToggle": "At specific times",
-    "addTimePlaceholder": "HH:MM",
     "addTime": "+ Add",
-    "invalidTime": "Use 24h format like 08:00",
     "assignee": "Assignee",
     "anyone": "Anyone",
     "pickTimeTitle": "Pick a time"
