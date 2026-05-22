@@ -393,7 +393,17 @@
     },
     "errStarValue": "star value must be 1–999",
     "errStarCost": "star cost must be 1–9999",
-    "errNoFamily": "no family loaded"
+    "errNoFamily": "no family loaded",
+    "recurrenceLabel": "Recurrence",
+    "repeats": "Repeats",
+    "dueDateLabel": "Due date (YYYY-MM-DD)",
+    "dueDatePlaceholder": "2026-05-23",
+    "recurrenceDaily": "Daily",
+    "recurrenceWeekly": "Weekly",
+    "specificTimesToggle": "At specific times",
+    "addTimePlaceholder": "HH:MM",
+    "addTime": "+ Add",
+    "invalidTime": "Use 24h format like 08:00"
   },
   "recurrence": {
     "daily": "Daily",

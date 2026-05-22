@@ -393,7 +393,17 @@
     },
     "errStarValue": "el valor en estrellas debe ser 1–999",
     "errStarCost": "el coste en estrellas debe ser 1–9999",
-    "errNoFamily": "no se cargó la familia"
+    "errNoFamily": "no se cargó la familia",
+    "recurrenceLabel": "Repetición",
+    "repeats": "Se repite",
+    "dueDateLabel": "Fecha (AAAA-MM-DD)",
+    "dueDatePlaceholder": "2026-05-23",
+    "recurrenceDaily": "Diaria",
+    "recurrenceWeekly": "Semanal",
+    "specificTimesToggle": "A horas específicas",
+    "addTimePlaceholder": "HH:MM",
+    "addTime": "+ Añadir",
+    "invalidTime": "Usa formato 24h como 08:00"
   },
   "recurrence": {
     "daily": "Diaria",
