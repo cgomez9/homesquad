@@ -42,9 +42,7 @@ jest.mock('../src/theme', () => ({
 
 function controlled(initial: Recurrence) {
   let value = initial;
-  const onChange = jest.fn((next: Recurrence) => {
-    value = next;
-  });
+  const onChange = jest.fn((next: Recurrence) => { value = next; });
   return { get value() { return value; }, onChange };
 }
 
@@ -58,7 +56,7 @@ describe('RecurrencePicker times UI', () => {
     expect(toggle.props.value).toBe(false);
   });
 
-  it('turning the toggle on starts with empty times and shows the input row', () => {
+  it('turning the toggle on starts with empty times and shows the picker trigger', () => {
     const ctrl = controlled({ type: 'daily' });
     const { getByTestId } = render(
       <RecurrencePicker value={ctrl.value} onChange={ctrl.onChange} />,
@@ -68,28 +66,28 @@ describe('RecurrencePicker times UI', () => {
     const tree = render(
       <RecurrencePicker value={{ type: 'daily', times: [] }} onChange={ctrl.onChange} />,
     );
-    expect(tree.queryByTestId('add-time-input')).not.toBeNull();
+    expect(tree.queryByTestId('time-picker-trigger')).not.toBeNull();
   });
 
-  it('adding a valid time inserts it sorted and dedup', () => {
+  it('tapping the trigger opens the modal and confirming a time adds it sorted', () => {
     const ctrl = controlled({ type: 'daily', times: ['20:00'] });
-    const { getByTestId } = render(
+    const { getByTestId, queryByTestId } = render(
       <RecurrencePicker value={ctrl.value} onChange={ctrl.onChange} />,
     );
-    fireEvent.changeText(getByTestId('add-time-input'), '08:00');
-    fireEvent.press(getByTestId('add-time-button'));
-    expect(ctrl.onChange).toHaveBeenLastCalledWith({
-      type: 'daily', times: ['08:00', '20:00'],
-    });
+    expect(queryByTestId('time-picker-modal')).toBeNull();
+    fireEvent.press(getByTestId('time-picker-trigger'));
+    expect(getByTestId('time-picker-modal')).not.toBeNull();
+    fireEvent.press(getByTestId('time-picker-confirm'));
+    expect(ctrl.onChange).toHaveBeenLastCalledWith({ type: 'daily', times: ['08:00', '20:00'] });
   });
 
-  it('adding a duplicate time is a no-op', () => {
+  it('confirming a duplicate time is a silent no-op', () => {
     const ctrl = controlled({ type: 'daily', times: ['08:00'] });
     const { getByTestId } = render(
       <RecurrencePicker value={ctrl.value} onChange={ctrl.onChange} />,
     );
-    fireEvent.changeText(getByTestId('add-time-input'), '08:00');
-    fireEvent.press(getByTestId('add-time-button'));
+    fireEvent.press(getByTestId('time-picker-trigger'));
+    fireEvent.press(getByTestId('time-picker-confirm'));
     expect(ctrl.onChange).not.toHaveBeenCalled();
   });
 
@@ -99,19 +97,17 @@ describe('RecurrencePicker times UI', () => {
       <RecurrencePicker value={ctrl.value} onChange={ctrl.onChange} />,
     );
     fireEvent.press(getByTestId('time-chip-remove-08:00'));
-    expect(ctrl.onChange).toHaveBeenCalledWith({
-      type: 'daily', times: ['20:00'],
-    });
+    expect(ctrl.onChange).toHaveBeenCalledWith({ type: 'daily', times: ['20:00'] });
   });
 
-  it('invalid time format shows error and does not call onChange', () => {
-    const ctrl = controlled({ type: 'daily', times: [] });
-    const { getByTestId, queryByTestId } = render(
+  it('tapping a chip opens the picker in edit mode and confirming replaces the value', () => {
+    const ctrl = controlled({ type: 'daily', times: ['08:00', '20:00'] });
+    const { getByTestId } = render(
       <RecurrencePicker value={ctrl.value} onChange={ctrl.onChange} />,
     );
-    fireEvent.changeText(getByTestId('add-time-input'), '99:99');
-    fireEvent.press(getByTestId('add-time-button'));
+    fireEvent.press(getByTestId('time-chip-08:00'));
+    expect(getByTestId('time-picker-modal')).not.toBeNull();
+    fireEvent.press(getByTestId('time-picker-confirm'));
     expect(ctrl.onChange).not.toHaveBeenCalled();
-    expect(queryByTestId('add-time-error')).not.toBeNull();
   });
 });

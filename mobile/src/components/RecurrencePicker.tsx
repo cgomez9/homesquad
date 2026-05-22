@@ -2,10 +2,10 @@ import { useMemo, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Switch, TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { spacing, radii, typography, useTheme, type Palette } from '../theme';
+import { TimePickerModal } from './TimePickerModal';
 import type { Recurrence } from '../lib/recurrence';
 
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
-const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 const MAX_TIMES = 6;
 
 export function RecurrencePicker({
@@ -18,16 +18,14 @@ export function RecurrencePicker({
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { t } = useTranslation();
-  const [pendingTime, setPendingTime] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [pickerVisible, setPickerVisible] = useState(false);
+  const [editingTime, setEditingTime] = useState<string | null>(null);
 
   const isRecurring = value.type !== 'once';
   const currentTimes: string[] =
-    (value.type === 'daily' || value.type === 'weekly')
-      ? value.times ?? []
-      : [];
-  const hasTimes = currentTimes.length > 0;
+    (value.type === 'daily' || value.type === 'weekly') ? value.times ?? [] : [];
   const supportsTimes = value.type === 'daily' || value.type === 'weekly';
+  const timesEnabled = (value as { times?: string[] }).times !== undefined;
 
   function patchTimes(next: string[]) {
     if (value.type === 'daily') {
@@ -42,7 +40,6 @@ export function RecurrencePicker({
   }
 
   function toggleSpecificTimes(on: boolean) {
-    setError(null);
     if (on) {
       if (value.type === 'daily') onChange({ type: 'daily', times: [] });
       else if (value.type === 'weekly') onChange({ type: 'weekly', days: value.days, times: [] });
@@ -51,21 +48,34 @@ export function RecurrencePicker({
     }
   }
 
-  function addTime() {
-    setError(null);
-    const trimmed = pendingTime.trim();
-    if (!TIME_RE.test(trimmed)) {
-      setError(t('forms.invalidTime'));
-      return;
+  function openPickerForAdd() {
+    if (currentTimes.length >= MAX_TIMES) return;
+    setEditingTime(null);
+    setPickerVisible(true);
+  }
+
+  function openPickerForEdit(time: string) {
+    setEditingTime(time);
+    setPickerVisible(true);
+  }
+
+  function onConfirmTime(hhmm: string) {
+    setPickerVisible(false);
+    const editing = editingTime;
+    setEditingTime(null);
+    if (editing) {
+      if (editing === hhmm) return;
+      const without = currentTimes.filter((x) => x !== editing);
+      if (without.includes(hhmm)) {
+        patchTimes([...without].sort());
+        return;
+      }
+      patchTimes([...without, hhmm].sort());
+    } else {
+      if (currentTimes.includes(hhmm)) return;
+      if (currentTimes.length >= MAX_TIMES) return;
+      patchTimes([...currentTimes, hhmm].sort());
     }
-    if (currentTimes.includes(trimmed)) return;
-    if (currentTimes.length >= MAX_TIMES) {
-      setError(t('forms.invalidTime'));
-      return;
-    }
-    const next = [...currentTimes, trimmed].sort();
-    patchTimes(next);
-    setPendingTime('');
   }
 
   function removeTime(time: string) {
@@ -155,16 +165,21 @@ export function RecurrencePicker({
                 <Text style={styles.rowLabel}>{t('forms.specificTimesToggle')}</Text>
                 <Switch
                   testID="specific-times-toggle"
-                  value={hasTimes || (value as { times?: string[] }).times !== undefined}
+                  value={timesEnabled}
                   onValueChange={toggleSpecificTimes}
                 />
               </View>
 
-              {((value as { times?: string[] }).times !== undefined) && (
+              {timesEnabled && (
                 <View>
                   <View style={styles.chipsRow}>
                     {currentTimes.map((time) => (
-                      <View key={time} style={styles.chip}>
+                      <Pressable
+                        key={time}
+                        testID={`time-chip-${time}`}
+                        onPress={() => openPickerForEdit(time)}
+                        style={styles.chip}
+                      >
                         <Text style={styles.chipText}>{time}</Text>
                         <Pressable
                           testID={`time-chip-remove-${time}`}
@@ -175,174 +190,56 @@ export function RecurrencePicker({
                         >
                           <Text style={styles.chipRemove}>×</Text>
                         </Pressable>
-                      </View>
+                      </Pressable>
                     ))}
                   </View>
-                  <View style={styles.addRow}>
-                    <TextInput
-                      testID="add-time-input"
-                      value={pendingTime}
-                      onChangeText={setPendingTime}
-                      placeholder={t('forms.addTimePlaceholder')}
-                      placeholderTextColor={colors.textMuted}
-                      keyboardType="numbers-and-punctuation"
-                      autoCapitalize="none"
-                      style={styles.addInput}
-                      onSubmitEditing={addTime}
-                    />
-                    <Pressable
-                      testID="add-time-button"
-                      onPress={addTime}
-                      style={styles.addBtn}
-                      accessibilityRole="button"
-                    >
-                      <Text style={styles.addBtnText}>{t('forms.addTime')}</Text>
-                    </Pressable>
-                  </View>
-                  {error && (
-                    <Text testID="add-time-error" style={styles.error}>{error}</Text>
-                  )}
+                  <Pressable
+                    testID="time-picker-trigger"
+                    onPress={openPickerForAdd}
+                    style={styles.addBtn}
+                    accessibilityRole="button"
+                  >
+                    <Text style={styles.addBtnText}>+ {t('forms.addTime')}</Text>
+                  </Pressable>
                 </View>
               )}
             </View>
           )}
         </View>
       )}
+
+      <TimePickerModal
+        visible={pickerVisible}
+        initial={editingTime ?? '08:00'}
+        onCancel={() => { setPickerVisible(false); setEditingTime(null); }}
+        onConfirm={onConfirmTime}
+      />
     </View>
   );
 }
 
 const makeStyles = (colors: Palette) =>
   StyleSheet.create({
-    label: {
-      fontSize: typography.small,
-      fontFamily: typography.fontFamilyBold,
-      color: colors.textMuted,
-      marginBottom: spacing.xs + 2,
-    },
-    row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: spacing.xs,
-    },
-    rowLabel: {
-      flex: 1,
-      fontFamily: typography.fontFamilySemi,
-      fontSize: typography.body,
-      color: colors.text,
-    },
-    sub: {
-      fontFamily: typography.fontFamilySemi,
-      fontSize: typography.small,
-      color: colors.textMuted,
-      marginTop: spacing.sm,
-    },
-    input: {
-      borderWidth: 1.5,
-      borderColor: colors.border,
-      borderRadius: radii.md,
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.sm + 2,
-      marginTop: spacing.xs,
-      fontFamily: typography.fontFamilySemi,
-      fontSize: typography.body,
-      color: colors.text,
-      backgroundColor: colors.surface,
-    },
+    label: { fontSize: typography.small, fontFamily: typography.fontFamilyBold, color: colors.textMuted, marginBottom: spacing.xs + 2 },
+    row: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.xs },
+    rowLabel: { flex: 1, fontFamily: typography.fontFamilySemi, fontSize: typography.body, color: colors.text },
+    sub: { fontFamily: typography.fontFamilySemi, fontSize: typography.small, color: colors.textMuted, marginTop: spacing.sm },
+    input: { borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 2, marginTop: spacing.xs, fontFamily: typography.fontFamilySemi, fontSize: typography.body, color: colors.text, backgroundColor: colors.surface },
     segRow: { flexDirection: 'row', gap: spacing.sm, marginVertical: spacing.sm },
-    seg: {
-      flex: 1,
-      paddingVertical: spacing.sm + 2,
-      borderRadius: radii.md,
-      borderWidth: 1.5,
-      borderColor: colors.border,
-      backgroundColor: colors.surface,
-      alignItems: 'center',
-    },
+    seg: { flex: 1, paddingVertical: spacing.sm + 2, borderRadius: radii.md, borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.surface, alignItems: 'center' },
     segSel: { backgroundColor: colors.primary, borderColor: colors.primary },
-    segText: {
-      fontFamily: typography.fontFamilyBold,
-      fontSize: typography.small + 1,
-      color: colors.text,
-    },
+    segText: { fontFamily: typography.fontFamilyBold, fontSize: typography.small + 1, color: colors.text },
     segTextSel: { color: '#fff' },
-    daysRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginTop: spacing.sm,
-    },
-    dayChip: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      borderWidth: 1.5,
-      borderColor: colors.border,
-      backgroundColor: colors.surface,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
+    daysRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.sm },
+    dayChip: { width: 36, height: 36, borderRadius: 18, borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
     dayChipSel: { backgroundColor: colors.primary, borderColor: colors.primary },
-    dayText: {
-      fontFamily: typography.fontFamilyBold,
-      fontSize: typography.body,
-      color: colors.text,
-    },
+    dayText: { fontFamily: typography.fontFamilyBold, fontSize: typography.body, color: colors.text },
     dayTextSel: { color: '#fff' },
     timesBlock: { marginTop: spacing.md },
-    chipsRow: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: spacing.sm,
-      marginTop: spacing.sm,
-    },
-    chip: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-      backgroundColor: 'rgba(14,165,164,0.12)',
-      paddingVertical: 6,
-      paddingHorizontal: spacing.md,
-      borderRadius: radii.pill,
-    },
-    chipText: {
-      fontFamily: typography.fontFamilyBold,
-      fontSize: typography.small + 1,
-      color: colors.primaryDark,
-    },
-    chipRemove: {
-      fontFamily: typography.fontFamilyBold,
-      fontSize: 18,
-      color: colors.primaryDark,
-      lineHeight: 18,
-    },
-    addRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
-    addInput: {
-      flex: 1,
-      borderWidth: 1.5,
-      borderColor: colors.border,
-      borderRadius: radii.md,
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.sm + 2,
-      fontFamily: typography.fontFamilySemi,
-      fontSize: typography.body,
-      color: colors.text,
-      backgroundColor: colors.surface,
-    },
-    addBtn: {
-      paddingHorizontal: spacing.lg,
-      justifyContent: 'center',
-      backgroundColor: colors.primary,
-      borderRadius: radii.md,
-    },
-    addBtnText: {
-      color: '#fff',
-      fontFamily: typography.fontFamilyBold,
-      fontSize: typography.body,
-    },
-    error: {
-      color: colors.error,
-      fontFamily: typography.fontFamilySemi,
-      fontSize: typography.small,
-      marginTop: spacing.xs,
-    },
+    chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },
+    chip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(14,165,164,0.12)', paddingVertical: 6, paddingHorizontal: spacing.md, borderRadius: radii.pill },
+    chipText: { fontFamily: typography.fontFamilyBold, fontSize: typography.small + 1, color: colors.primaryDark },
+    chipRemove: { fontFamily: typography.fontFamilyBold, fontSize: 18, color: colors.primaryDark, lineHeight: 18 },
+    addBtn: { marginTop: spacing.md, paddingVertical: spacing.sm + 2, paddingHorizontal: spacing.md, borderRadius: radii.md, borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.border, backgroundColor: colors.surface, alignItems: 'center' },
+    addBtnText: { fontFamily: typography.fontFamilyBold, fontSize: typography.body, color: colors.primary },
   });
