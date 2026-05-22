@@ -49,12 +49,12 @@ export default function PhotoCapture() {
     if (instErr || !inst) { setError(instErr?.message ?? 'instance not found'); setBusy(false); return; }
     const path = `family/${inst.family_id}/chore-proofs/${instanceId}.jpg`;
 
-    const blob = await (await fetch(uri)).blob();
+    const arrayBuffer = await (await fetch(uri)).arrayBuffer();
     let lastErr: string | null = null;
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       const { error: upErr } = await supabase.storage
         .from('chore-proofs')
-        .upload(path, blob, { contentType: 'image/jpeg', upsert: true });
+        .upload(path, arrayBuffer, { contentType: 'image/jpeg', upsert: true });
       if (!upErr) { lastErr = null; break; }
       lastErr = upErr.message;
       await new Promise((r) => setTimeout(r, 1000 * Math.pow(3, attempt)));
