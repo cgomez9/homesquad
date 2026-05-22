@@ -458,5 +458,8 @@
     "snack": "Snack",
     "movie": "Peli",
     "toy": "Peluche"
+  },
+  "pin": {
+    "title": "Introduce tu PIN"
   }
 }
