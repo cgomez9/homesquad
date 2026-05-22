@@ -1,5 +1,5 @@
 // mobile/app/(app)/kid/[profileId]/index.tsx
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   View,
@@ -29,7 +29,13 @@ type Instance = {
   status: 'pending' | 'submitted' | 'approved' | 'rejected';
   due_at: string;
   rejection_reason: string | null;
-  chore: { id: string; title: string; star_value: number; verification_mode: 'auto'|'photo'|'approval' } | null;
+  chore: {
+    id: string;
+    title: string;
+    star_value: number;
+    verification_mode: 'auto'|'photo'|'approval';
+    recurrence: { type: string; times?: string[] } | null;
+  } | null;
 };
 
 type ProfileMeta = { family_id: string; display_name: string; avatar_id: number };
@@ -41,6 +47,15 @@ const WEEKDAY_KEYS = [
   'common.days.sun', 'common.days.mon', 'common.days.tue', 'common.days.wed',
   'common.days.thu', 'common.days.fri', 'common.days.sat',
 ];
+
+function useMinuteTick(): number {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((n) => n + 1), 60_000);
+    return () => clearInterval(id);
+  }, []);
+  return tick;
+}
 
 export default function KidHome() {
   const { colors } = useTheme();
@@ -75,7 +90,7 @@ export default function KidHome() {
       const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
       const { data, error } = await supabase
         .from('chore_instances')
-        .select('id, status, due_at, rejection_reason, chore:chores(id,title,star_value,verification_mode)')
+        .select('id, status, due_at, rejection_reason, chore:chores(id,title,star_value,verification_mode,recurrence)')
         .or(`assignee_profile_id.eq.${profileId},assignee_profile_id.is.null`)
         .gte('due_at', startOfDay.toISOString())
         .lt('due_at', endOfDay.toISOString())
@@ -280,6 +295,15 @@ function ChoreCard({
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { t } = useTranslation();
+  const tick = useMinuteTick(); void tick; // re-render every minute for overdue flip
+  const hasTimes =
+    (inst.chore?.recurrence as { times?: string[] } | null)?.times !== undefined &&
+    ((inst.chore?.recurrence as { times?: string[] } | null)?.times?.length ?? 0) > 0;
+  const timeLabel = hasTimes
+    ? new Date(inst.due_at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+    : null;
+  const isOverdue =
+    hasTimes && inst.status === 'pending' && Date.now() > new Date(inst.due_at).getTime();
   const enter = useRef(new Animated.Value(0)).current;
   const { scale, onPressIn, onPressOut } = usePressScale();
 
@@ -348,7 +372,7 @@ function ChoreCard({
   }
 
   return (
-    <Animated.View style={[styles.card, animStyle]}>
+    <Animated.View style={[styles.card, isOverdue && styles.cardOverdue, animStyle]}>
       <View style={styles.cardMain}>
         <Text style={styles.choreTitle}>{inst.chore?.title}</Text>
         <View style={styles.metaRow}>
@@ -359,6 +383,11 @@ function ChoreCard({
             </View>
           )}
         </View>
+        {timeLabel && (
+          <Text testID="chore-time-label" style={[styles.timeLabel, isOverdue && styles.timeLabelOverdue]}>
+            {isOverdue ? `● 🕗 ${timeLabel} · ${t('kid.overdue')}` : `🕗 ${timeLabel}`}
+          </Text>
+        )}
       </View>
       <Animated.View style={{ transform: [{ scale }] }}>
         <Pressable
@@ -503,6 +532,19 @@ const makeStyles = (colors: Palette) =>
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 9 },
     elevation: 4,
+  },
+  cardOverdue: {
+    borderWidth: 1.5,
+    borderColor: colors.warning,
+  },
+  timeLabel: {
+    fontFamily: typography.fontFamilyBold,
+    fontSize: typography.small,
+    color: colors.textMuted,
+    marginTop: spacing.xs,
+  },
+  timeLabelOverdue: {
+    color: colors.warning,
   },
   cardMain: { flex: 1 },
   choreTitle: { fontFamily: typography.fontFamilyBold, fontSize: 17, color: colors.text },
