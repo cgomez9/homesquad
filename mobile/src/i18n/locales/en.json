@@ -244,7 +244,8 @@
     "rewards": "Rewards",
     "approvals": "Approvals",
     "activity": "Activity",
-    "settings": "Settings"
+    "settings": "Settings",
+    "approvalsCount": "{{count}} pending approvals"
   },
   "picker": {
     "title": "Who's here today?",

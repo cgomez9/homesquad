@@ -132,6 +132,8 @@ export default function Approvals() {
     qc.invalidateQueries({ queryKey: ['approvals-chores'] });
     qc.invalidateQueries({ queryKey: ['approvals-redemptions-pending'] });
     qc.invalidateQueries({ queryKey: ['approvals-redemptions-approved'] });
+    qc.invalidateQueries({ queryKey: ['approvals-chores-count'] });
+    qc.invalidateQueries({ queryKey: ['approvals-redemptions-pending-count'] });
     qc.invalidateQueries({ queryKey: ['activity'] });
     if (kidId) {
       qc.invalidateQueries({ queryKey: ['kid-today', kidId] });

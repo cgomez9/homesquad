@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { spacing, typography, useTheme, type Palette } from '../theme';
+import { usePendingDecisionsCount } from '../hooks/usePendingDecisionsCount';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -26,6 +27,7 @@ export function ParentTabBar({ state, navigation }: BottomTabBarProps) {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { t } = useTranslation();
   const activeName = state.routes[state.index]?.name;
+  const pendingCount = usePendingDecisionsCount();
 
   return (
     <View style={[styles.bar, { paddingBottom: BOTTOM }]}>
@@ -51,14 +53,27 @@ export function ParentTabBar({ state, navigation }: BottomTabBarProps) {
             onPress={onPress}
             accessibilityRole="button"
             accessibilityState={{ selected: focused }}
-            accessibilityLabel={t(tab.labelKey)}
+            accessibilityLabel={
+              tab.name === 'approvals' && pendingCount > 0
+                ? t('tabs.approvalsCount', { count: pendingCount })
+                : t(tab.labelKey)
+            }
             style={styles.tab}
           >
-            <Ionicons
-              name={focused ? tab.on : tab.off}
-              size={23}
-              color={focused ? colors.primary : colors.textMuted}
-            />
+            <View style={styles.iconWrap}>
+              <Ionicons
+                name={focused ? tab.on : tab.off}
+                size={23}
+                color={focused ? colors.primary : colors.textMuted}
+              />
+              {tab.name === 'approvals' && pendingCount > 0 && (
+                <View style={styles.badge} testID="approvals-badge">
+                  <Text style={styles.badgeText}>
+                    {pendingCount > 99 ? '99+' : pendingCount}
+                  </Text>
+                </View>
+              )}
+            </View>
             <Text style={[styles.label, focused && styles.labelOn]} numberOfLines={1}>
               {t(tab.labelKey)}
             </Text>
@@ -90,4 +105,25 @@ const makeStyles = (colors: Palette) =>
       color: colors.textMuted,
     },
     labelOn: { color: colors.primary },
+    iconWrap: { position: 'relative' },
+    badge: {
+      position: 'absolute',
+      top: -6,
+      right: -10,
+      minWidth: 18,
+      height: 18,
+      borderRadius: 9,
+      backgroundColor: colors.error,
+      paddingHorizontal: 4,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1.5,
+      borderColor: colors.surface,
+    },
+    badgeText: {
+      color: '#fff',
+      fontFamily: typography.fontFamilyBold,
+      fontSize: 10,
+      lineHeight: 12,
+    },
   });
