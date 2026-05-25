@@ -32,6 +32,9 @@ mobile/android/
 *.swp
 .DS_Store
 
+# Builds
+mobile/builds/
+
 # Supabase
 supabase/.branches/
 supabase/.temp/

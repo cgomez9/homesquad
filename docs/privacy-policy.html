@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HomeSquad Privacy Policy</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+           max-width: 720px; margin: 2em auto; padding: 0 1em; color: #222; line-height: 1.55; }
+    h1, h2 { color: #0F766E; }
+    h1 { border-bottom: 2px solid #0F766E; padding-bottom: 0.3em; }
+    code { background: #f0f0f0; padding: 0.1em 0.3em; border-radius: 3px; font-size: 0.9em; }
+    blockquote { border-left: 3px solid #0F766E; margin: 1em 0; padding: 0.5em 1em;
+                 background: #f7fafa; color: #555; }
+  </style>
+</head>
+<body>
+<h1>HomeSquad Privacy Policy</h1>
+<p><strong>Last updated:</strong> 2026-05-25</p>
+
+<p>HomeSquad is a family-management app built and operated by Carlos Gomez. This policy describes what data the app handles, why, and how you can remove it.</p>
+
+<blockquote><strong>Important:</strong> The URL of this page is referenced from the Google Play Store listing. Do not rename the file or move the page without updating the Play Console "Privacy policy" field.</blockquote>
+
+<h2>What we collect</h2>
+<p>We collect only what HomeSquad needs to work:</p>
+<ul>
+  <li><strong>Account identifier (email + display name).</strong> When you sign in with Google, we receive your email address and the name on your Google profile. When you sign up with email + password, we store your email and a hashed password. We never receive or store your Google password.</li>
+  <li><strong>Family data you enter.</strong> Family name, chore titles, reward names, schedules, kid profile names, kid avatars, kid PINs (stored hashed starting in M3). You enter this yourself; we do not infer it from other sources.</li>
+  <li><strong>Push notification token.</strong> A device-specific identifier we use to send chore reminders and approval notifications to your phone. Stored in your account row; rotated whenever your device reinstalls the app.</li>
+  <li><strong>Voice journal recordings (optional).</strong> When a kid uses the voice journal feature, the audio is recorded on the device. <strong>Recordings stay on the device and are not uploaded to any server.</strong></li>
+</ul>
+
+<p>We do <strong>not</strong> collect: precise location, contacts, calendar, photos outside what you explicitly attach to a kid avatar, browsing history, or any analytics events tied to your identity.</p>
+
+<h2>Where it lives</h2>
+<p>Account and family data is stored in Supabase (Postgres), encrypted at rest by the cloud provider, encrypted in transit by HTTPS. Row-Level Security policies prevent any user from reading another family's data.</p>
+
+<h2>Third parties</h2>
+<ul>
+  <li><strong>Google Identity Services</strong> &mdash; used only when you choose to sign in with Google. Google's policy applies to the data Google itself handles on your behalf.</li>
+  <li><strong>Supabase</strong> &mdash; our database and authentication provider.</li>
+  <li><strong>Expo Push Notifications</strong> &mdash; relays push notifications to your device.</li>
+</ul>
+<p>We do not share data with advertisers, analytics services, or data brokers.</p>
+
+<h2>Children</h2>
+<p>HomeSquad is <strong>not</strong> primarily directed at children under 13. Parents create kid profiles inside their own account; kids do not sign in directly. Kid profile data (name, avatar, achievement progress) is entered by the parent and controlled by the parent. Parents can delete any kid profile at any time from the app.</p>
+
+<h2>Deletion</h2>
+<p>To delete your account and all associated family + kid data, email <code>sabiondo3101@gmail.com</code> from the address tied to your account. We will delete the data within 30 days and reply to confirm.</p>
+<p>You can also remove individual kid profiles from the app at any time.</p>
+
+<h2>Contact</h2>
+<p>Questions: <code>sabiondo3101@gmail.com</code>.</p>
+</body>
+</html>
