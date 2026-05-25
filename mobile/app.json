@@ -2,18 +2,18 @@
   "expo": {
     "name": "HomeSquad",
     "slug": "shores",
-    "scheme": "shores",
-    "version": "0.1.0",
+    "scheme": "homesquad",
+    "version": "0.1.1",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.shores.app",
+      "bundleIdentifier": "com.homesquad.app",
       "usesAppleSignIn": true
     },
     "android": {
-      "package": "com.shores.app",
+      "package": "com.homesquad.app",
       "permissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS"
