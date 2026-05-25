@@ -9,9 +9,7 @@ export function SocialAuthRow() {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { t } = useTranslation();
-  const googleConfigured =
-    !!process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID &&
-    !!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+  const googleConfigured = !!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 
   async function onApplePress() {
     try {
