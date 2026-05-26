@@ -14,24 +14,12 @@
     "preview": {
       "distribution": "internal",
       "channel": "preview",
-      "env": {
-        "EXPO_PUBLIC_SUPABASE_URL": "$EXPO_PUBLIC_SUPABASE_URL",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "$EXPO_PUBLIC_SUPABASE_ANON_KEY",
-        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "$EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID",
-        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "$EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID"
-      },
       "ios": { "simulator": false },
       "android": { "buildType": "apk" }
     },
     "production": {
       "channel": "production",
       "autoIncrement": true,
-      "env": {
-        "EXPO_PUBLIC_SUPABASE_URL": "$EXPO_PUBLIC_SUPABASE_URL",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "$EXPO_PUBLIC_SUPABASE_ANON_KEY",
-        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "$EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID",
-        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "$EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID"
-      },
       "ios": { "simulator": false }
     }
   },
