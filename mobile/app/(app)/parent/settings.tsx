@@ -27,6 +27,8 @@ import { ThemePickerModal } from '../../../src/components/ThemePickerModal';
 import { setLanguage as setI18nLanguage, getCurrentLanguagePref } from '../../../src/i18n';
 import { QuietHoursPicker } from '../../../src/components/QuietHoursPicker';
 import { PushPrefsList } from '../../../src/components/PushPrefsList';
+import { KidDevicesList } from '../../../src/components/KidDevicesList';
+import { PairDeviceModal } from '../../../src/components/PairDeviceModal';
 import type { EventType } from '../../../src/components/PushPrefsList';
 import { AVATARS, AvatarId } from '../../../src/constants/avatars';
 import { TidePoolBackground } from '../../../src/components/TidePool';
@@ -157,6 +159,41 @@ export default function Settings() {
     },
   });
 
+  // --- Kids list query ---
+  const { data: kidsData } = useQuery({
+    queryKey: ['kids-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar_id')
+        .eq('type', 'kid')
+        .order('created_at');
+      if (error) throw error;
+      return (data ?? []) as { id: string; display_name: string; avatar_id: number }[];
+    },
+  });
+
+  // --- Kid devices query ---
+  const { data: kidDevicesMap, refetch: refetchDevices } = useQuery({
+    queryKey: ['kid-devices'],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('kid_devices')
+        .select('id, kid_id, device_name, last_seen_at')
+        .is('revoked_at', null);
+      if (error) throw error;
+      const byKid = new Map<string, { id: string; device_name: string; last_seen_at: string }[]>();
+      for (const row of (data ?? []) as { id: string; kid_id: string; device_name: string; last_seen_at: string }[]) {
+        const arr = byKid.get(row.kid_id) ?? [];
+        arr.push({ id: row.id, device_name: row.device_name, last_seen_at: row.last_seen_at });
+        byKid.set(row.kid_id, arr);
+      }
+      return byKid;
+    },
+  });
+
+  const [pairKidId, setPairKidId] = useState<string | null>(null);
+
   const invite = useMutation({
     mutationFn: async () => {
       const { data, error } = await supabase.rpc('create_family_invite');
@@ -271,6 +308,24 @@ export default function Settings() {
             <Button label={t('settings.inviteCoParent')} onPress={() => invite.mutate()} loading={invite.isPending} variant="secondary" />
           </View>
         </View>
+
+        {/* devices — per-kid */}
+        {(kidsData ?? []).length > 0 && (
+          <>
+            <Text style={styles.label}>{t('settings.devices.label', 'Devices')}</Text>
+            {(kidsData ?? []).map((kid) => (
+              <View key={kid.id} style={{ marginBottom: spacing.md }}>
+                <Text style={styles.kidDevicesName}>{kid.display_name}</Text>
+                <KidDevicesList
+                  kidId={kid.id}
+                  devices={kidDevicesMap?.get(kid.id) ?? []}
+                  onPair={(id) => setPairKidId(id)}
+                  onChanged={() => refetchDevices()}
+                />
+              </View>
+            ))}
+          </>
+        )}
 
         {/* feedback */}
         <Text style={styles.label}>{t('settings.feedback')}</Text>
@@ -395,6 +450,15 @@ export default function Settings() {
         }}
         onCancel={() => setThemePickerOpen(false)}
       />
+
+      {pairKidId && (
+        <PairDeviceModal
+          visible
+          kidId={pairKidId}
+          onClose={() => setPairKidId(null)}
+          onPaired={(_payload) => { setPairKidId(null); refetchDevices(); }}
+        />
+      )}
     </View>
   );
 }
@@ -497,6 +561,14 @@ const makeStyles = (colors: Palette) =>
 
   dangerCard: { borderWidth: 1.5, borderColor: '#F7C9D2', backgroundColor: '#FFF5F6' },
   dangerText: { fontFamily: typography.fontFamilyBold, fontSize: typography.body, color: colors.error },
+
+  kidDevicesName: {
+    fontFamily: typography.fontFamilyBold,
+    fontSize: typography.body,
+    color: colors.text,
+    marginBottom: spacing.xs,
+    marginLeft: spacing.xs,
+  },
 
   bottomBtns: { marginTop: spacing.xl },
 
