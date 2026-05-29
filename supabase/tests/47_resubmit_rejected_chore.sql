@@ -20,12 +20,12 @@ insert into public.chore_instances(id, chore_id, family_id, assignee_profile_id,
 set local role authenticated;
 set local "request.jwt.claims" to '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
 
--- approval chore: pending -> submitted
+-- approval chore: pending -> finished
 select lives_ok(
   $$ select public.complete_chore('33333333-aaaa-3333-3333-333333333333', 'a3333333-3333-3333-3333-333333333333') $$,
   'approval chore submits'
 );
-select is((select status from public.chore_instances where id = '33333333-aaaa-3333-3333-333333333333'), 'submitted', 'status submitted');
+select is((select status from public.chore_instances where id = '33333333-aaaa-3333-3333-333333333333'), 'finished', 'status finished');
 
 -- parent rejects
 select lives_ok(
@@ -40,7 +40,7 @@ select lives_ok(
   $$ select public.complete_chore('33333333-aaaa-3333-3333-333333333333', 'a3333333-3333-3333-3333-333333333333') $$,
   'rejected chore can be resubmitted'
 );
-select is((select status from public.chore_instances where id = '33333333-aaaa-3333-3333-333333333333'), 'submitted', 'resubmit -> submitted again');
+select is((select status from public.chore_instances where id = '33333333-aaaa-3333-3333-333333333333'), 'finished', 'resubmit -> finished again');
 select is((select rejection_reason from public.chore_instances where id = '33333333-aaaa-3333-3333-333333333333'), null, 'rejection_reason cleared on resubmit');
 
 -- parent approves the resubmission: stars awarded exactly once (no double-award)
@@ -65,7 +65,7 @@ select lives_ok($$
   select public.reject_chore('22222222-aaaa-2222-2222-222222222222', 'blurry');
   select public.complete_chore('22222222-aaaa-2222-2222-222222222222', 'a3333333-3333-3333-3333-333333333333', 'http://x/b.jpg');
 $$, 'photo chore can be resubmitted with a new photo');
-select is((select status from public.chore_instances where id = '22222222-aaaa-2222-2222-222222222222'), 'submitted', 'photo resubmit -> submitted');
+select is((select status from public.chore_instances where id = '22222222-aaaa-2222-2222-222222222222'), 'finished', 'photo resubmit -> finished');
 
 select * from finish();
 rollback;

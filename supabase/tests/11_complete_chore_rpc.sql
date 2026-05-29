@@ -36,7 +36,7 @@ select lives_ok(
   $$ select public.complete_chore('22222222-aaaa-2222-2222-222222222222', 'a2222222-2222-2222-2222-222222222222', 'http://x/y.jpg') $$,
   'photo chore submits with URL'
 );
-select is((select status from public.chore_instances where id = '22222222-aaaa-2222-2222-222222222222'), 'submitted', 'photo status submitted');
+select is((select status from public.chore_instances where id = '22222222-aaaa-2222-2222-222222222222'), 'finished', 'photo status finished');
 
 prepare wrong_kid as select public.complete_chore('33333333-aaaa-3333-3333-333333333333', 'a2222222-2222-2222-2222-222222222222');
 select throws_ok('wrong_kid', null, null, 'wrong assignee raises');

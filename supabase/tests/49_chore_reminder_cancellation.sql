@@ -58,17 +58,17 @@ select is(
   2, 'baseline: 2 pending reminders'
 );
 
--- 2. Update chore_instance status pending → submitted. The reminder
+-- 2. Update chore_instance status pending → finished. The reminder
 -- matching (chore_id, due_at) flips to canceled.
 update public.chore_instances
-   set status = 'submitted', completed_by = 'a2222222-2222-2222-2222-222222222222', completed_at = now()
+   set status = 'finished', completed_by = 'a2222222-2222-2222-2222-222222222222', completed_at = now()
  where id = '11111111-aaaa-1111-1111-111111111111';
 
 select is(
   (select status from public.push_outbox
     where event_type = 'chore_reminder'
       and (payload->>'due_at')::timestamptz = '2026-05-22T08:00:00Z'),
-  'canceled', 'instance pending→submitted cancels its matching reminder'
+  'canceled', 'instance pending→finished cancels its matching reminder'
 );
 
 -- 3. The reminder for the OTHER due_at is still pending.
@@ -79,7 +79,7 @@ select is(
   'pending', 'reminders for other due_at are unaffected'
 );
 
--- 4. Subsequent status changes (submitted → approved) do NOT re-fire the cancel.
+-- 4. Subsequent status changes (finished → approved) do NOT re-fire the cancel.
 -- (idempotency: we only act on pending → not-pending; canceled rows stay canceled.)
 update public.chore_instances
    set status = 'approved', approved_by = 'a1111111-1111-1111-1111-111111111111', approved_at = now()
