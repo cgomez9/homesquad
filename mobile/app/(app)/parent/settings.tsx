@@ -177,7 +177,7 @@ export default function Settings() {
   const { data: kidDevicesMap, refetch: refetchDevices } = useQuery({
     queryKey: ['kid-devices'],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('kid_devices')
         .select('id, kid_id, device_name, last_seen_at')
         .is('revoked_at', null);

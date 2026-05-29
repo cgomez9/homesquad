@@ -16,14 +16,13 @@ export function useKidSession(userId: string | undefined): KidSessionState {
     }
     let cancelled = false;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabase as any)
+    supabase
       .from('kid_devices')
       .select('id, kid_id, family_id')
       .eq('user_id', userId)
       .is('revoked_at', null)
       .maybeSingle()
-      .then(({ data, error }: { data: { id: string; kid_id: string; family_id: string } | null; error: unknown }) => {
+      .then(({ data, error }) => {
         if (cancelled) return;
         if (error || !data) {
           setState({ status: 'not-kid' });
