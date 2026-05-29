@@ -13,8 +13,9 @@
 --   session  4 sees 0 rows in every table
 --
 -- 4 sessions × 10 kid-readable tables = 40 assertions
+-- + 4 assertions for started/finished status visibility = 44 total
 begin;
-select plan(40);
+select plan(44);
 
 -- ────────────────────────────────────────────────
 -- Auth users
@@ -56,11 +57,14 @@ insert into public.chores(id, family_id, title, star_value, verification_mode, r
   ('c0200001-0000-0000-0000-000000000001', 'fb000000-0000-0000-0000-000000000001', 'B-chore', 5, 'auto', '{"type":"daily"}'::jsonb, 'b0200001-0000-0000-0000-000000000001', 'b0100001-0000-0000-0000-000000000001');
 
 -- ────────────────────────────────────────────────
--- chore_instances (1 per family)
+-- chore_instances (1 per family, plus 2 extra for family A with started/finished)
 -- ────────────────────────────────────────────────
-insert into public.chore_instances(id, chore_id, family_id, assignee_profile_id, due_at) values
-  ('d0100001-0000-0000-0000-000000000001', 'c0100001-0000-0000-0000-000000000001', 'fa000000-0000-0000-0000-000000000001', 'a0200001-0000-0000-0000-000000000001', now()),
-  ('d0200001-0000-0000-0000-000000000001', 'c0200001-0000-0000-0000-000000000001', 'fb000000-0000-0000-0000-000000000001', 'b0200001-0000-0000-0000-000000000001', now());
+insert into public.chore_instances(id, chore_id, family_id, assignee_profile_id, due_at, status) values
+  ('d0100001-0000-0000-0000-000000000001', 'c0100001-0000-0000-0000-000000000001', 'fa000000-0000-0000-0000-000000000001', 'a0200001-0000-0000-0000-000000000001', now(),            'pending'),
+  ('d0200001-0000-0000-0000-000000000001', 'c0200001-0000-0000-0000-000000000001', 'fb000000-0000-0000-0000-000000000001', 'b0200001-0000-0000-0000-000000000001', now(),            'pending'),
+  -- extra family-A rows to exercise the started + finished status values
+  ('d0100002-0000-0000-0000-000000000002', 'c0100001-0000-0000-0000-000000000001', 'fa000000-0000-0000-0000-000000000001', 'a0200001-0000-0000-0000-000000000001', now() - interval '1 day',  'started'),
+  ('d0100003-0000-0000-0000-000000000003', 'c0100001-0000-0000-0000-000000000001', 'fa000000-0000-0000-0000-000000000001', 'a0200001-0000-0000-0000-000000000001', now() - interval '2 days', 'finished');
 
 -- ────────────────────────────────────────────────
 -- star_ledger (1 per family)
@@ -113,7 +117,8 @@ set local "request.jwt.claims" to '{"sub":"a1000001-0000-0000-0000-000000000001"
 select is((select count(*)::int from public.families),        1, 'parent A: sees 1 family');
 select is((select count(*)::int from public.profiles),        3, 'parent A: sees 3 profiles');
 select is((select count(*)::int from public.chores),          1, 'parent A: sees 1 chore');
-select is((select count(*)::int from public.chore_instances), 1, 'parent A: sees 1 chore instance');
+select is((select count(*)::int from public.chore_instances), 3, 'parent A: sees 3 chore instances (pending+started+finished)');
+select is((select count(*)::int from public.chore_instances where status in ('started','finished')), 2, 'parent A: sees 2 started+finished instances');
 select is((select count(*)::int from public.star_ledger),     1, 'parent A: sees 1 star ledger row');
 select is((select count(*)::int from public.streaks),         1, 'parent A: sees 1 streak row');
 select is((select count(*)::int from public.rewards),         1, 'parent A: sees 1 reward');
@@ -129,7 +134,8 @@ set local "request.jwt.claims" to '{"sub":"a2000002-0000-0000-0000-000000000002"
 select is((select count(*)::int from public.families),        1, 'kid A1: sees 1 family');
 select is((select count(*)::int from public.profiles),        3, 'kid A1: sees 3 profiles in family A');
 select is((select count(*)::int from public.chores),          1, 'kid A1: sees 1 chore');
-select is((select count(*)::int from public.chore_instances), 1, 'kid A1: sees 1 chore instance');
+select is((select count(*)::int from public.chore_instances), 3, 'kid A1: sees 3 chore instances (pending+started+finished)');
+select is((select count(*)::int from public.chore_instances where status in ('started','finished')), 2, 'kid A1: sees 2 started+finished instances');
 select is((select count(*)::int from public.star_ledger),     1, 'kid A1: sees 1 star ledger row');
 select is((select count(*)::int from public.streaks),         1, 'kid A1: sees 1 streak row');
 select is((select count(*)::int from public.rewards),         1, 'kid A1: sees 1 reward');
@@ -146,6 +152,7 @@ select is((select count(*)::int from public.families),        1, 'parent B: sees
 select is((select count(*)::int from public.profiles),        2, 'parent B: sees 2 profiles (own family)');
 select is((select count(*)::int from public.chores),          1, 'parent B: sees 1 chore (own family)');
 select is((select count(*)::int from public.chore_instances), 1, 'parent B: sees 1 chore instance (own family)');
+select is((select count(*)::int from public.chore_instances where status in ('started','finished')), 0, 'parent B: sees 0 started+finished instances (cross-family isolation)');
 select is((select count(*)::int from public.star_ledger),     1, 'parent B: sees 1 star ledger row (own family)');
 select is((select count(*)::int from public.streaks),         1, 'parent B: sees 1 streak row (own family)');
 select is((select count(*)::int from public.rewards),         1, 'parent B: sees 1 reward (own family)');
@@ -162,6 +169,7 @@ select is((select count(*)::int from public.families),        0, 'orphan: sees 0
 select is((select count(*)::int from public.profiles),        0, 'orphan: sees 0 profiles');
 select is((select count(*)::int from public.chores),          0, 'orphan: sees 0 chores');
 select is((select count(*)::int from public.chore_instances), 0, 'orphan: sees 0 chore instances');
+select is((select count(*)::int from public.chore_instances where status in ('started','finished')), 0, 'orphan: sees 0 started+finished instances');
 select is((select count(*)::int from public.star_ledger),     0, 'orphan: sees 0 star ledger rows');
 select is((select count(*)::int from public.streaks),         0, 'orphan: sees 0 streak rows');
 select is((select count(*)::int from public.rewards),         0, 'orphan: sees 0 rewards');
