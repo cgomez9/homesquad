@@ -83,10 +83,12 @@ export type Database = {
           completed_by: string | null
           due_at: string
           family_id: string
+          finished_at: string | null
           id: string
           photo_url: string | null
           rejection_reason: string | null
           stars_awarded: number | null
+          started_at: string | null
           status: string
         }
         Insert: {
@@ -98,10 +100,12 @@ export type Database = {
           completed_by?: string | null
           due_at: string
           family_id: string
+          finished_at?: string | null
           id?: string
           photo_url?: string | null
           rejection_reason?: string | null
           stars_awarded?: number | null
+          started_at?: string | null
           status?: string
         }
         Update: {
@@ -113,10 +117,12 @@ export type Database = {
           completed_by?: string | null
           due_at?: string
           family_id?: string
+          finished_at?: string | null
           id?: string
           photo_url?: string | null
           rejection_reason?: string | null
           stars_awarded?: number | null
+          started_at?: string | null
           status?: string
         }
         Relationships: [
@@ -815,15 +821,11 @@ export type Database = {
       archive_reward: { Args: { reward_id: string }; Returns: undefined }
       cancel_family_goal: { Args: { p_goal_id: string }; Returns: undefined }
       check_achievements: { Args: { p_profile_id: string }; Returns: string[] }
-      cleanup_pairing_redeem_attempts: { Args: never; Returns: undefined }
-      complete_chore: {
-        Args: {
-          instance_id: string
-          kid_profile_id: string
-          photo_url?: string
-        }
+      claim_chore: {
+        Args: { actor_profile_id: string; instance_id: string }
         Returns: undefined
       }
+      cleanup_pairing_redeem_attempts: { Args: never; Returns: undefined }
       create_chore: {
         Args: {
           assignee_profile_id: string
@@ -883,6 +885,10 @@ export type Database = {
         }
         Returns: string
       }
+      credit_family_pool: {
+        Args: { p_amount: number; p_family_id: string; p_profile_id: string }
+        Returns: undefined
+      }
       current_family_id: { Args: never; Returns: string }
       current_kid_id: { Args: never; Returns: string }
       current_streak: { Args: { p: string }; Returns: number }
@@ -894,6 +900,14 @@ export type Database = {
       drain_push_outbox: { Args: never; Returns: undefined }
       ensure_today_instance: {
         Args: { p_chore_id: string }
+        Returns: undefined
+      }
+      finish_chore: {
+        Args: {
+          actor_profile_id: string
+          instance_id: string
+          photo_url?: string
+        }
         Returns: undefined
       }
       fulfill_redemption: {
@@ -943,8 +957,16 @@ export type Database = {
         Args: { instance_id: string; reason?: string }
         Returns: undefined
       }
+      release_chore: {
+        Args: { actor_profile_id: string; instance_id: string }
+        Returns: undefined
+      }
       request_redemption: {
         Args: { kid_profile_id: string; reward_id: string }
+        Returns: string
+      }
+      resolve_actor_profile_id: {
+        Args: { p_actor_profile_id: string }
         Returns: string
       }
       revoke_kid_device: { Args: { device_id: string }; Returns: undefined }
@@ -965,6 +987,10 @@ export type Database = {
           p_start: string
           p_timezone: string
         }
+        Returns: undefined
+      }
+      start_chore: {
+        Args: { actor_profile_id: string; instance_id: string }
         Returns: undefined
       }
       start_device_pairing: {
