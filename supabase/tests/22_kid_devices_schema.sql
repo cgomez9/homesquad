@@ -20,12 +20,14 @@ insert into public.profiles(id, family_id, type, display_name, avatar_id, user_i
   ('a2222222-2222-2222-2222-222222222222', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'kid',    'K',  2, null),
   ('b1111111-1111-1111-1111-111111111111', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'parent', 'P2', 1, '33333333-3333-3333-3333-333333333333');
 
+-- Seed kid_devices as superuser (before role switch) — the RLS INSERT policy
+-- was dropped in 20260528000003 so this row must be inserted as superuser.
+insert into public.kid_devices(kid_id, family_id, user_id, device_name) values
+  ('a2222222-2222-2222-2222-222222222222', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '22222222-2222-2222-2222-222222222222', 'TestDev');
+
 -- RLS: parent in family can see kid_devices in their family
 set local role authenticated;
 set local "request.jwt.claims" to '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
-
-insert into public.kid_devices(kid_id, family_id, user_id, device_name) values
-  ('a2222222-2222-2222-2222-222222222222', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '22222222-2222-2222-2222-222222222222', 'TestDev');
 
 select is(
   (select count(*) from public.kid_devices where family_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')::int,

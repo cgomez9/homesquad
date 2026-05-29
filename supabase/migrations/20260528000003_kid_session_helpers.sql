@@ -32,3 +32,13 @@ $$;
 
 comment on function public.current_kid_id is
   'Returns the kid_id for a kid-session caller (anon user bound to a kid_device), or null.';
+
+comment on function public.current_family_id is
+  'Returns the family_id for the calling session. Resolves parent profiles and kid-device sessions. Null if the session is not associated with any family.';
+
+-- Drop the test-convenience INSERT policy added in 20260528000001. Now that
+-- this migration extends current_family_id() to resolve kid sessions, that
+-- policy would allow a paired kid session to INSERT kid_devices rows
+-- arbitrarily within its family — an escalation path the security-definer
+-- redeem_device_pairing RPC (Task 5) does not need.
+drop policy kid_devices_insert_own_family on public.kid_devices;
