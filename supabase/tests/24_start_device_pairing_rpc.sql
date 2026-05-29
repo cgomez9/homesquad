@@ -1,6 +1,6 @@
 -- supabase/tests/24_start_device_pairing_rpc.sql
 begin;
-select plan(6);
+select plan(7);
 
 insert into auth.users(id, email) values
   ('11111111-1111-1111-1111-111111111111', 'parent@a.test');
@@ -28,22 +28,34 @@ select lives_ok(
   'parent generates code for own kid'
 );
 select is(
-  (select length(code) from public.kid_pairing_codes
-     where kid_id = 'a2222222-2222-2222-2222-222222222222' order by created_at desc limit 1),
-  6, 'code is 6 chars');
-select is(
   (select code ~ '^[0-9]{6}$' from public.kid_pairing_codes
      where kid_id = 'a2222222-2222-2222-2222-222222222222' order by created_at desc limit 1),
   true, 'code is all digits');
+select is(
+  (select issued_by from public.kid_pairing_codes
+     where kid_id = 'a2222222-2222-2222-2222-222222222222'
+     order by created_at desc limit 1),
+  '11111111-1111-1111-1111-111111111111'::uuid,
+  'issued_by captures the calling parent uid');
+select ok(
+  (select abs(extract(epoch from (expires_at - now() - interval '5 minutes'))) < 5
+     from public.kid_pairing_codes
+     where kid_id = 'a2222222-2222-2222-2222-222222222222'
+     order by created_at desc limit 1),
+  'expires_at is approximately now + 5 minutes');
 
 -- Foreign kid rejected
 prepare foreign_kid as select public.start_device_pairing('b2222222-2222-2222-2222-222222222222');
-select throws_ok('foreign_kid', null, null, 'foreign-family kid rejected');
+select throws_ok('foreign_kid', null,
+  'kid_id b2222222-2222-2222-2222-222222222222 not a kid in caller family',
+  'foreign-family kid rejected');
 
 -- Non-parent caller rejected
 set local "request.jwt.claims" to '{"sub":"99999999-9999-9999-9999-999999999999","role":"authenticated"}';
 prepare other_parent as select public.start_device_pairing('a2222222-2222-2222-2222-222222222222');
-select throws_ok('other_parent', null, null, 'parent in other family rejected');
+select throws_ok('other_parent', null,
+  'kid_id a2222222-2222-2222-2222-222222222222 not a kid in caller family',
+  'parent in other family rejected');
 
 -- True non-parent caller (auth.users row with no profile) rejected
 set local "request.jwt.claims" to '{"sub":"dddddddd-dddd-dddd-dddd-dddddddddddd","role":"authenticated"}';

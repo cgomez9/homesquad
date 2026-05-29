@@ -38,7 +38,7 @@ begin
       exit;
     exception when unique_violation then
       v_attempts := v_attempts + 1;
-      if v_attempts > 5 then
+      if v_attempts >= 5 then
         raise exception 'failed to generate unique pairing code after 5 attempts';
       end if;
     end;
