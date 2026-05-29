@@ -16,6 +16,8 @@
       "package": "com.homesquad.app",
       "permissions": [
         "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS"
       ]
     },
@@ -30,7 +32,14 @@
           "iosUrlScheme": "com.googleusercontent.apps.000000000000-placeholder"
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "HomeSquad uses the camera to scan a pairing code from a parent's phone.",
+          "recordAudioAndroid": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
@@ -40,6 +49,12 @@
       "eas": {
         "projectId": "efd25541-1278-4358-a693-3da8bdad9776"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/efd25541-1278-4358-a693-3da8bdad9776"
     }
   }
 }
