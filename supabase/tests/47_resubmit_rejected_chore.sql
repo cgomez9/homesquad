@@ -20,11 +20,11 @@ insert into public.chore_instances(id, chore_id, family_id, assignee_profile_id,
 set local role authenticated;
 set local "request.jwt.claims" to '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
 
--- approval chore: pending -> finished
-select lives_ok(
-  $$ select public.complete_chore('33333333-aaaa-3333-3333-333333333333', 'a3333333-3333-3333-3333-333333333333') $$,
-  'approval chore submits'
-);
+-- approval chore: pending -> started -> finished
+select lives_ok($$
+  select public.start_chore('33333333-aaaa-3333-3333-333333333333', 'a3333333-3333-3333-3333-333333333333');
+  select public.finish_chore('33333333-aaaa-3333-3333-333333333333', 'a3333333-3333-3333-3333-333333333333');
+$$, 'approval chore submits');
 select is((select status from public.chore_instances where id = '33333333-aaaa-3333-3333-333333333333'), 'finished', 'status finished');
 
 -- parent rejects
@@ -35,11 +35,11 @@ select lives_ok(
 select is((select status from public.chore_instances where id = '33333333-aaaa-3333-3333-333333333333'), 'rejected', 'status rejected');
 select is((select rejection_reason from public.chore_instances where id = '33333333-aaaa-3333-3333-333333333333'), 'tidy up first', 'rejection_reason recorded');
 
--- kid re-attempts the rejected chore (the new behaviour)
-select lives_ok(
-  $$ select public.complete_chore('33333333-aaaa-3333-3333-333333333333', 'a3333333-3333-3333-3333-333333333333') $$,
-  'rejected chore can be resubmitted'
-);
+-- kid re-attempts the rejected chore (the new behaviour): rejected -> started -> finished
+select lives_ok($$
+  select public.start_chore('33333333-aaaa-3333-3333-333333333333', 'a3333333-3333-3333-3333-333333333333');
+  select public.finish_chore('33333333-aaaa-3333-3333-333333333333', 'a3333333-3333-3333-3333-333333333333');
+$$, 'rejected chore can be resubmitted');
 select is((select status from public.chore_instances where id = '33333333-aaaa-3333-3333-333333333333'), 'finished', 'resubmit -> finished again');
 select is((select rejection_reason from public.chore_instances where id = '33333333-aaaa-3333-3333-333333333333'), null, 'rejection_reason cleared on resubmit');
 
@@ -54,16 +54,18 @@ select is(
   'exactly one star_ledger row — no double award'
 );
 
--- still cannot complete an already-approved instance
-prepare complete_approved as
-  select public.complete_chore('33333333-aaaa-3333-3333-333333333333', 'a3333333-3333-3333-3333-333333333333');
-select throws_ok('complete_approved', null, null, 'completing an approved instance still raises');
+-- still cannot start an already-approved instance
+prepare start_approved as
+  select public.start_chore('33333333-aaaa-3333-3333-333333333333', 'a3333333-3333-3333-3333-333333333333');
+select throws_ok('start_approved', null, 'chore not startable', 'starting an approved instance still raises');
 
--- photo chore: submit -> reject -> resubmit with a fresh photo
+-- photo chore: start -> finish -> reject -> start -> finish with a fresh photo
 select lives_ok($$
-  select public.complete_chore('22222222-aaaa-2222-2222-222222222222', 'a3333333-3333-3333-3333-333333333333', 'http://x/a.jpg');
+  select public.start_chore('22222222-aaaa-2222-2222-222222222222', 'a3333333-3333-3333-3333-333333333333');
+  select public.finish_chore('22222222-aaaa-2222-2222-222222222222', 'a3333333-3333-3333-3333-333333333333', 'http://x/a.jpg');
   select public.reject_chore('22222222-aaaa-2222-2222-222222222222', 'blurry');
-  select public.complete_chore('22222222-aaaa-2222-2222-222222222222', 'a3333333-3333-3333-3333-333333333333', 'http://x/b.jpg');
+  select public.start_chore('22222222-aaaa-2222-2222-222222222222', 'a3333333-3333-3333-3333-333333333333');
+  select public.finish_chore('22222222-aaaa-2222-2222-222222222222', 'a3333333-3333-3333-3333-333333333333', 'http://x/b.jpg');
 $$, 'photo chore can be resubmitted with a new photo');
 select is((select status from public.chore_instances where id = '22222222-aaaa-2222-2222-222222222222'), 'finished', 'photo resubmit -> finished');
 
