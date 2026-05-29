@@ -20,8 +20,24 @@ begin
     raise exception 'Invalid or expired code';
   end if;
 
+  -- Defensive guard: device_name is normally Device.deviceName from expo-device
+  -- which is a short OS string. Reject anything outside reasonable bounds with
+  -- the same generic error to avoid enumeration.
+  if device_name is null or char_length(device_name) < 1 or char_length(device_name) > 200 then
+    raise exception 'Invalid or expired code';
+  end if;
+
   -- Rate limit: >= 10 failures in last 10 min from the caller's IP -> reject.
-  v_ip := nullif(current_setting('request.headers', true)::jsonb->>'x-forwarded-for','')::inet;
+  -- x-forwarded-for is a comma-separated list when there are multiple proxies
+  -- ("client, lb1, lb2"). Take only the leftmost (client) IP. NULL/empty -> no
+  -- IP context, so rate limiting is skipped (managed-platform fallback).
+  v_ip := nullif(
+    trim(split_part(
+      coalesce(current_setting('request.headers', true)::jsonb->>'x-forwarded-for', ''),
+      ',', 1
+    )),
+    ''
+  )::inet;
   if v_ip is not null then
     select count(*) into v_recent_failures
       from public.pairing_redeem_attempts
@@ -31,11 +47,15 @@ begin
     end if;
   end if;
 
-  -- Idempotency: same auth.uid already has a kid_devices row for this code?
+  -- Idempotency: same auth.uid already paired via this exact code?
+  -- Join on both kid_id AND the code being used_at (so a different code for
+  -- the same kid does NOT trigger the idempotency short-circuit).
   select kd.* into v_existing
     from public.kid_devices kd
     join public.kid_pairing_codes pc
-      on pc.kid_id = kd.kid_id and pc.code = pair_code
+      on pc.kid_id = kd.kid_id
+     and pc.code = pair_code
+     and pc.used_at is not null
     where kd.user_id = auth.uid()
     limit 1;
   if v_existing.id is not null then
