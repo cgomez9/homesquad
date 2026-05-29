@@ -1,6 +1,6 @@
 -- supabase/tests/24_start_device_pairing_rpc.sql
 begin;
-select plan(5);
+select plan(6);
 
 insert into auth.users(id, email) values
   ('11111111-1111-1111-1111-111111111111', 'parent@a.test');
@@ -15,6 +15,9 @@ insert into public.families(id, name) values ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbb
 insert into public.profiles(id, family_id, type, display_name, avatar_id, user_id) values
   ('b1111111-1111-1111-1111-111111111111', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'parent', 'P2', 1, '99999999-9999-9999-9999-999999999999'),
   ('b2222222-2222-2222-2222-222222222222', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'kid',    'K2', 2, null);
+
+-- auth.users row with no profile (to test no-parent-profile guard)
+insert into auth.users(id, email) values ('dddddddd-dddd-dddd-dddd-dddddddddddd', 'noprofile@c.test');
 
 set local role authenticated;
 set local "request.jwt.claims" to '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
@@ -41,6 +44,11 @@ select throws_ok('foreign_kid', null, null, 'foreign-family kid rejected');
 set local "request.jwt.claims" to '{"sub":"99999999-9999-9999-9999-999999999999","role":"authenticated"}';
 prepare other_parent as select public.start_device_pairing('a2222222-2222-2222-2222-222222222222');
 select throws_ok('other_parent', null, null, 'parent in other family rejected');
+
+-- True non-parent caller (auth.users row with no profile) rejected
+set local "request.jwt.claims" to '{"sub":"dddddddd-dddd-dddd-dddd-dddddddddddd","role":"authenticated"}';
+prepare no_profile as select public.start_device_pairing('a2222222-2222-2222-2222-222222222222');
+select throws_ok('no_profile', null, 'caller is not a parent', 'caller with no profile rejected');
 
 select * from finish();
 rollback;
