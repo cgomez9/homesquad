@@ -6,7 +6,7 @@ create table public.kid_pairing_codes (
   code         char(6)     primary key,
   kid_id       uuid        not null references public.profiles(id) on delete cascade,
   family_id    uuid        not null references public.families(id) on delete cascade,
-  issued_by    uuid        not null references auth.users(id),
+  issued_by    uuid        not null references auth.users(id) on delete cascade,
   expires_at   timestamptz not null,
   used_at      timestamptz,
   created_at   timestamptz not null default now()
@@ -48,9 +48,18 @@ create policy kid_devices_select_own_family_or_self
   on public.kid_devices for select
   using (
     family_id = public.current_family_id()
-    or user_id = auth.uid()
+    or (user_id = auth.uid() and revoked_at is null)
   );
 
+-- FIXME(Task 3): This policy is harmless in isolation because parents are the
+-- only callers whose current_family_id() resolves to a non-null family today.
+-- Once Task 3 extends current_family_id() to also resolve kid sessions, a kid
+-- session will satisfy this check. The unique(user_id) constraint blocks the
+-- most direct sibling-impersonation path, but a kid session could still
+-- INSERT spam rows with arbitrary user_ids belonging to other auth.users.
+-- When Task 3 lands, either drop this policy (rely solely on the
+-- security-definer RPC for inserts) or tighten with: with check (... and
+-- not exists (select 1 from public.kid_devices where user_id = auth.uid())).
 create policy kid_devices_insert_own_family
   on public.kid_devices for insert
   with check (family_id = public.current_family_id());

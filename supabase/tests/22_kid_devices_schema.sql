@@ -1,5 +1,5 @@
 begin;
-select plan(7);
+select plan(9);
 
 select has_table('public', 'kid_pairing_codes', 'kid_pairing_codes exists');
 select has_table('public', 'kid_devices',       'kid_devices exists');
@@ -31,6 +31,12 @@ select is(
   (select count(*) from public.kid_devices where family_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')::int,
   1, 'parent sees kid device in their family');
 
+-- Kid session can self-select its own device row
+set local "request.jwt.claims" to '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}';
+select is(
+  (select count(*)::int from public.kid_devices where user_id = '22222222-2222-2222-2222-222222222222'),
+  1, 'kid session can self-select own device row');
+
 -- RLS: a parent in another family cannot see this kid device
 set local "request.jwt.claims" to '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}';
 select is(
@@ -45,6 +51,13 @@ insert into public.kid_pairing_codes(code, kid_id, family_id, issued_by, expires
 select is(
   (select count(*) from public.kid_pairing_codes where code = '482619')::int,
   1, 'parent can insert pairing code in own family');
+
+-- Other-family parent cannot insert a pairing code for any family
+set local "request.jwt.claims" to '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}';
+prepare other_parent_insert as
+  insert into public.kid_pairing_codes(code, kid_id, family_id, issued_by, expires_at)
+  values ('999999', 'a2222222-2222-2222-2222-222222222222', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-3333-3333-3333-333333333333', now() + interval '5 minutes');
+select throws_ok('other_parent_insert', null, null, 'other-family parent cannot insert pairing code');
 
 select * from finish();
 rollback;
