@@ -45,9 +45,9 @@ describe('finishChore', () => {
     expect(mockedRpc).toHaveBeenCalledWith('finish_chore', { instance_id: 'inst-1', actor_profile_id: 'actor-1', photo_url: 'https://x.test/y.jpg' });
   });
 
-  it('omits photo_url when not provided (passes null)', async () => {
+  it('omits photo_url when not provided (passes undefined)', async () => {
     mockedRpc.mockResolvedValue({ data: null, error: null } as any);
     await finishChore('inst-1', 'actor-1');
-    expect(mockedRpc).toHaveBeenCalledWith('finish_chore', { instance_id: 'inst-1', actor_profile_id: 'actor-1', photo_url: null });
+    expect(mockedRpc).toHaveBeenCalledWith('finish_chore', { instance_id: 'inst-1', actor_profile_id: 'actor-1', photo_url: undefined });
   });
 });

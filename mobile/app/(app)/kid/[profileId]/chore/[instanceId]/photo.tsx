@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { supabase } from '../../../../../../src/lib/supabase';
+import { finishChore } from '../../../../../../src/lib/chores';
 
 const MAX_RETRIES = 3;
 
@@ -62,12 +63,13 @@ export default function PhotoCapture() {
     if (lastErr) { setError(t('photo.uploadFailed', { error: lastErr })); setBusy(false); return; }
 
     const { data: { publicUrl } } = supabase.storage.from('chore-proofs').getPublicUrl(path);
-    const { error: rpcErr } = await supabase.rpc('complete_chore', {
-      instance_id: instanceId,
-      kid_profile_id: profileId,
-      photo_url: publicUrl,
-    });
-    if (rpcErr) { setError(rpcErr.message); setBusy(false); return; }
+    try {
+      await finishChore(instanceId, profileId, publicUrl);
+    } catch (rpcErr) {
+      setError((rpcErr as Error).message);
+      setBusy(false);
+      return;
+    }
 
     setBusy(false);
     router.replace(`/(app)/kid/${profileId}` as never);

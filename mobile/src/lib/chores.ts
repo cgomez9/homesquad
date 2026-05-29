@@ -32,7 +32,7 @@ export async function finishChore(
   const { error } = await supabase.rpc('finish_chore', {
     instance_id: instanceId,
     actor_profile_id: actorProfileId,
-    photo_url: photoUrl,
+    photo_url: photoUrl ?? undefined,
   });
   if (error) throw new Error(error.message);
 }

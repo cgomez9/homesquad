@@ -23,20 +23,8 @@ import { GoalCard } from '../../../../src/components/GoalCard';
 import { TidePoolBackground } from '../../../../src/components/TidePool';
 import { AVATARS, AvatarId } from '../../../../src/constants/avatars';
 import { useTheme, type Palette, radii, spacing, typography } from '../../../../src/theme';
-
-type Instance = {
-  id: string;
-  status: 'pending' | 'submitted' | 'approved' | 'rejected';
-  due_at: string;
-  rejection_reason: string | null;
-  chore: {
-    id: string;
-    title: string;
-    star_value: number;
-    verification_mode: 'auto'|'photo'|'approval';
-    recurrence: { type: string; times?: string[] } | null;
-  } | null;
-};
+import { ChoreCard, type ChoreAction, type ChoreCardInstance } from '../../../../src/components/ChoreCard';
+import { claimChore, releaseChore, startChore, finishChore } from '../../../../src/lib/chores';
 
 type ProfileMeta = { family_id: string; display_name: string; avatar_id: number };
 
@@ -47,15 +35,6 @@ const WEEKDAY_KEYS = [
   'common.days.sun', 'common.days.mon', 'common.days.tue', 'common.days.wed',
   'common.days.thu', 'common.days.fri', 'common.days.sat',
 ];
-
-function useMinuteTick(): number {
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setTick((n) => n + 1), 60_000);
-    return () => clearInterval(id);
-  }, []);
-  return tick;
-}
 
 export default function KidHome() {
   const { colors } = useTheme();
@@ -85,23 +64,30 @@ export default function KidHome() {
   useCelebrationCatchup(profileId, familyId ?? undefined);
 
   const { data: instances, isLoading, error } = useQuery({
-    queryKey: ['kid-today', profileId],
-    queryFn: async (): Promise<Instance[]> => {
-      const startOfDay = new Date();
-      startOfDay.setUTCHours(0, 0, 0, 0);
+    queryKey: ['kid-today', profileId, familyId],
+    queryFn: async (): Promise<ChoreCardInstance[]> => {
+      if (!familyId) return [];
+      const startOfDay = new Date(); startOfDay.setUTCHours(0, 0, 0, 0);
       const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
       const { data, error } = await supabase
         .from('chore_instances')
-        .select('id, status, due_at, rejection_reason, chore:chores(id,title,star_value,verification_mode,recurrence)')
-        .or(`assignee_profile_id.eq.${profileId},assignee_profile_id.is.null`)
+        .select('id, status, due_at, assignee_profile_id, rejection_reason, chore:chores(id,title,star_value,verification_mode,recurrence), assignee:profiles!chore_instances_assignee_profile_id_fkey(id,display_name,avatar_id)')
+        .eq('family_id', familyId)
+        .in('status', ['pending', 'started', 'finished', 'rejected'])
         .gte('due_at', startOfDay.toISOString())
         .lt('due_at', endOfDay.toISOString())
-        .in('status', ['pending', 'submitted', 'rejected'])
         .order('due_at');
       if (error) throw error;
-      return (data ?? []) as unknown as Instance[];
+      const rows = (data ?? []) as unknown as ChoreCardInstance[];
+      // Three-section sort: mine -> unassigned -> others'
+      return rows.sort((a, b) => {
+        const sa = a.assignee_profile_id === profileId ? 0 : a.assignee_profile_id === null ? 1 : 2;
+        const sb = b.assignee_profile_id === profileId ? 0 : b.assignee_profile_id === null ? 1 : 2;
+        if (sa !== sb) return sa - sb;
+        return a.due_at.localeCompare(b.due_at);
+      });
     },
-    enabled: !!profileId,
+    enabled: !!profileId && !!familyId,
   });
 
   const { data: balance } = useQuery({
@@ -127,25 +113,29 @@ export default function KidHome() {
     enabled: !!profileId,
   });
 
-  const complete = useMutation({
-    mutationFn: async (vars: { instanceId: string }) => {
-      const { error } = await supabase.rpc('complete_chore', {
-        instance_id: vars.instanceId,
-        kid_profile_id: profileId,
-      });
-      if (error) throw error;
+  const choreAction = useMutation({
+    mutationFn: async (action: ChoreAction) => {
+      if (!profileId) throw new Error('no profile');
+      switch (action.kind) {
+        case 'claim':   return claimChore(action.instanceId, profileId);
+        case 'release': return releaseChore(action.instanceId, profileId);
+        case 'start':   return startChore(action.instanceId, profileId);
+        case 'finish': {
+          const inst = instances?.find((i) => i.id === action.instanceId);
+          if (inst?.chore?.verification_mode === 'photo') {
+            router.push(`/(app)/kid/${profileId}/chore/${action.instanceId}/photo` as never);
+            return;
+          }
+          return finishChore(action.instanceId, profileId);
+        }
+      }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['kid-today', profileId] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['kid-today', profileId, familyId] }),
   });
 
-  function onDone(inst: Instance) {
-    if (!inst.chore) return;
+  function onAction(action: ChoreAction) {
     fireSmallFeedback();
-    if (inst.chore.verification_mode === 'photo') {
-      router.push(`/(app)/kid/${profileId}/chore/${inst.id}/photo` as never);
-      return;
-    }
-    complete.mutate({ instanceId: inst.id });
+    choreAction.mutate(action);
   }
 
   useEffect(() => {
@@ -180,7 +170,7 @@ export default function KidHome() {
 
   const avatar = AVATARS[(meta?.avatar_id ?? 1) as AvatarId] ?? AVATARS[1];
   const list = instances ?? [];
-  const todoCount = list.filter((i) => i.status === 'pending').length;
+  const todoCount = list.filter((i) => i.status === 'pending' || i.status === 'started').length;
 
   return (
     <View style={styles.screen}>
@@ -252,8 +242,13 @@ export default function KidHome() {
             </View>
           )}
 
-          {list.map((inst, i) => (
-            <ChoreCard key={inst.id} inst={inst} index={i} onDone={() => onDone(inst)} />
+          {list.map((inst) => (
+            <ChoreCard
+              key={inst.id}
+              inst={inst}
+              viewerActorId={profileId ?? ''}
+              onAction={onAction}
+            />
           ))}
         </ScrollView>
       </View>
@@ -279,130 +274,6 @@ function NavBtn({ icon, label, onPress }: { icon: string; label: string; onPress
       >
         <Text style={styles.navIcon}>{icon}</Text>
       </Pressable>
-    </Animated.View>
-  );
-}
-
-/* ---------- chore card ---------- */
-
-function ChoreCard({
-  inst,
-  index,
-  onDone,
-}: {
-  inst: Instance;
-  index: number;
-  onDone: () => void;
-}) {
-  const { colors } = useTheme();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
-  const { t } = useTranslation();
-  const tick = useMinuteTick(); void tick; // re-render every minute for overdue flip
-  const hasTimes =
-    (inst.chore?.recurrence as { times?: string[] } | null)?.times !== undefined &&
-    ((inst.chore?.recurrence as { times?: string[] } | null)?.times?.length ?? 0) > 0;
-  const timeLabel = hasTimes
-    ? new Date(inst.due_at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
-    : null;
-  const isOverdue =
-    hasTimes && inst.status === 'pending' && Date.now() > new Date(inst.due_at).getTime();
-  const enter = useRef(new Animated.Value(0)).current;
-  const { scale, onPressIn, onPressOut } = usePressScale();
-
-  useEffect(() => {
-    Animated.timing(enter, {
-      toValue: 1,
-      duration: 420,
-      delay: 80 + index * 65,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    }).start();
-  }, [enter, index]);
-
-  const submitted = inst.status === 'submitted';
-  const rejected = inst.status === 'rejected';
-  const stars = inst.chore?.star_value ?? 0;
-  const isPhoto = inst.chore?.verification_mode === 'photo';
-
-  const animStyle = {
-    opacity: enter,
-    transform: [
-      { translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) },
-    ],
-  };
-
-  if (submitted) {
-    return (
-      <Animated.View style={[styles.card, styles.cardWait, animStyle]}>
-        <View style={styles.waitBadge}>
-          <Text style={styles.waitBadgeText}>⏳</Text>
-        </View>
-        <View style={styles.cardMain}>
-          <Text style={[styles.choreTitle, styles.choreTitleWait]}>{inst.chore?.title}</Text>
-          <Text style={styles.waitText}>{t('kid.waiting')}</Text>
-        </View>
-        <Text style={styles.starMuted}>⭐ {stars}</Text>
-      </Animated.View>
-    );
-  }
-
-  if (rejected) {
-    return (
-      <Animated.View style={[styles.card, styles.cardRej, animStyle]}>
-        <View style={styles.cardMain}>
-          <Text style={[styles.choreTitle, styles.choreTitleRej]}>{inst.chore?.title}</Text>
-          <Text style={styles.rejText}>
-            {inst.rejection_reason
-              ? t('kid.rejectedReason', { reason: inst.rejection_reason })
-              : t('kid.notApproved')}
-          </Text>
-        </View>
-        <Animated.View style={{ transform: [{ scale }] }}>
-          <Pressable
-            onPress={onDone}
-            onPressIn={onPressIn}
-            onPressOut={onPressOut}
-            accessibilityRole="button"
-            accessibilityLabel={t('kid.tryAgainA11y', { title: inst.chore?.title ?? t('kid.choreFallback') })}
-            style={styles.retryBtn}
-          >
-            <Text style={styles.retryText}>{t('kid.tryAgain')}</Text>
-          </Pressable>
-        </Animated.View>
-      </Animated.View>
-    );
-  }
-
-  return (
-    <Animated.View style={[styles.card, isOverdue && styles.cardOverdue, animStyle]}>
-      <View style={styles.cardMain}>
-        <Text style={styles.choreTitle}>{inst.chore?.title}</Text>
-        <View style={styles.metaRow}>
-          <Text style={styles.star}>⭐ {stars}</Text>
-          {isPhoto && (
-            <View style={styles.photoTag}>
-              <Text style={styles.photoTagText}>{t('kid.photo')}</Text>
-            </View>
-          )}
-        </View>
-        {timeLabel && (
-          <Text testID="chore-time-label" style={[styles.timeLabel, isOverdue && styles.timeLabelOverdue]}>
-            {isOverdue ? `● 🕗 ${timeLabel} · ${t('kid.overdue')}` : `🕗 ${timeLabel}`}
-          </Text>
-        )}
-      </View>
-      <Animated.View style={{ transform: [{ scale }] }}>
-        <Pressable
-          onPress={onDone}
-          onPressIn={onPressIn}
-          onPressOut={onPressOut}
-          accessibilityRole="button"
-          accessibilityLabel={t('kid.markDoneA11y', { title: inst.chore?.title ?? t('kid.choreFallback') })}
-          style={styles.doneBtn}
-        >
-          <Text style={styles.doneIcon}>✓</Text>
-        </Pressable>
-      </Animated.View>
     </Animated.View>
   );
 }
@@ -517,107 +388,4 @@ const makeStyles = (colors: Palette) =>
   emptyEmoji: { fontSize: 52 },
   emptyTitle: { fontFamily: typography.fontFamilyBold, fontSize: typography.h2, color: colors.text },
   emptySub: { fontFamily: typography.fontFamilySemi, fontSize: typography.body, color: colors.textMuted },
-
-  // chore card
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 22,
-    paddingVertical: spacing.lg,
-    paddingLeft: spacing.lg + 2,
-    paddingRight: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    marginBottom: spacing.md,
-    shadowColor: SHADOW,
-    shadowOpacity: 0.11,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 9 },
-    elevation: 4,
-  },
-  cardOverdue: {
-    borderWidth: 1.5,
-    borderColor: colors.warning,
-  },
-  timeLabel: {
-    fontFamily: typography.fontFamilyBold,
-    fontSize: typography.small,
-    color: colors.textMuted,
-    marginTop: spacing.xs,
-  },
-  timeLabelOverdue: {
-    color: colors.warning,
-  },
-  cardMain: { flex: 1 },
-  choreTitle: { fontFamily: typography.fontFamilyBold, fontSize: 17, color: colors.text },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.xs + 1 },
-  star: { fontFamily: typography.fontFamilyBold, fontSize: typography.small, color: colors.primaryDark },
-  photoTag: {
-    backgroundColor: 'rgba(15,118,110,0.07)',
-    paddingVertical: 2,
-    paddingHorizontal: spacing.sm,
-    borderRadius: radii.pill,
-  },
-  photoTagText: { fontFamily: typography.fontFamilySemi, fontSize: typography.tiny, color: colors.textMuted },
-  doneBtn: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: colors.primary,
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 5,
-  },
-  doneIcon: { color: '#fff', fontSize: 24, fontFamily: typography.fontFamilyBold },
-
-  // waiting variant
-  cardWait: { backgroundColor: 'rgba(52,211,153,0.12)', shadowOpacity: 0, elevation: 0 },
-  waitBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(52,211,153,0.30)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  waitBadgeText: { fontSize: 20 },
-  choreTitleWait: { color: colors.primaryDark },
-  waitText: { fontFamily: typography.fontFamilyBold, fontSize: typography.small, color: colors.primaryDark, marginTop: 3 },
-  starMuted: { fontFamily: typography.fontFamilyBold, fontSize: typography.small, color: colors.primaryDark },
-
-  // rejected variant
-  cardRej: {
-    backgroundColor: '#FFF1F0',
-    borderWidth: 1,
-    borderColor: 'rgba(225,29,72,0.18)',
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  choreTitleRej: { color: colors.error },
-  rejText: {
-    fontFamily: typography.fontFamilySemi,
-    fontSize: typography.small,
-    color: colors.error,
-    fontStyle: 'italic',
-    marginTop: 3,
-  },
-  retryBtn: {
-    backgroundColor: colors.accent,
-    paddingVertical: spacing.sm + 2,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radii.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: colors.accent,
-    shadowOpacity: 0.34,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
-  },
-  retryText: { fontFamily: typography.fontFamilyBold, fontSize: typography.small + 1, color: '#fff' },
 });
-
