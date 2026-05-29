@@ -78,7 +78,7 @@ export default function Approvals() {
           const { data, error } = await supabase
             .from('chore_instances')
             .select('id,completed_at,photo_url,family_id,completed_by,kid:profiles!chore_instances_completed_by_fkey(display_name,avatar_id),chore:chores(title,star_value,verification_mode)')
-            .eq('status', 'submitted')
+            .eq('status', 'finished')
             .order('completed_at', { ascending: true })
             .limit(100);
           if (error) throw error;
@@ -387,7 +387,7 @@ function ChoreApprovalCard({
       </View>
       <View style={styles.meta}>
         <Text style={styles.metaText}>
-          {t('approvals.submitted', { time: timeAgo(item.completed_at, t) })}
+          {t('approvals.finished', { time: timeAgo(item.completed_at, t) })}
         </Text>
         {item.chore?.verification_mode === 'photo' && !isFlashing && (
           <Pressable onPress={onViewPhoto} style={styles.photoChip}>

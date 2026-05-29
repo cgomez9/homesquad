@@ -241,6 +241,7 @@
   },
   "tabs": {
     "chores": "Tareas",
+    "myChores": "Mis tareas",
     "rewards": "Premios",
     "approvals": "Aprobar",
     "activity": "Actividad",
@@ -347,7 +348,7 @@
     "empty": "Sin aprobaciones pendientes — ¡bien hecho!",
     "sectionDecisions": "Decisiones pendientes",
     "sectionFulfillment": "Por entregar",
-    "submitted": "enviado {{time}}",
+    "finished": "terminado {{time}}",
     "requested": "pedido {{time}}",
     "approvedAgo": "aprobado {{time}}",
     "viewPhoto": "📷 Ver foto",
@@ -358,6 +359,13 @@
     "wants": "{{name}} quiere",
     "approvedFlashChore": "✓ Aprobada · +{{stars}} ⭐",
     "approvedFlashRedemption": "✓ Aprobado"
+  },
+  "chore": {
+    "claim": "Reclamar",
+    "release": "Liberar",
+    "start": "Iniciar",
+    "finish": "Terminar",
+    "tryAgain": "Reintentar"
   },
   "activity": {
     "title": "Actividad",

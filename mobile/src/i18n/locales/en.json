@@ -241,6 +241,7 @@
   },
   "tabs": {
     "chores": "Chores",
+    "myChores": "My Chores",
     "rewards": "Rewards",
     "approvals": "Approvals",
     "activity": "Activity",
@@ -347,7 +348,7 @@
     "empty": "No pending approvals — nice work!",
     "sectionDecisions": "Decisions needed",
     "sectionFulfillment": "Pending fulfillment",
-    "submitted": "submitted {{time}}",
+    "finished": "finished {{time}}",
     "requested": "requested {{time}}",
     "approvedAgo": "approved {{time}}",
     "viewPhoto": "📷 View photo",
@@ -358,6 +359,13 @@
     "wants": "{{name}} wants",
     "approvedFlashChore": "✓ Approved · +{{stars}} ⭐",
     "approvedFlashRedemption": "✓ Approved"
+  },
+  "chore": {
+    "claim": "Claim",
+    "release": "Release",
+    "start": "Start",
+    "finish": "Finish",
+    "tryAgain": "Try again"
   },
   "activity": {
     "title": "Activity",

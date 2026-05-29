@@ -14,6 +14,7 @@ type IoniconName = keyof typeof Ionicons.glyphMap;
 
 const TABS: { name: string; labelKey: string; on: IoniconName; off: IoniconName }[] = [
   { name: 'index',     labelKey: 'tabs.chores',    on: 'clipboard',              off: 'clipboard-outline' },
+  { name: 'my-chores', labelKey: 'tabs.myChores',  on: 'person',                 off: 'person-outline' },
   { name: 'rewards',   labelKey: 'tabs.rewards',   on: 'gift',                   off: 'gift-outline' },
   { name: 'approvals', labelKey: 'tabs.approvals', on: 'checkmark-done-circle',  off: 'checkmark-done-circle-outline' },
   { name: 'activity',  labelKey: 'tabs.activity',  on: 'stats-chart',            off: 'stats-chart-outline' },
