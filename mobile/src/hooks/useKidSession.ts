@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
-type KidSessionState =
+export type KidSessionState =
   | { status: 'loading' }
   | { status: 'not-kid' }
   | { status: 'kid'; kidId: string; familyId: string; deviceId: string };
@@ -14,6 +14,10 @@ export function useKidSession(userId: string | undefined): KidSessionState {
       setState({ status: 'not-kid' });
       return;
     }
+    // A user just appeared (e.g. right after sign-in). Re-enter `loading` while
+    // we look them up so the root layout waits instead of acting on the stale
+    // `not-kid` from the no-user pass.
+    setState({ status: 'loading' });
     let cancelled = false;
 
     supabase
