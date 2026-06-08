@@ -54,6 +54,20 @@ describe('decideRoute', () => {
     expect(decideRoute(authed(), notKid, hasFamily, ['(app)'])).toBeNull();
   });
 
+  // Race during the onboarding wizard: create-family RPC succeeds, refetchFamily
+  // flips family → has-family, router.replace moves to add-kid. The root-layout
+  // effect re-runs decideRoute with new family state + new segments. Without
+  // the post-creation exemption it would return '/(app)' and cut the wizard
+  // short before the user adds any kid or initial chore — the iOS-TestFlight
+  // bug that surfaced on 2026-06-08.
+  it('lets a has-family parent stay on add-kid (post-creation onboarding step)', () => {
+    expect(decideRoute(authed(), notKid, hasFamily, ['(onboarding)', 'add-kid'])).toBeNull();
+  });
+
+  it('lets a has-family parent stay on add-chores (post-creation onboarding step)', () => {
+    expect(decideRoute(authed(), notKid, hasFamily, ['(onboarding)', 'add-chores'])).toBeNull();
+  });
+
   // A failed family lookup must NOT masquerade as "no family" and dump an
   // existing user into onboarding.
   it('never routes to onboarding when the family lookup errored', () => {

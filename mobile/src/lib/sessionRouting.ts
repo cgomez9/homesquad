@@ -38,7 +38,17 @@ export function decideRoute(
   // the fix for the stranding bug: previously this only fired from the auth
   // group, so a brief stale `no-family` read could push a real member into
   // onboarding with no way back.
+  //
+  // Exception: add-kid and add-chores are post-creation steps of the same
+  // onboarding wizard. The user reached them via router.replace from
+  // create-family/join-family — by definition family.has-family was just
+  // achieved, and yanking them to /(app) here cuts the wizard short before
+  // they can add kids or initial chores.
   if (family.status === 'has-family') {
+    const inPostCreationOnboarding =
+      segments[0] === '(onboarding)' &&
+      (segments[1] === 'add-kid' || segments[1] === 'add-chores');
+    if (inPostCreationOnboarding) return null;
     return inAppGroup ? null : '/(app)';
   }
 
