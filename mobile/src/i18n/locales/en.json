@@ -474,6 +474,12 @@
     "title": "Enter PIN"
   },
   "app": {
-    "brandName": "HomeSquad"
+    "brandName": "HomeSquad",
+    "loadError": {
+      "title": "We couldn't load your account",
+      "body": "Check your connection and try again.",
+      "retry": "Try again",
+      "signOut": "Sign out"
+    }
   }
 }

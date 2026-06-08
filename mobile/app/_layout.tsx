@@ -1,12 +1,14 @@
 // mobile/app/_layout.tsx — full file
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import * as Notifications from 'expo-notifications';
 import { useAuth } from '../src/hooks/useAuth';
-import { useFamily } from '../src/hooks/useFamily';
+import { useFamily, refetchFamily } from '../src/hooks/useFamily';
 import { useKidSession } from '../src/hooks/useKidSession';
+import { decideRoute } from '../src/lib/sessionRouting';
 import { queryClient } from '../src/lib/queryClient';
 import { subscribeToFamily } from '../src/lib/realtime';
 import { supabase } from '../src/lib/supabase';
@@ -49,6 +51,35 @@ function RealtimeBridge() {
   return null;
 }
 
+// Shown when the family lookup errors out. Mounted only after i18n is ready
+// (the loading guard above gates on i18nReady), so useTranslation is safe here.
+function AccountLoadError() {
+  const { t } = useTranslation();
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 12 }}>
+      <Text style={{ fontFamily: 'Nunito_700Bold', fontSize: 18, textAlign: 'center' }}>
+        {t('app.loadError.title')}
+      </Text>
+      <Text style={{ fontFamily: 'Nunito_400Regular', fontSize: 14, textAlign: 'center', opacity: 0.7 }}>
+        {t('app.loadError.body')}
+      </Text>
+      <Pressable
+        onPress={() => refetchFamily()}
+        style={{ marginTop: 12, paddingVertical: 12, paddingHorizontal: 28, borderRadius: 999, backgroundColor: '#2563eb' }}
+      >
+        <Text style={{ fontFamily: 'Nunito_600SemiBold', fontSize: 15, color: '#fff' }}>
+          {t('app.loadError.retry')}
+        </Text>
+      </Pressable>
+      <Pressable onPress={() => supabase.auth.signOut()} style={{ marginTop: 4, paddingVertical: 10, paddingHorizontal: 20 }}>
+        <Text style={{ fontFamily: 'Nunito_600SemiBold', fontSize: 14, color: '#2563eb' }}>
+          {t('app.loadError.signOut')}
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
 export default function RootLayout() {
   const auth = useAuth();
   const userId = auth.status === 'authenticated' ? auth.session.user.id : undefined;
@@ -70,41 +101,8 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    if (auth.status === 'loading') return;
-    if (auth.status === 'authenticated' && (kidSession.status === 'loading' || family.status === 'loading')) return;
-
-    const inAuthGroup       = segments[0] === '(auth)';
-    const inOnboardingGroup = segments[0] === '(onboarding)';
-    const inPairGroup       = (segments[0] as string) === '(pair)';
-    const inAppGroup        = segments[0] === '(app)';
-
-    // Unauthenticated → login (existing behavior).
-    if (auth.status === 'unauthenticated') {
-      if (!inAuthGroup) router.replace('/(auth)/login');
-      return;
-    }
-
-    // Kid session → land on kid mode for the bound kid.
-    if (kidSession.status === 'kid') {
-      if (!inAppGroup) router.replace(`/(app)/kid/${kidSession.kidId}` as never);
-      return;
-    }
-
-    // Authenticated anon with no kid_device row → pair screen.
-    if (kidSession.status === 'not-kid' && family.status === 'no-family') {
-      const isAnon = !!(auth.status === 'authenticated' && auth.session.user.is_anonymous);
-      if (isAnon) {
-        if (!inPairGroup) router.replace('/(pair)' as never);
-        return;
-      }
-      if (!inOnboardingGroup) router.replace('/(onboarding)/welcome');
-      return;
-    }
-
-    // Parent with family in auth group → bounce to app (existing behavior).
-    if (family.status === 'has-family' && inAuthGroup) {
-      router.replace('/(app)');
-    }
+    const target = decideRoute(auth, kidSession, family, segments as string[]);
+    if (target) router.replace(target as never);
   }, [auth, kidSession, family, segments]);
 
   if (
@@ -118,6 +116,13 @@ export default function RootLayout() {
         <ActivityIndicator />
       </View>
     );
+  }
+
+  // Family lookup failed (e.g. transient network/RLS error). Don't strand the
+  // user on whatever screen they happened to be on — offer a recovery path
+  // instead of silently treating it as "no family".
+  if (auth.status === 'authenticated' && family.status === 'error') {
+    return <AccountLoadError />;
   }
 
   return (

@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useKidSession } from './useKidSession';
 
-type FamilyState =
+export type FamilyState =
   | { status: 'loading' }
   | { status: 'no-family' }
-  | { status: 'has-family'; familyId: string };
+  | { status: 'has-family'; familyId: string }
+  | { status: 'error' };
 
 const refetchListeners = new Set<() => void>();
 export function refetchFamily() { refetchListeners.forEach((fn) => fn()); }
@@ -33,6 +34,10 @@ export function useFamily(userId: string | undefined): FamilyState {
       return;
     }
 
+    // We have a user and a settled (non-kid) session: look up their parent
+    // profile. Re-enter `loading` first so a stale `no-family` from an earlier
+    // pass can't route an existing member into onboarding mid-fetch.
+    setState({ status: 'loading' });
     let cancelled = false;
     supabase
       .from('profiles')
@@ -42,7 +47,9 @@ export function useFamily(userId: string | undefined): FamilyState {
       .maybeSingle()
       .then(({ data, error }) => {
         if (cancelled) return;
-        if (error) { console.warn('useFamily error', error); setState({ status: 'no-family' }); return; }
+        // A failed lookup is NOT "no family" — collapsing the two is what sent
+        // existing users into a family-creation screen that then hard-errors.
+        if (error) { console.warn('useFamily error', error); setState({ status: 'error' }); return; }
         setState(data ? { status: 'has-family', familyId: data.family_id } : { status: 'no-family' });
       });
     return () => { cancelled = true; };
