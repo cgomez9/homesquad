@@ -37,6 +37,8 @@ export function DeleteAccountModal({ visible, loading, error, onCancel, onConfir
             onChangeText={setConfirmText}
             autoCapitalize="characters"
             autoCorrect={false}
+            autoComplete="off"
+            textContentType="none"
           />
           {error && <Text style={styles.error}>{error}</Text>}
           <View style={styles.row}>

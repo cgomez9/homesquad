@@ -63,6 +63,8 @@ export default function CreateGoalScreen() {
             onChangeText={setTitle}
             placeholder={i18n.t('goals.titlePlaceholder')}
             placeholderTextColor={colors.textMuted}
+            autoComplete="off"
+            textContentType="none"
           />
 
           <Text style={styles.label}>{i18n.t('goals.targetLabel')}</Text>
@@ -72,6 +74,8 @@ export default function CreateGoalScreen() {
             value={targetStr}
             onChangeText={setTargetStr}
             keyboardType="number-pad"
+            autoComplete="off"
+            textContentType="none"
           />
 
           <Text style={styles.label}>{i18n.t('goals.descriptionLabel')}</Text>
@@ -83,6 +87,8 @@ export default function CreateGoalScreen() {
             placeholder={i18n.t('goals.descriptionPlaceholder')}
             placeholderTextColor={colors.textMuted}
             multiline
+            autoComplete="off"
+            textContentType="none"
           />
 
           {errorKey ? <Text style={styles.error}>{i18n.t(errorKey)}</Text> : null}

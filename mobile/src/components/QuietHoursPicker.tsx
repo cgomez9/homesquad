@@ -57,6 +57,8 @@ export function QuietHoursPicker({ enabled, start, end, timezone, onSave }: Prop
               value={vStart}
               onChangeText={setVStart}
               placeholder="21:00"
+              autoComplete="off"
+              textContentType="none"
             />
           </View>
           <View style={styles.row}>
@@ -67,6 +69,8 @@ export function QuietHoursPicker({ enabled, start, end, timezone, onSave }: Prop
               value={vEnd}
               onChangeText={setVEnd}
               placeholder="07:00"
+              autoComplete="off"
+              textContentType="none"
             />
           </View>
           <View style={styles.row}>
@@ -78,6 +82,8 @@ export function QuietHoursPicker({ enabled, start, end, timezone, onSave }: Prop
               onChangeText={setVTimezone}
               autoCapitalize="none"
               placeholder="UTC"
+              autoComplete="off"
+              textContentType="none"
             />
           </View>
         </>

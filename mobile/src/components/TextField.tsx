@@ -12,6 +12,8 @@ export function TextField({ label, error, style, onFocus, onBlur, ...rest }: Pro
     <View style={{ marginBottom: spacing.xl }}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
+        autoComplete="off"
+        textContentType="none"
         {...rest}
         onFocus={(e) => { setFocused(true); onFocus?.(e); }}
         onBlur={(e) => { setFocused(false); onBlur?.(e); }}

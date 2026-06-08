@@ -36,6 +36,8 @@ export function PairCodeInput({ value, onChange, onSubmit }: Props) {
         keyboardType="number-pad"
         maxLength={6}
         autoFocus
+        autoComplete="off"
+        textContentType="none"
         style={styles.hidden}
       />
     </Pressable>
