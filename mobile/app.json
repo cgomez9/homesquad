@@ -9,7 +9,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.homesquad.app",
+      "bundleIdentifier": "app.homesquad.com",
       "usesAppleSignIn": true,
       "config": {
         "usesNonExemptEncryption": false
