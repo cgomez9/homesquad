@@ -57,15 +57,32 @@ describe('decideRoute', () => {
   // Race during the onboarding wizard: create-family RPC succeeds, refetchFamily
   // flips family → has-family, router.replace moves to add-kid. The root-layout
   // effect re-runs decideRoute with new family state + new segments. Without
-  // the post-creation exemption it would return '/(app)' and cut the wizard
-  // short before the user adds any kid or initial chore — the iOS-TestFlight
-  // bug that surfaced on 2026-06-08.
+  // the wizard exemption it would return '/(app)' and cut the wizard short
+  // before the user adds any kid or initial chore — the iOS-TestFlight bug
+  // that surfaced on 2026-06-08. The race fires BEFORE navigation lands, so
+  // the exemption has to cover create-family and join-family too, not just
+  // the post-navigation add-kid/add-chores screens.
+  it('lets a has-family parent stay on create-family (race window during submit)', () => {
+    expect(decideRoute(authed(), notKid, hasFamily, ['(onboarding)', 'create-family'])).toBeNull();
+  });
+
+  it('lets a has-family parent stay on join-family (race window during submit)', () => {
+    expect(decideRoute(authed(), notKid, hasFamily, ['(onboarding)', 'join-family'])).toBeNull();
+  });
+
   it('lets a has-family parent stay on add-kid (post-creation onboarding step)', () => {
     expect(decideRoute(authed(), notKid, hasFamily, ['(onboarding)', 'add-kid'])).toBeNull();
   });
 
   it('lets a has-family parent stay on add-chores (post-creation onboarding step)', () => {
     expect(decideRoute(authed(), notKid, hasFamily, ['(onboarding)', 'add-chores'])).toBeNull();
+  });
+
+  // Original stranding-bug scenario is still protected: if family lookup
+  // returns has-family while the user happens to be on the welcome screen,
+  // evacuate to (app) (welcome is an entry point, not a wizard step).
+  it('still bounces a has-family parent OUT of welcome', () => {
+    expect(decideRoute(authed(), notKid, hasFamily, ['(onboarding)', 'welcome'])).toBe('/(app)');
   });
 
   // A failed family lookup must NOT masquerade as "no family" and dump an

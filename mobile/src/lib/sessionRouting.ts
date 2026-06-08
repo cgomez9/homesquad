@@ -39,16 +39,21 @@ export function decideRoute(
   // group, so a brief stale `no-family` read could push a real member into
   // onboarding with no way back.
   //
-  // Exception: add-kid and add-chores are post-creation steps of the same
-  // onboarding wizard. The user reached them via router.replace from
-  // create-family/join-family — by definition family.has-family was just
-  // achieved, and yanking them to /(app) here cuts the wizard short before
-  // they can add kids or initial chores.
+  // Exception: the create-family / join-family / add-kid / add-chores screens
+  // are the actual wizard. By the time the user is submitting create-family,
+  // a successful RPC means family.has-family is racing to land — sometimes
+  // BEFORE router.replace to add-kid has updated useSegments. If we evacuate
+  // to /(app) on the create-family screen we cut the wizard short and skip
+  // add-kid + add-chores entirely. The original stranding-bug fix only needs
+  // to fire on the entry-point welcome screen (and bare-group fallback).
   if (family.status === 'has-family') {
-    const inPostCreationOnboarding =
+    const inOnboardingWizard =
       segments[0] === '(onboarding)' &&
-      (segments[1] === 'add-kid' || segments[1] === 'add-chores');
-    if (inPostCreationOnboarding) return null;
+      (segments[1] === 'create-family' ||
+        segments[1] === 'join-family' ||
+        segments[1] === 'add-kid' ||
+        segments[1] === 'add-chores');
+    if (inOnboardingWizard) return null;
     return inAppGroup ? null : '/(app)';
   }
 
