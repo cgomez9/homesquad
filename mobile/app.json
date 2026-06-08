@@ -10,7 +10,10 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.homesquad.app",
-      "usesAppleSignIn": true
+      "usesAppleSignIn": true,
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.homesquad.app",
@@ -29,7 +32,7 @@
       [
         "@react-native-google-signin/google-signin",
         {
-          "iosUrlScheme": "com.googleusercontent.apps.000000000000-placeholder"
+          "iosUrlScheme": "com.googleusercontent.apps.661962304012-sbp1lc5r9son6qfqmpet1h5vuhvstkal"
         }
       ],
       "expo-localization",
