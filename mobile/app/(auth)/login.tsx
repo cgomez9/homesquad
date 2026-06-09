@@ -128,13 +128,14 @@ export default function LoginScreen() {
               onChangeText={setEmail}
               autoCapitalize="none"
               keyboardType="email-address"
-              autoComplete="email"
+              autoComplete="off"
+              textContentType="none"
+              importantForAutofill="no"
             />
             <PasswordField
               label={t('auth.login.password')}
               value={password}
               onChangeText={setPassword}
-              autoComplete="current-password"
             />
             <View style={styles.forgotRow}>
               <Link href="/(auth)/reset" style={styles.forgotLink}>

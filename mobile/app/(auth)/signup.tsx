@@ -133,20 +133,20 @@ export default function SignupScreen() {
               onChangeText={setEmail}
               autoCapitalize="none"
               keyboardType="email-address"
-              autoComplete="email"
+              autoComplete="off"
+              textContentType="none"
+              importantForAutofill="no"
             />
             <PasswordField
               label={t('auth.signup.password')}
               value={password}
               onChangeText={setPassword}
-              autoComplete="new-password"
               showStrength
             />
             <PasswordField
               label={t('auth.signup.confirmPassword')}
               value={confirm}
               onChangeText={setConfirm}
-              autoComplete="new-password"
             />
           </View>
 

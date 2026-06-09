@@ -27,6 +27,15 @@ export function PasswordField({ label, error, style, showStrength, onFocus, onBl
           onFocus={(e) => { setFocused(true); onFocus?.(e); }}
           onBlur={(e) => { setFocused(false); onBlur?.(e); }}
           secureTextEntry={!visible}
+          // Opt out of iOS AutoFill / Automatic Strong Passwords. With the
+          // autofill hints on, iOS tinted the whole credential form yellow and
+          // left the fields non-editable. Set AFTER {...rest} so a stray
+          // autoComplete hint from a caller can't turn the takeover back on.
+          // Primary auth is Apple/Google SSO; email+password is a fallback, so
+          // losing password-manager autofill here is an acceptable trade.
+          autoComplete="off"
+          textContentType="none"
+          importantForAutofill="no"
           style={[
             styles.input,
             focused && styles.inputFocused,
