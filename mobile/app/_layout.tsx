@@ -8,7 +8,7 @@ import * as Notifications from 'expo-notifications';
 import { useAuth } from '../src/hooks/useAuth';
 import { useFamily, refetchFamily } from '../src/hooks/useFamily';
 import { useKidSession } from '../src/hooks/useKidSession';
-import { decideRoute } from '../src/lib/sessionRouting';
+import { decideRoute, isBootLoading } from '../src/lib/sessionRouting';
 import { queryClient } from '../src/lib/queryClient';
 import { subscribeToFamily } from '../src/lib/realtime';
 import { supabase } from '../src/lib/supabase';
@@ -105,12 +105,20 @@ export default function RootLayout() {
     if (target) router.replace(target as never);
   }, [auth, kidSession, family, segments]);
 
-  if (
-    auth.status === 'loading' ||
-    (auth.status === 'authenticated' && (kidSession.status === 'loading' || family.status === 'loading')) ||
-    !fontsLoaded ||
-    !i18nReady
-  ) {
+  // Show the full-screen boot spinner only during the FIRST resolve. Once we've
+  // booted, latch it: a later refetchFamily() flips family → 'loading' again
+  // (e.g. right after create_family), and unmounting <Slot/> at that point
+  // tears down the navigator mid-navigation — which dropped the
+  // create-family → add-kid replace and skipped the rest of the onboarding
+  // wizard. After boot, we keep the UI mounted and let decideRoute (which
+  // returns null while family is loading) handle routing without a teardown.
+  const booting = isBootLoading(auth, kidSession, family);
+  const [bootReady, setBootReady] = useState(false);
+  useEffect(() => {
+    if (!booting) setBootReady(true);
+  }, [booting]);
+
+  if (!fontsLoaded || !i18nReady || (!bootReady && booting)) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator />

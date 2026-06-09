@@ -32,6 +32,19 @@ describe('PasswordField', () => {
     expect(input.props.secureTextEntry).toBe(true);
   });
 
+  it('opts out of iOS AutoFill / Automatic Strong Passwords, even if a caller passes an autofill hint', () => {
+    // iOS was tinting the whole credential form yellow and locking the fields
+    // (Automatic Strong Passwords). Force the autofill-off props so no caller
+    // hint (e.g. autoComplete="new-password") can re-enable the takeover.
+    const { getByTestId } = render(
+      <PasswordField label="Password" value="" onChangeText={() => {}} autoComplete="new-password" />,
+    );
+    const input = getByTestId('password-input');
+    expect(input.props.autoComplete).toBe('off');
+    expect(input.props.textContentType).toBe('none');
+    expect(input.props.importantForAutofill).toBe('no');
+  });
+
   it('renders strength meter when showStrength is true', () => {
     const { queryByTestId, rerender } = render(<PasswordField label="Password" value="" onChangeText={() => {}} showStrength />);
     expect(queryByTestId('password-strength-bar')).toBeNull();
