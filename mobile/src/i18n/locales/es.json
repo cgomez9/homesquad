@@ -192,8 +192,13 @@
       "redemption_approved": "Premio aprobado",
       "redemption_denied": "Premio rechazado",
       "redemption_fulfilled": "Premio entregado",
+      "privilege_redemption_requested": "Privilegio solicitado",
+      "privilege_redemption_approved": "Privilegio aprobado",
+      "privilege_redemption_denied": "Privilegio rechazado",
+      "privilege_redemption_fulfilled": "Privilegio entregado",
       "achievement_unlocked": "Insignia ganada",
       "streak_milestone": "Racha lograda",
+      "skill_streak_milestone": "Racha de práctica lograda",
       "goal_completed": "Meta familiar lograda",
       "chore_reminder": "Recordatorios de tareas"
     },
@@ -298,9 +303,11 @@
     "nav": {
       "badges": "Insignias",
       "rewards": "Premios",
+      "privileges": "Privilegios",
       "leaderboard": "Clasificación",
       "switch": "Cambiar perfil"
-    }
+    },
+    "skills": "Práctica"
   },
   "badges": {
     "title": "Insignias",
@@ -322,6 +329,17 @@
     "spend": "Gastar",
     "couldNotRequest": "No se pudo pedir"
   },
+  "kidPrivileges": {
+    "title": "Privilegios",
+    "subtitle": "Cambia fichas por permisos",
+    "yourTokens": "Tus fichas",
+    "empty": "Aún no hay privilegios — pídele a un adulto que cree uno.",
+    "needMore": "Faltan {{count}}",
+    "requestA11y": "Pedir {{title}} por {{count}} fichas",
+    "confirmTitle": "¿Gastar 🪙{{count}} en {{title}}?",
+    "spend": "Gastar",
+    "couldNotRequest": "No se pudo pedir"
+  },
   "parent": {
     "choresTitle": "Tareas",
     "activeChores_one": "{{count}} tarea activa",
@@ -337,6 +355,32 @@
     "rewardsEmpty": "Aún no hay premios — toca + para crear uno.",
     "newRewardA11y": "Nuevo premio",
     "archiveRewardTitle": "¿Archivar premio?",
+    "privilegesTitle": "Privilegios",
+    "privilegesIntro": "Los privilegios son recompensas no monetarias que los niños obtienen con fichas de tareas de práctica. Nunca cuestan estrellas.",
+    "privilegesCount_one": "{{count}} privilegio",
+    "privilegesCount_other": "{{count}} privilegios",
+    "privilegesEmpty": "Aún no hay privilegios — elige una plantilla o toca + para crear uno.",
+    "privilegePresetsHeader": "Añadir rápido",
+    "newPrivilegeA11y": "Nuevo privilegio",
+    "archivePrivilegeTitle": "¿Archivar privilegio?",
+    "privilegePresets": {
+      "extraScreenTime": {
+        "title": "Más pantalla",
+        "description": "15 minutos extra de pantalla"
+      },
+      "pickMovie": {
+        "title": "Elegir peli",
+        "description": "Tú eliges la peli para la noche de cine"
+      },
+      "chooseDinner": {
+        "title": "Elegir cena",
+        "description": "Tú decides la cena de una noche"
+      },
+      "stayUpLater": {
+        "title": "Acostarse más tarde",
+        "description": "15 minutos extra antes de dormir"
+      }
+    },
     "setGoalCta": {
       "title": "Crea una meta familiar",
       "blurb": "Reúnan a todos por un premio compartido — pizza, una peli, lo que sea."
@@ -384,18 +428,37 @@
     "editChore": "Editar tarea",
     "newReward": "Nuevo premio",
     "editReward": "Editar premio",
+    "newPrivilege": "Nuevo privilegio",
+    "editPrivilege": "Editar privilegio",
     "title": "Título",
     "descriptionOptional": "Descripción (opcional)",
     "stars": "Estrellas",
     "starCost": "Coste en estrellas",
+    "tokens": "Fichas",
+    "tokenCost": "Coste en fichas",
     "save": "Guardar",
     "saveChanges": "Guardar cambios",
     "choreTitlePlaceholder": "Hacer la cama",
+    "skillTitlePlaceholder": "Practicar piano",
     "rewardTitlePlaceholder": "Helado",
+    "privilegeTitlePlaceholder": "Más pantalla",
+    "skillTaskHint": "Las tareas de práctica dan fichas, no estrellas. Los niños usan las fichas para privilegios que tú creas — sin dinero de por medio.",
+    "taskType": {
+      "label": "Tipo de tarea",
+      "chore": { "label": "Tarea de estrellas", "hint": "Gana estrellas (economía monetaria)" },
+      "skill": { "label": "Tarea de práctica", "hint": "Gana fichas (privilegios no monetarios)" }
+    },
+    "skillIntro": {
+      "title": "¿Por qué tareas de práctica?",
+      "body": "Úsalas para empujones como practicar piano. Los niños ganan fichas (no estrellas) y las cambian por privilegios que tú defines — más pantalla, elegir la cena, etc. El premio es real pero nunca se convierte en dinero.",
+      "gotIt": "Entendido"
+    },
     "couldNotCreateChore": "No se pudo crear la tarea",
     "couldNotUpdateChore": "No se pudo actualizar la tarea",
     "couldNotCreateReward": "No se pudo crear el premio",
     "couldNotUpdateReward": "No se pudo actualizar el premio",
+    "couldNotCreatePrivilege": "No se pudo crear el privilegio",
+    "couldNotUpdatePrivilege": "No se pudo actualizar el privilegio",
     "verification": {
       "label": "Verificación",
       "auto": { "label": "Auto", "hint": "Tocar listo = listo" },
@@ -404,6 +467,8 @@
     },
     "errStarValue": "el valor en estrellas debe ser 1–999",
     "errStarCost": "el coste en estrellas debe ser 1–9999",
+    "errTokenValue": "el valor en fichas debe ser 1–999",
+    "errTokenCost": "el coste en fichas debe ser 1–9999",
     "errNoFamily": "no se cargó la familia",
     "recurrenceLabel": "Repetición",
     "repeats": "Se repite",
@@ -449,7 +514,11 @@
     "streak_30": { "title": "Racha mensual", "desc": "Gana estrellas 30 días seguidos" },
     "first_chore": { "title": "Primeros pasos", "desc": "Consigue que aprueben tu primera tarea" },
     "chores_25": { "title": "Veinticinco", "desc": "Consigue 25 tareas aprobadas" },
-    "first_reward": { "title": "Primer premio", "desc": "Canjea tu primer premio" }
+    "first_reward": { "title": "Primer premio", "desc": "Canjea tu primer premio" },
+    "first_skill_task": { "title": "Primera práctica", "desc": "Consigue que aprueben tu primera tarea de práctica" },
+    "skill_tasks_25": { "title": "Constancia", "desc": "Consigue 25 tareas de práctica aprobadas" },
+    "skill_tasks_100": { "title": "Dedicación", "desc": "Consigue 100 tareas de práctica aprobadas" },
+    "skill_streak_14": { "title": "Dos semanas", "desc": "Practica la misma habilidad 14 días seguidos" }
   },
   "photo": {
     "permissionTitle": "Se necesita permiso de cámara",

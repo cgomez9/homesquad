@@ -6,17 +6,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../../src/lib/supabase';
 import { Button } from '../../../../src/components/Button';
 import { TextField } from '../../../../src/components/TextField';
-import { VerificationModePicker, VerificationMode } from '../../../../src/components/VerificationModePicker';
-import { AssigneePicker, Assignee } from '../../../../src/components/AssigneePicker';
-import { RecurrencePicker } from '../../../../src/components/RecurrencePicker';
+import { RewardIconPicker } from '../../../../src/components/RewardIconPicker';
 import { TidePoolBackground } from '../../../../src/components/TidePool';
 import { useTheme, type Palette, spacing, typography } from '../../../../src/theme';
-import type { Recurrence } from '../../../../src/lib/recurrence';
+import type { RewardIconId } from '../../../../src/constants/rewardIcons';
 
 const TOP_INSET =
   Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) + spacing.lg : 56;
 
-export default function EditChore() {
+export default function EditPrivilege() {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
@@ -24,31 +22,17 @@ export default function EditChore() {
   const qc = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  const [kind, setKind] = useState<'chore' | 'skill'>('chore');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [stars, setStars] = useState('10');
-  const [tokens, setTokens] = useState('1');
-  const [assigneeId, setAssigneeId] = useState<string | null>(null);
-  const [mode, setMode] = useState<VerificationMode>('approval');
-  const [recurrence, setRecurrence] = useState<Recurrence>({ type: 'daily' });
-  const [originalAssignee, setOriginalAssignee] = useState<string | null>(null);
+  const [cost, setCost] = useState('3');
+  const [iconId, setIconId] = useState<RewardIconId>(1);
 
-  const { data: kids } = useQuery({
-    queryKey: ['kids'],
-    queryFn: async (): Promise<Assignee[]> => {
-      const { data, error } = await supabase.from('profiles').select('id, display_name, avatar_id').eq('type', 'kid').order('created_at');
-      if (error) throw error;
-      return (data ?? []) as Assignee[];
-    },
-  });
-
-  const { data: chore, isLoading } = useQuery({
-    queryKey: ['chore', id],
+  const { data: privilege, isLoading } = useQuery({
+    queryKey: ['privilege', id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('chores')
-        .select('id,title,description,star_value,token_value,kind,assignee_profile_id,verification_mode,recurrence')
+        .from('privileges')
+        .select('id, title, description, token_cost, icon_id')
         .eq('id', id).single();
       if (error) throw error;
       return data;
@@ -57,65 +41,43 @@ export default function EditChore() {
   });
 
   useEffect(() => {
-    if (!chore) return;
-    const c = chore as unknown as {
-      title: string; description: string | null;
-      star_value: number | null; token_value: number | null;
-      kind: 'chore' | 'skill';
-      assignee_profile_id: string | null;
-      verification_mode: string; recurrence: Recurrence;
-    };
-    setKind(c.kind);
-    setTitle(c.title);
-    setDescription(c.description ?? '');
-    setStars(c.star_value !== null ? String(c.star_value) : '10');
-    setTokens(c.token_value !== null ? String(c.token_value) : '1');
-    setAssigneeId(c.assignee_profile_id);
-    setOriginalAssignee(c.assignee_profile_id);
-    setMode(c.verification_mode as VerificationMode);
-    setRecurrence(c.recurrence);
-  }, [chore]);
+    if (!privilege) return;
+    setTitle(privilege.title);
+    setDescription(privilege.description ?? '');
+    setCost(String(privilege.token_cost));
+    setIconId(privilege.icon_id as RewardIconId);
+  }, [privilege]);
 
   const update = useMutation({
     mutationFn: async () => {
-      const isSkill = kind === 'skill';
-      const sv = isSkill ? null : parseInt(stars, 10);
-      const tv = isSkill ? parseInt(tokens, 10) : null;
-      if (!isSkill && (!Number.isFinite(sv as number) || (sv as number) < 1 || (sv as number) > 999)) {
-        throw new Error(t('forms.errStarValue'));
-      }
-      if (isSkill && (!Number.isFinite(tv as number) || (tv as number) < 1 || (tv as number) > 999)) {
-        throw new Error(t('forms.errTokenValue'));
-      }
+      const tc = parseInt(cost, 10);
+      if (!Number.isFinite(tc) || tc < 1 || tc > 9999) throw new Error(t('forms.errTokenCost'));
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any).rpc('update_chore', {
-        chore_id: id,
+      const { error } = await (supabase as any).rpc('update_privilege', {
+        privilege_id: id,
         title: title.trim(),
         description: (description.trim() || null) as unknown as string,
-        star_value: sv,
-        token_value: tv,
-        clear_assignee: originalAssignee !== null && assigneeId === null,
-        assignee_profile_id: assigneeId as unknown as string,
-        verification_mode: mode,
-        recurrence,
+        token_cost: tc,
+        icon_id: iconId,
       });
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['parent-chores'] });
-      qc.invalidateQueries({ queryKey: ['chore', id] });
+      qc.invalidateQueries({ queryKey: ['parent-privileges'] });
+      qc.invalidateQueries({ queryKey: ['privilege', id] });
       router.back();
     },
-    onError: (e) => Alert.alert(t('forms.couldNotUpdateChore'), (e as Error).message),
+    onError: (e) => Alert.alert(t('forms.couldNotUpdatePrivilege'), (e as Error).message),
   });
 
   const archive = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.rpc('archive_chore', { chore_id: id });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).rpc('archive_privilege', { privilege_id: id });
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['parent-chores'] });
+      qc.invalidateQueries({ queryKey: ['parent-privileges'] });
       router.back();
     },
   });
@@ -126,28 +88,16 @@ export default function EditChore() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.container}>
         <View style={styles.topbar}>
           <BackButton onPress={() => router.back()} />
-          <Text style={styles.h1}>{t('forms.editChore')}</Text>
+          <Text style={styles.h1}>{t('forms.editPrivilege')}</Text>
         </View>
-        {isLoading || !chore ? (
+        {isLoading || !privilege ? (
           <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xxl }} />
         ) : (
           <View style={styles.card}>
-            <View style={styles.kindBadge}>
-              <Text style={styles.kindBadgeEmoji}>{kind === 'skill' ? '🎯' : '⭐'}</Text>
-              <Text style={styles.kindBadgeText}>
-                {t(`forms.taskType.${kind}.label`)}
-              </Text>
-            </View>
             <TextField label={t('forms.title')} value={title} onChangeText={setTitle} />
             <TextField label={t('forms.descriptionOptional')} value={description} onChangeText={setDescription} />
-            {kind === 'chore' ? (
-              <TextField label={t('forms.stars')} value={stars} onChangeText={setStars} keyboardType="number-pad" />
-            ) : (
-              <TextField label={t('forms.tokens')} value={tokens} onChangeText={setTokens} keyboardType="number-pad" />
-            )}
-            <VerificationModePicker value={mode} onChange={setMode} />
-            <AssigneePicker kids={kids ?? []} value={assigneeId} onChange={setAssigneeId} />
-            <RecurrencePicker value={recurrence} onChange={setRecurrence} />
+            <TextField label={t('forms.tokenCost')} value={cost} onChangeText={setCost} keyboardType="number-pad" />
+            <RewardIconPicker value={iconId} onChange={setIconId} />
             <View style={styles.actions}>
               <Button label={t('forms.saveChanges')} loading={update.isPending} onPress={() => update.mutate()} />
               <Button label={t('common.archive')} variant="secondary" onPress={() => archive.mutate()} style={{ marginTop: spacing.sm }} />
@@ -198,22 +148,4 @@ const makeStyles = (colors: Palette) =>
       shadowColor: '#0F766E', shadowOpacity: 0.12, shadowRadius: 24, shadowOffset: { width: 0, height: 12 }, elevation: 5,
     },
     actions: { marginTop: spacing.md },
-    kindBadge: {
-      alignSelf: 'flex-start',
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.xs,
-      backgroundColor: '#EAF7F4',
-      paddingVertical: 4,
-      paddingHorizontal: spacing.sm + 2,
-      borderRadius: 12,
-    },
-    kindBadgeEmoji: { fontSize: 14 },
-    kindBadgeText: {
-      fontFamily: typography.fontFamilyBold,
-      fontSize: typography.tiny,
-      color: colors.primaryDark,
-      letterSpacing: 0.5,
-      textTransform: 'uppercase',
-    },
   });

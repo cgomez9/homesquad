@@ -12,8 +12,13 @@ export const EVENT_TYPES = [
   'redemption_approved',
   'redemption_denied',
   'redemption_fulfilled',
+  'privilege_redemption_requested',
+  'privilege_redemption_approved',
+  'privilege_redemption_denied',
+  'privilege_redemption_fulfilled',
   'achievement_unlocked',
   'streak_milestone',
+  'skill_streak_milestone',
   'goal_completed',
   'chore_reminder',
 ] as const;

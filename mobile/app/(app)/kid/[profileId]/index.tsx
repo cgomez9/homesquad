@@ -71,7 +71,7 @@ export default function KidHome() {
       const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
       const { data, error } = await supabase
         .from('chore_instances')
-        .select('id, status, due_at, assignee_profile_id, rejection_reason, chore:chores(id,title,star_value,verification_mode,recurrence), assignee:profiles!chore_instances_assignee_profile_id_fkey(id,display_name,avatar_id)')
+        .select('id, status, due_at, assignee_profile_id, rejection_reason, chore:chores(id,title,kind,star_value,token_value,current_skill_streak,verification_mode,recurrence), assignee:profiles!chore_instances_assignee_profile_id_fkey(id,display_name,avatar_id)')
         .eq('family_id', familyId)
         .in('status', ['pending', 'started', 'finished', 'rejected'])
         .gte('due_at', startOfDay.toISOString())
@@ -113,6 +113,19 @@ export default function KidHome() {
     enabled: !!profileId,
   });
 
+  const { data: tokenBalance } = useQuery({
+    queryKey: ['token-balance', profileId],
+    queryFn: async (): Promise<number> => {
+      const { data, error } = await supabase
+        .from('privilege_token_ledger')
+        .select('delta')
+        .eq('profile_id', profileId);
+      if (error) throw error;
+      return (data ?? []).reduce((sum, r) => sum + (r as { delta: number }).delta, 0);
+    },
+    enabled: !!profileId,
+  });
+
   const choreAction = useMutation({
     mutationFn: async (action: ChoreAction) => {
       if (!profileId) throw new Error('no profile');
@@ -130,7 +143,11 @@ export default function KidHome() {
         }
       }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['kid-today', profileId, familyId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['kid-today', profileId, familyId] });
+      qc.invalidateQueries({ queryKey: ['token-balance', profileId] });
+      qc.invalidateQueries({ queryKey: ['balance', profileId] });
+    },
   });
 
   function onAction(action: ChoreAction) {
@@ -162,15 +179,41 @@ export default function KidHome() {
         if (newStatus === 'fulfilled' && oldStatus !== 'fulfilled') fireBigFeedback();
       })
       .subscribe();
+    const privRedChannel = supabase
+      .channel(`kid-feedback-priv-${profileId}-${channelKey}`)
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'privilege_redemptions',
+        filter: `kid_profile_id=eq.${profileId}`,
+      }, (payload) => {
+        const oldStatus = (payload.old as any)?.status;
+        const newStatus = (payload.new as any)?.status;
+        if (newStatus === 'fulfilled' && oldStatus !== 'fulfilled') fireBigFeedback();
+        qc.invalidateQueries({ queryKey: ['token-balance', profileId] });
+      })
+      .subscribe();
+    const tokenChannel = supabase
+      .channel(`kid-token-ledger-${profileId}-${channelKey}`)
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'privilege_token_ledger',
+        filter: `profile_id=eq.${profileId}`,
+      }, () => {
+        qc.invalidateQueries({ queryKey: ['token-balance', profileId] });
+      })
+      .subscribe();
     return () => {
       supabase.removeChannel(choreChannel);
       supabase.removeChannel(redChannel);
+      supabase.removeChannel(privRedChannel);
+      supabase.removeChannel(tokenChannel);
     };
-  }, [profileId]);
+  }, [profileId, qc, channelKey]);
 
   const avatar = AVATARS[(meta?.avatar_id ?? 1) as AvatarId] ?? AVATARS[1];
   const list = instances ?? [];
-  const todoCount = list.filter((i) => i.status === 'pending' || i.status === 'started').length;
+  const starList = list.filter((i) => (i.chore?.kind ?? 'chore') === 'chore');
+  const skillList = list.filter((i) => i.chore?.kind === 'skill');
+  const todoCount = starList.filter((i) => i.status === 'pending' || i.status === 'started').length;
+  const skillTodoCount = skillList.filter((i) => i.status === 'pending' || i.status === 'started').length;
 
   return (
     <View style={styles.screen}>
@@ -197,8 +240,9 @@ export default function KidHome() {
               onPress={() => router.push(`/(app)/kid/${profileId}/badges` as never)} />
             <NavBtn icon="🎁" label={t('kid.nav.rewards')}
               onPress={() => router.push(`/(app)/kid/${profileId}/rewards` as never)} />
-            <NavBtn icon="🏆" label={t('kid.nav.leaderboard')}
-              onPress={() => router.push(`/(app)/kid/${profileId}/leaderboard` as never)} />
+            <NavBtn icon="🎯" label={t('kid.nav.privileges')}
+              badge={(tokenBalance ?? 0) > 0 ? tokenBalance : undefined}
+              onPress={() => router.push(`/(app)/kid/${profileId}/privileges` as never)} />
             <NavBtn icon="↩" label={t('kid.nav.switch')}
               onPress={() => router.replace('/(app)')} />
           </View>
@@ -242,7 +286,7 @@ export default function KidHome() {
             </View>
           )}
 
-          {list.map((inst) => (
+          {starList.map((inst) => (
             <ChoreCard
               key={inst.id}
               inst={inst}
@@ -250,6 +294,23 @@ export default function KidHome() {
               onAction={onAction}
             />
           ))}
+
+          {skillList.length > 0 && (
+            <>
+              <View style={styles.sectionRow}>
+                <Text style={styles.section}>{t('kid.skills')}</Text>
+                {skillTodoCount > 0 && <Text style={styles.sectionCount}>{t('kid.toGo', { count: skillTodoCount })}</Text>}
+              </View>
+              {skillList.map((inst) => (
+                <ChoreCard
+                  key={inst.id}
+                  inst={inst}
+                  viewerActorId={profileId ?? ''}
+                  onAction={onAction}
+                />
+              ))}
+            </>
+          )}
         </ScrollView>
       </View>
     </View>
@@ -258,7 +319,7 @@ export default function KidHome() {
 
 /* ---------- nav button ---------- */
 
-function NavBtn({ icon, label, onPress }: { icon: string; label: string; onPress: () => void }) {
+function NavBtn({ icon, label, badge, onPress }: { icon: string; label: string; badge?: number; onPress: () => void }) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { scale, onPressIn, onPressOut } = usePressScale();
@@ -269,10 +330,15 @@ function NavBtn({ icon, label, onPress }: { icon: string; label: string; onPress
         onPressIn={onPressIn}
         onPressOut={onPressOut}
         accessibilityRole="button"
-        accessibilityLabel={label}
+        accessibilityLabel={badge !== undefined ? `${label} (${badge})` : label}
         style={styles.navBtn}
       >
         <Text style={styles.navIcon}>{icon}</Text>
+        {badge !== undefined && (
+          <View style={styles.navBadge}>
+            <Text style={styles.navBadgeText}>{badge}</Text>
+          </View>
+        )}
       </Pressable>
     </Animated.View>
   );
@@ -337,6 +403,21 @@ const makeStyles = (colors: Palette) =>
     elevation: 2,
   },
   navIcon: { fontSize: 17, color: colors.text },
+  navBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 5,
+    backgroundColor: '#1F548F',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.bg,
+  },
+  navBadgeText: { fontFamily: typography.fontFamilyBold, fontSize: 10, color: '#fff', lineHeight: 12 },
 
   scroll: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: 140 },
 

@@ -15,14 +15,18 @@ type Group = { recipient_id: string; items: Item[] };
 const BRAND = 'HomeSquad';
 
 const ACHIEVEMENTS: Record<string, { emoji: string; title: string }> = {
-  stargazer:    { emoji: '⭐', title: 'Stargazer' },
-  stars_100:    { emoji: '💯', title: 'Century' },
-  stars_500:    { emoji: '🏆', title: 'High Roller' },
-  streak_7:     { emoji: '🔥', title: 'Week Streak' },
-  streak_30:    { emoji: '🌟', title: 'Month Streak' },
-  first_chore:  { emoji: '✅', title: 'Getting Started' },
-  chores_25:    { emoji: '💪', title: 'Quarter Century' },
-  first_reward: { emoji: '🎁', title: 'First Reward' },
+  stargazer:        { emoji: '⭐', title: 'Stargazer' },
+  stars_100:        { emoji: '💯', title: 'Century' },
+  stars_500:        { emoji: '🏆', title: 'High Roller' },
+  streak_7:         { emoji: '🔥', title: 'Week Streak' },
+  streak_30:        { emoji: '🌟', title: 'Month Streak' },
+  first_chore:      { emoji: '✅', title: 'Getting Started' },
+  chores_25:        { emoji: '💪', title: 'Quarter Century' },
+  first_reward:     { emoji: '🎁', title: 'First Reward' },
+  first_skill_task: { emoji: '🎯', title: 'First Practice' },
+  skill_tasks_25:   { emoji: '🪙', title: 'Skill Builder' },
+  skill_tasks_100:  { emoji: '🏅', title: 'Dedicated' },
+  skill_streak_14:  { emoji: '🎶', title: 'Two-Week Practice' },
 };
 
 function classifyExpoError(details: { error?: string } | undefined): 'device_not_registered' | 'transient' {
@@ -76,6 +80,31 @@ async function formatMessage(
       return { title: BRAND, body: `Reward denied: "${rewardTitle}"` };
     if (it.event_type === 'redemption_fulfilled')
       return { title: BRAND, body: `Reward delivered: "${rewardTitle}" ✨` };
+  }
+
+  if (it.event_type.startsWith('privilege_redemption_')) {
+    const { data } = await supabase
+      .from('privilege_redemptions')
+      .select('privilege_id, kid_profile_id, privileges!inner(title), profiles:kid_profile_id(display_name)')
+      .eq('id', p.redemption_id)
+      .single();
+    const privTitle = (data as any)?.privileges?.title ?? 'a privilege';
+    const kidName   = (data as any)?.profiles?.display_name ?? 'A kid';
+    if (it.event_type === 'privilege_redemption_requested')
+      return { title: BRAND, body: `${kidName} wants "${privTitle}" 🎯` };
+    if (it.event_type === 'privilege_redemption_approved')
+      return { title: BRAND, body: `Privilege approved: "${privTitle}"` };
+    if (it.event_type === 'privilege_redemption_denied')
+      return { title: BRAND, body: `Privilege denied: "${privTitle}"` };
+    if (it.event_type === 'privilege_redemption_fulfilled')
+      return { title: BRAND, body: `Privilege delivered: "${privTitle}" ✨` };
+  }
+
+  if (it.event_type === 'skill_streak_milestone') {
+    return {
+      title: BRAND,
+      body: `${p.kid_name} hit a ${p.streak_days}-day streak on "${p.chore_title}" 🔥`,
+    };
   }
 
   if (it.event_type === 'achievement_unlocked') {

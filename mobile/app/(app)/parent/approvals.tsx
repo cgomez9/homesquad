@@ -54,7 +54,28 @@ type RedemptionFulfillRow = {
   reward: { title: string; icon_id: number } | null;
 };
 
-type DecisionRow = ChoreRow | RedemptionPendingRow;
+type PrivRedemptionPendingRow = {
+  kind: 'privilege-redemption-pending';
+  id: string;
+  requested_at: string;
+  token_cost_snapshot: number;
+  kid_profile_id: string;
+  kid: { display_name: string; avatar_id: number } | null;
+  privilege: { title: string; icon_id: number } | null;
+};
+
+type PrivRedemptionFulfillRow = {
+  kind: 'privilege-redemption-fulfill';
+  id: string;
+  resolved_at: string | null;
+  token_cost_snapshot: number;
+  kid_profile_id: string;
+  kid: { display_name: string; avatar_id: number } | null;
+  privilege: { title: string; icon_id: number } | null;
+};
+
+type DecisionRow = ChoreRow | RedemptionPendingRow | PrivRedemptionPendingRow;
+type FulfillRow = RedemptionFulfillRow | PrivRedemptionFulfillRow;
 
 const SHADOW = '#0F766E';
 const TOP_INSET =
@@ -68,9 +89,10 @@ export default function Approvals() {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [rejectChoreTarget, setRejectChoreTarget] = useState<ChoreRow | null>(null);
   const [denyTarget, setDenyTarget] = useState<RedemptionPendingRow | null>(null);
+  const [denyPrivTarget, setDenyPrivTarget] = useState<PrivRedemptionPendingRow | null>(null);
   const [flashRows, setFlashRows] = useState<Map<string, DecisionRow>>(new Map());
 
-  const [chores, redPending, redApproved] = useQueries({
+  const [chores, redPending, redApproved, privRedPending, privRedApproved] = useQueries({
     queries: [
       {
         queryKey: ['approvals-chores'],
@@ -111,35 +133,70 @@ export default function Approvals() {
           return (data ?? []).map((d) => ({ ...(d as object), kind: 'redemption-fulfill' })) as unknown as RedemptionFulfillRow[];
         },
       },
+      {
+        queryKey: ['approvals-privilege-redemptions-pending'],
+        queryFn: async (): Promise<PrivRedemptionPendingRow[]> => {
+          const { data, error } = await supabase
+            .from('privilege_redemptions')
+            .select('id,requested_at,token_cost_snapshot,kid_profile_id,kid:profiles!privilege_redemptions_kid_profile_id_fkey(display_name,avatar_id),privilege:privileges(title,icon_id)')
+            .eq('status', 'pending')
+            .order('requested_at', { ascending: true })
+            .limit(100);
+          if (error) throw error;
+          return (data ?? []).map((d) => ({ ...(d as object), kind: 'privilege-redemption-pending' })) as unknown as PrivRedemptionPendingRow[];
+        },
+      },
+      {
+        queryKey: ['approvals-privilege-redemptions-approved'],
+        queryFn: async (): Promise<PrivRedemptionFulfillRow[]> => {
+          const { data, error } = await supabase
+            .from('privilege_redemptions')
+            .select('id,resolved_at,token_cost_snapshot,kid_profile_id,kid:profiles!privilege_redemptions_kid_profile_id_fkey(display_name,avatar_id),privilege:privileges(title,icon_id)')
+            .eq('status', 'approved')
+            .order('resolved_at', { ascending: false })
+            .limit(100);
+          if (error) throw error;
+          return (data ?? []).map((d) => ({ ...(d as object), kind: 'privilege-redemption-fulfill' })) as unknown as PrivRedemptionFulfillRow[];
+        },
+      },
     ],
   });
 
-  const isLoading = chores.isLoading || redPending.isLoading || redApproved.isLoading;
-  const errorAny = (chores.error ?? redPending.error ?? redApproved.error) as Error | undefined;
+  const isLoading = chores.isLoading || redPending.isLoading || redApproved.isLoading || privRedPending.isLoading || privRedApproved.isLoading;
+  const errorAny = (chores.error ?? redPending.error ?? redApproved.error ?? privRedPending.error ?? privRedApproved.error) as Error | undefined;
 
   const decisions: DecisionRow[] = [
     ...(chores.data ?? []),
     ...(redPending.data ?? []),
+    ...(privRedPending.data ?? []),
   ].sort((a, b) => {
     const ta = a.kind === 'chore' ? a.completed_at : a.requested_at;
     const tb = b.kind === 'chore' ? b.completed_at : b.requested_at;
     return new Date(ta).getTime() - new Date(tb).getTime();
   });
 
-  const fulfill: RedemptionFulfillRow[] = redApproved.data ?? [];
+  const fulfill: FulfillRow[] = [
+    ...(redApproved.data ?? []),
+    ...(privRedApproved.data ?? []),
+  ].sort((a, b) => new Date(b.resolved_at ?? 0).getTime() - new Date(a.resolved_at ?? 0).getTime());
 
   function invalidateAfterDecision(kidId?: string | null) {
     qc.invalidateQueries({ queryKey: ['approvals-chores'] });
     qc.invalidateQueries({ queryKey: ['approvals-redemptions-pending'] });
     qc.invalidateQueries({ queryKey: ['approvals-redemptions-approved'] });
+    qc.invalidateQueries({ queryKey: ['approvals-privilege-redemptions-pending'] });
+    qc.invalidateQueries({ queryKey: ['approvals-privilege-redemptions-approved'] });
     qc.invalidateQueries({ queryKey: ['approvals-chores-count'] });
     qc.invalidateQueries({ queryKey: ['approvals-redemptions-pending-count'] });
     qc.invalidateQueries({ queryKey: ['activity'] });
     if (kidId) {
       qc.invalidateQueries({ queryKey: ['kid-today', kidId] });
       qc.invalidateQueries({ queryKey: ['balance', kidId] });
+      qc.invalidateQueries({ queryKey: ['token-balance', kidId] });
       qc.invalidateQueries({ queryKey: ['streak', kidId] });
       qc.invalidateQueries({ queryKey: ['kid-rewards', kidId] });
+      qc.invalidateQueries({ queryKey: ['kid-privileges', kidId] });
+      qc.invalidateQueries({ queryKey: ['kid-open-privilege-redemptions', kidId] });
     }
   }
 
@@ -216,6 +273,42 @@ export default function Approvals() {
     },
   });
 
+  const approvePrivRedemption = useMutation({
+    mutationFn: async (redemptionId: string) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).rpc('approve_privilege_redemption', { redemption_id: redemptionId });
+      if (error) throw error;
+    },
+    onSuccess: (_d, redemptionId) => {
+      const row = privRedPending.data?.find((r) => r.id === redemptionId);
+      invalidateAfterDecision(row?.kid_profile_id);
+    },
+  });
+
+  const denyPrivRedemption = useMutation({
+    mutationFn: async (vars: { redemptionId: string; note: string }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).rpc('deny_privilege_redemption', { redemption_id: vars.redemptionId, parent_note: vars.note });
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      const row = privRedPending.data?.find((r) => r.id === vars.redemptionId);
+      invalidateAfterDecision(row?.kid_profile_id);
+    },
+  });
+
+  const fulfillPrivRedemption = useMutation({
+    mutationFn: async (redemptionId: string) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).rpc('fulfill_privilege_redemption', { redemption_id: redemptionId });
+      if (error) throw error;
+    },
+    onSuccess: (_d, redemptionId) => {
+      const row = privRedApproved.data?.find((r) => r.id === redemptionId);
+      invalidateAfterDecision(row?.kid_profile_id);
+    },
+  });
+
   function onApproveChoreTap(item: ChoreRow) {
     startApprovalFlash(item);
     approveChore.mutate(item.id);
@@ -224,6 +317,11 @@ export default function Approvals() {
   function onApproveRedemptionTap(item: RedemptionPendingRow) {
     startApprovalFlash(item);
     approveRedemption.mutate(item.id);
+  }
+
+  function onApprovePrivRedemptionTap(item: PrivRedemptionPendingRow) {
+    startApprovalFlash(item);
+    approvePrivRedemption.mutate(item.id);
   }
 
   async function openPhoto(row: ChoreRow) {
@@ -300,9 +398,37 @@ export default function Approvals() {
               />
             );
           }
-          // redemption-fulfill (Pending fulfillment section)
-          const fulfillItem = item as unknown as RedemptionFulfillRow;
+          if (item.kind === 'privilege-redemption-pending') {
+            return (
+              <PrivilegeRedemptionApprovalCard
+                item={item}
+                isFlashing={flashRows.has(item.id)}
+                onApprove={() => onApprovePrivRedemptionTap(item)}
+                onDeny={() => setDenyPrivTarget(item)}
+                onFlashComplete={() => endApprovalFlash(item.id)}
+              />
+            );
+          }
+          // fulfill rows (Pending fulfillment section)
+          const fulfillItem = item as unknown as FulfillRow;
           const a = fulfillItem.kid ? AVATARS[fulfillItem.kid.avatar_id as AvatarId] : null;
+          if (fulfillItem.kind === 'privilege-redemption-fulfill') {
+            const icon = fulfillItem.privilege ? REWARD_ICONS[fulfillItem.privilege.icon_id as RewardIconId]?.emoji : '🎁';
+            return (
+              <View style={styles.ffCard}>
+                <View style={[styles.av, { backgroundColor: a?.bg ?? '#EDF3F1' }]}>
+                  <Text style={styles.avEmoji}>{a?.emoji ?? '👤'}</Text>
+                </View>
+                <View style={styles.who}>
+                  <Text style={styles.ffTitle} numberOfLines={1}>
+                    {icon} {fulfillItem.privilege?.title} · {fulfillItem.kid?.display_name}
+                  </Text>
+                  <Text style={styles.ffSub}>{t('approvals.approvedAgo', { time: timeAgo(fulfillItem.resolved_at ?? new Date().toISOString(), t) })}</Text>
+                </View>
+                <ActBtn label={t('approvals.markGiven')} variant="give" onPress={() => fulfillPrivRedemption.mutate(fulfillItem.id)} />
+              </View>
+            );
+          }
           const icon = fulfillItem.reward ? REWARD_ICONS[fulfillItem.reward.icon_id as RewardIconId]?.emoji : '🎁';
           return (
             <View style={styles.ffCard}>
@@ -344,7 +470,71 @@ export default function Approvals() {
           setDenyTarget(null);
         }}
       />
+
+      <RejectModal
+        visible={!!denyPrivTarget}
+        onCancel={() => setDenyPrivTarget(null)}
+        onConfirm={(note) => {
+          if (denyPrivTarget) denyPrivRedemption.mutate({ redemptionId: denyPrivTarget.id, note });
+          setDenyPrivTarget(null);
+        }}
+      />
     </View>
+  );
+}
+
+/* ---------- PrivilegeRedemptionApprovalCard ---------- */
+
+function PrivilegeRedemptionApprovalCard({
+  item,
+  isFlashing,
+  onApprove,
+  onDeny,
+  onFlashComplete,
+}: {
+  item: PrivRedemptionPendingRow;
+  isFlashing: boolean;
+  onApprove: () => void;
+  onDeny: () => void;
+  onFlashComplete: () => void;
+}) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { t } = useTranslation();
+  const a = item.kid ? AVATARS[item.kid.avatar_id as AvatarId] : null;
+  const icon = item.privilege ? REWARD_ICONS[item.privilege.icon_id as RewardIconId]?.emoji : '🎯';
+  const animStyle = useFlashAnimation(isFlashing, onFlashComplete);
+
+  return (
+    <Animated.View style={[styles.card, isFlashing && styles.cardFlash, animStyle]}>
+      <View style={styles.top}>
+        <View style={[styles.av, { backgroundColor: a?.bg ?? '#EDF3F1' }]}>
+          <Text style={styles.avEmoji}>{a?.emoji ?? '👤'}</Text>
+        </View>
+        <View style={styles.who}>
+          <Text style={styles.kn}>{t('approvals.wants', { name: item.kid?.display_name })}</Text>
+          <Text style={styles.it} numberOfLines={1}>{icon} {item.privilege?.title}</Text>
+        </View>
+        <View style={styles.costToken}>
+          <Text style={styles.costTokenText}>🪙 {item.token_cost_snapshot}</Text>
+        </View>
+      </View>
+      <View style={styles.meta}>
+        <Text style={styles.metaText}>
+          {t('approvals.requested', { time: timeAgo(item.requested_at, t) })}
+        </Text>
+      </View>
+      {isFlashing ? (
+        <View style={styles.flashPill}>
+          <Text style={styles.flashPillText}>{t('approvals.approvedFlashRedemption')}</Text>
+        </View>
+      ) : (
+        <View style={styles.acts}>
+          <ActBtn label={t('approvals.approve')} variant="approve" onPress={onApprove} />
+          <ActBtn label={t('approvals.deny')} variant="reject" onPress={onDeny} />
+        </View>
+      )}
+    </Animated.View>
   );
 }
 
@@ -624,6 +814,8 @@ const makeStyles = (colors: Palette) =>
   it: { fontFamily: typography.fontFamilyBold, fontSize: 17, color: colors.text, marginTop: 1 },
   cost: { backgroundColor: '#FFF1C9', paddingVertical: 5, paddingHorizontal: spacing.md, borderRadius: radii.pill },
   costText: { fontFamily: typography.fontFamilyBold, fontSize: typography.small, color: '#7A5200' },
+  costToken: { backgroundColor: '#DBE9FF', paddingVertical: 5, paddingHorizontal: spacing.md, borderRadius: radii.pill },
+  costTokenText: { fontFamily: typography.fontFamilyBold, fontSize: typography.small, color: '#1F548F' },
 
   meta: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginVertical: spacing.md },
   metaText: { fontFamily: typography.fontFamilySemi, fontSize: typography.small, color: colors.textMuted },

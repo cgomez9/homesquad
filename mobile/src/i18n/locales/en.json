@@ -192,8 +192,13 @@
       "redemption_approved": "Reward approved",
       "redemption_denied": "Reward denied",
       "redemption_fulfilled": "Reward delivered",
+      "privilege_redemption_requested": "Privilege requested",
+      "privilege_redemption_approved": "Privilege approved",
+      "privilege_redemption_denied": "Privilege denied",
+      "privilege_redemption_fulfilled": "Privilege delivered",
       "achievement_unlocked": "Badge unlocked",
       "streak_milestone": "Streak milestone",
+      "skill_streak_milestone": "Skill streak milestone",
       "goal_completed": "Family goal reached",
       "chore_reminder": "Chore reminders"
     },
@@ -298,9 +303,11 @@
     "nav": {
       "badges": "Badges",
       "rewards": "Rewards",
+      "privileges": "Privileges",
       "leaderboard": "Leaderboard",
       "switch": "Switch profile"
-    }
+    },
+    "skills": "Skills"
   },
   "badges": {
     "title": "Badges",
@@ -322,6 +329,17 @@
     "spend": "Spend",
     "couldNotRequest": "Could not request"
   },
+  "kidPrivileges": {
+    "title": "Privileges",
+    "subtitle": "Spend tokens on perks",
+    "yourTokens": "Your tokens",
+    "empty": "No privileges yet — ask a grown-up to set one up.",
+    "needMore": "{{count}} more",
+    "requestA11y": "Request {{title}} for {{count}} tokens",
+    "confirmTitle": "Spend 🪙{{count}} on {{title}}?",
+    "spend": "Spend",
+    "couldNotRequest": "Could not request"
+  },
   "parent": {
     "choresTitle": "Chores",
     "activeChores_one": "{{count}} active chore",
@@ -337,6 +355,32 @@
     "rewardsEmpty": "No rewards yet — tap + to add one.",
     "newRewardA11y": "New reward",
     "archiveRewardTitle": "Archive reward?",
+    "privilegesTitle": "Privileges",
+    "privilegesIntro": "Privileges are non-monetary perks kids earn with tokens from skill tasks. They never cost stars.",
+    "privilegesCount_one": "{{count}} privilege",
+    "privilegesCount_other": "{{count}} privileges",
+    "privilegesEmpty": "No privileges yet — pick a preset above or tap + to add one.",
+    "privilegePresetsHeader": "Quick add",
+    "newPrivilegeA11y": "New privilege",
+    "archivePrivilegeTitle": "Archive privilege?",
+    "privilegePresets": {
+      "extraScreenTime": {
+        "title": "Extra screen time",
+        "description": "15 extra minutes of screen time"
+      },
+      "pickMovie": {
+        "title": "Pick the family movie",
+        "description": "Choose what we watch for movie night"
+      },
+      "chooseDinner": {
+        "title": "Choose dinner",
+        "description": "Pick what's for dinner one night"
+      },
+      "stayUpLater": {
+        "title": "Stay up later",
+        "description": "Bedtime 15 minutes later"
+      }
+    },
     "setGoalCta": {
       "title": "Set a family goal",
       "blurb": "Rally everyone toward a shared treat — pizza, a movie, anything."
@@ -384,18 +428,37 @@
     "editChore": "Edit chore",
     "newReward": "New reward",
     "editReward": "Edit reward",
+    "newPrivilege": "New privilege",
+    "editPrivilege": "Edit privilege",
     "title": "Title",
     "descriptionOptional": "Description (optional)",
     "stars": "Stars",
     "starCost": "Star cost",
+    "tokens": "Tokens",
+    "tokenCost": "Token cost",
     "save": "Save",
     "saveChanges": "Save changes",
     "choreTitlePlaceholder": "Make bed",
+    "skillTitlePlaceholder": "Practice piano",
     "rewardTitlePlaceholder": "Ice Cream",
+    "privilegeTitlePlaceholder": "Extra screen time",
+    "skillTaskHint": "Skill tasks award tokens, not stars. Kids spend tokens on privileges you set up — no money flow.",
+    "taskType": {
+      "label": "Task type",
+      "chore": { "label": "Star task", "hint": "Earns stars (the money economy)" },
+      "skill": { "label": "Skill task", "hint": "Earns tokens (non-monetary perks)" }
+    },
+    "skillIntro": {
+      "title": "Why skill tasks?",
+      "body": "Use these for nudges like practicing piano. Kids earn tokens (not stars) and spend them on privileges you set — extra screen time, picking dinner, etc. The reward is real but never converts to money.",
+      "gotIt": "Got it"
+    },
     "couldNotCreateChore": "Could not create chore",
     "couldNotUpdateChore": "Could not update chore",
     "couldNotCreateReward": "Could not create reward",
     "couldNotUpdateReward": "Could not update reward",
+    "couldNotCreatePrivilege": "Could not create privilege",
+    "couldNotUpdatePrivilege": "Could not update privilege",
     "verification": {
       "label": "Verification",
       "auto": { "label": "Auto", "hint": "Tap done = done" },
@@ -404,6 +467,8 @@
     },
     "errStarValue": "star value must be 1–999",
     "errStarCost": "star cost must be 1–9999",
+    "errTokenValue": "token value must be 1–999",
+    "errTokenCost": "token cost must be 1–9999",
     "errNoFamily": "no family loaded",
     "recurrenceLabel": "Recurrence",
     "repeats": "Repeats",
@@ -449,7 +514,11 @@
     "streak_30": { "title": "Month Streak", "desc": "Earn stars 30 days in a row" },
     "first_chore": { "title": "Getting Started", "desc": "Get your first chore approved" },
     "chores_25": { "title": "Quarter Century", "desc": "Get 25 chores approved" },
-    "first_reward": { "title": "First Reward", "desc": "Redeem your first reward" }
+    "first_reward": { "title": "First Reward", "desc": "Redeem your first reward" },
+    "first_skill_task": { "title": "First Practice", "desc": "Get your first skill task approved" },
+    "skill_tasks_25": { "title": "Skill Builder", "desc": "Get 25 skill tasks approved" },
+    "skill_tasks_100": { "title": "Dedicated", "desc": "Get 100 skill tasks approved" },
+    "skill_streak_14": { "title": "Two-Week Practice", "desc": "Practice the same skill 14 days in a row" }
   },
   "photo": {
     "permissionTitle": "Camera permission needed",

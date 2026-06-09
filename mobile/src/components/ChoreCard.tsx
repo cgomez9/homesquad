@@ -9,7 +9,16 @@ export type ChoreCardInstance = {
   assignee_profile_id: string | null;
   due_at: string;
   rejection_reason: string | null;
-  chore: { id: string; title: string; star_value: number; verification_mode: 'auto' | 'photo' | 'approval'; recurrence: { type: string; times?: string[] } | null } | null;
+  chore: {
+    id: string;
+    title: string;
+    kind: 'chore' | 'skill';
+    star_value: number | null;
+    token_value: number | null;
+    current_skill_streak: number;
+    verification_mode: 'auto' | 'photo' | 'approval';
+    recurrence: { type: string; times?: string[] } | null;
+  } | null;
   assignee: { id: string; display_name: string; avatar_id: number } | null;
 };
 
@@ -37,7 +46,16 @@ export function ChoreCard({ inst, viewerActorId, onAction }: Props) {
     <View style={styles.card}>
       <View style={styles.body}>
         <Text style={styles.title}>{inst.chore?.title ?? '(untitled)'}</Text>
-        <Text style={styles.meta}>★ {inst.chore?.star_value ?? 0}</Text>
+        {inst.chore?.kind === 'skill' ? (
+          <View style={styles.metaRow}>
+            <Text style={styles.metaToken}>🪙 {inst.chore?.token_value ?? 0}</Text>
+            {(inst.chore?.current_skill_streak ?? 0) > 0 && (
+              <Text style={styles.metaStreak}>🔥 {inst.chore.current_skill_streak}</Text>
+            )}
+          </View>
+        ) : (
+          <Text style={styles.meta}>★ {inst.chore?.star_value ?? 0}</Text>
+        )}
       </View>
       <View style={styles.actions}>
         {isUnassigned && inst.status === 'pending' && (
@@ -91,6 +109,9 @@ const makeStyles = (colors: Palette) =>
     body: { gap: spacing.xs },
     title: { fontFamily: typography.fontFamilyBold, fontSize: typography.body, color: colors.text },
     meta: { fontFamily: typography.fontFamilySemi, fontSize: typography.tiny, color: colors.textMuted },
+    metaRow: { flexDirection: 'row', gap: spacing.sm },
+    metaToken: { fontFamily: typography.fontFamilyBold, fontSize: typography.tiny, color: '#1F548F' },
+    metaStreak: { fontFamily: typography.fontFamilyBold, fontSize: typography.tiny, color: '#B45A1F' },
     actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm, alignItems: 'center' },
     primaryBtn: { paddingVertical: spacing.xs, paddingHorizontal: spacing.md, borderRadius: radii.pill, backgroundColor: colors.primary },
     primaryBtnText: { fontFamily: typography.fontFamilyBold, fontSize: typography.tiny, color: colors.surface },
