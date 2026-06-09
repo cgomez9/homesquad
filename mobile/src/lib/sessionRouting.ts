@@ -47,6 +47,14 @@ export function decideRoute(
   // add-kid + add-chores entirely. The original stranding-bug fix only needs
   // to fire on the entry-point welcome screen (and bare-group fallback).
   if (family.status === 'has-family') {
+    // Empty segments means the navigator is mid-(re)mount — useSegments() has
+    // no route yet. Evacuating here is exactly how the create-family wizard got
+    // cut short: a refetchFamily() during submit briefly unmounted the
+    // navigator, and the has-family read landed against empty segments → we
+    // bounced to /(app), skipping add-kid + add-chores. Never decide on an
+    // unknown location. (The primary fix keeps the navigator mounted; this is
+    // the backstop.)
+    if (segments.length === 0) return null;
     const inOnboardingWizard =
       segments[0] === '(onboarding)' &&
       (segments[1] === 'create-family' ||
@@ -69,4 +77,23 @@ export function decideRoute(
   // family.status === 'error' (lookup failed) or any other indeterminate
   // state → do nothing. Never fall through to onboarding on uncertainty.
   return null;
+}
+
+// Whether the root layout should show its full-screen boot spinner. True ONLY
+// during the very first resolve after launch/sign-in. Crucially, a later
+// refetchFamily() flips family → 'loading' again; the layout must NOT treat
+// that as "boot" and unmount the navigator, or it tears down an in-progress
+// navigation (e.g. create-family → add-kid) and strands/evacuates the user.
+// The layout latches on the first `false` and never blocks on family/kid
+// loading again.
+export function isBootLoading(
+  auth: AuthState,
+  kidSession: KidSessionState,
+  family: FamilyState,
+): boolean {
+  if (auth.status === 'loading') return true;
+  if (auth.status === 'authenticated' && (kidSession.status === 'loading' || family.status === 'loading')) {
+    return true;
+  }
+  return false;
 }
