@@ -42,6 +42,17 @@
           "cameraPermission": "HomeSquad uses the camera to scan a pairing code from a parent's phone.",
           "recordAudioAndroid": false
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "extraPods": [
+              { "name": "GoogleUtilities", "modular_headers": true },
+              { "name": "RecaptchaInterop", "modular_headers": true }
+            ]
+          }
+        }
       ]
     ],
     "experiments": {
