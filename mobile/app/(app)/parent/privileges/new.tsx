@@ -6,10 +6,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../../src/lib/supabase';
 import { Button } from '../../../../src/components/Button';
 import { TextField } from '../../../../src/components/TextField';
-import { RewardIconPicker } from '../../../../src/components/RewardIconPicker';
+import { PrivilegeIconPicker } from '../../../../src/components/PrivilegeIconPicker';
 import { TidePoolBackground } from '../../../../src/components/TidePool';
 import { useTheme, type Palette, spacing, typography } from '../../../../src/theme';
-import type { RewardIconId } from '../../../../src/constants/rewardIcons';
+import type { PrivilegeIconId } from '../../../../src/constants/privilegeIcons';
 
 const TOP_INSET =
   Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) + spacing.lg : 56;
@@ -30,8 +30,8 @@ export default function NewPrivilege() {
   const [title, setTitle] = useState(params.preset_title ?? '');
   const [description, setDescription] = useState(params.preset_description ?? '');
   const [cost, setCost] = useState(params.preset_token_cost ?? '3');
-  const [iconId, setIconId] = useState<RewardIconId>(
-    ((parseInt(params.preset_icon_id ?? '1', 10) || 1) as RewardIconId)
+  const [iconId, setIconId] = useState<PrivilegeIconId>(
+    ((parseInt(params.preset_icon_id ?? '1', 10) || 1) as PrivilegeIconId)
   );
   const [familyId, setFamilyId] = useState<string | null>(null);
 
@@ -76,7 +76,7 @@ export default function NewPrivilege() {
           <TextField label={t('forms.title')} value={title} onChangeText={setTitle} placeholder={t('forms.privilegeTitlePlaceholder')} />
           <TextField label={t('forms.descriptionOptional')} value={description} onChangeText={setDescription} />
           <TextField label={t('forms.tokenCost')} value={cost} onChangeText={setCost} keyboardType="number-pad" />
-          <RewardIconPicker value={iconId} onChange={setIconId} />
+          <PrivilegeIconPicker value={iconId} onChange={setIconId} />
           <View style={styles.actions}>
             <Button label={t('forms.save')} loading={create.isPending} onPress={() => create.mutate()} />
             <Button label={t('common.cancel')} variant="secondary" onPress={() => router.back()} style={{ marginTop: spacing.sm }} />

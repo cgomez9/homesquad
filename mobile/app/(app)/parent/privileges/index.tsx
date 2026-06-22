@@ -16,7 +16,7 @@ import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../../src/lib/supabase';
-import { REWARD_ICONS, type RewardIconId } from '../../../../src/constants/rewardIcons';
+import { PRIVILEGE_ICONS, type PrivilegeIconId } from '../../../../src/constants/privilegeIcons';
 import { PRIVILEGE_PRESETS } from '../../../../src/constants/privilegePresets';
 import { TidePoolBackground } from '../../../../src/components/TidePool';
 import { useTheme, type Palette, radii, spacing, typography } from '../../../../src/theme';
@@ -111,7 +111,7 @@ export default function PrivilegesList() {
               style={[styles.presetChip, alreadyActive && styles.presetChipUsed]}
             >
               <Text style={styles.presetEmoji}>
-                {REWARD_ICONS[p.iconId as RewardIconId]?.emoji ?? '🎁'}
+                {PRIVILEGE_ICONS[p.iconId as PrivilegeIconId]?.emoji ?? '🪙'}
               </Text>
               <Text style={styles.presetTitle} numberOfLines={1}>
                 {presetTitle}
@@ -199,7 +199,7 @@ function PrivilegeRow({
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { t } = useTranslation();
   const { scale, onPressIn, onPressOut } = usePressScale();
-  const emoji = REWARD_ICONS[privilege.icon_id as RewardIconId]?.emoji ?? '🎁';
+  const emoji = PRIVILEGE_ICONS[privilege.icon_id as PrivilegeIconId]?.emoji ?? '🪙';
 
   return (
     <Animated.View style={{ transform: [{ scale }] }}>

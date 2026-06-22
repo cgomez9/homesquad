@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../src/lib/supabase';
 import { AVATARS, AvatarId } from '../../../src/constants/avatars';
 import { REWARD_ICONS, type RewardIconId } from '../../../src/constants/rewardIcons';
+import { PRIVILEGE_ICONS, type PrivilegeIconId } from '../../../src/constants/privilegeIcons';
 import { RejectModal } from '../../../src/components/RejectModal';
 import { TidePoolBackground } from '../../../src/components/TidePool';
 import { useTheme, type Palette, radii, spacing, typography } from '../../../src/theme';
@@ -413,7 +414,7 @@ export default function Approvals() {
           const fulfillItem = item as unknown as FulfillRow;
           const a = fulfillItem.kid ? AVATARS[fulfillItem.kid.avatar_id as AvatarId] : null;
           if (fulfillItem.kind === 'privilege-redemption-fulfill') {
-            const icon = fulfillItem.privilege ? REWARD_ICONS[fulfillItem.privilege.icon_id as RewardIconId]?.emoji : '🎁';
+            const icon = fulfillItem.privilege ? PRIVILEGE_ICONS[fulfillItem.privilege.icon_id as PrivilegeIconId]?.emoji : '🪙';
             return (
               <View style={styles.ffCard}>
                 <View style={[styles.av, { backgroundColor: a?.bg ?? '#EDF3F1' }]}>
@@ -502,7 +503,7 @@ function PrivilegeRedemptionApprovalCard({
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { t } = useTranslation();
   const a = item.kid ? AVATARS[item.kid.avatar_id as AvatarId] : null;
-  const icon = item.privilege ? REWARD_ICONS[item.privilege.icon_id as RewardIconId]?.emoji : '🎯';
+  const icon = item.privilege ? PRIVILEGE_ICONS[item.privilege.icon_id as PrivilegeIconId]?.emoji : '🎯';
   const animStyle = useFlashAnimation(isFlashing, onFlashComplete);
 
   return (

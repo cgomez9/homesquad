@@ -17,7 +17,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../../src/lib/supabase';
-import { REWARD_ICONS, type RewardIconId } from '../../../../src/constants/rewardIcons';
+import { PRIVILEGE_ICONS, type PrivilegeIconId } from '../../../../src/constants/privilegeIcons';
 import { TidePoolBackground } from '../../../../src/components/TidePool';
 import { useTheme, type Palette, radii, spacing, typography } from '../../../../src/theme';
 
@@ -228,7 +228,7 @@ function PrivilegeTile({
     }).start();
   }, [enter, index]);
 
-  const emoji = REWARD_ICONS[privilege.icon_id as RewardIconId]?.emoji ?? '🎁';
+  const emoji = PRIVILEGE_ICONS[privilege.icon_id as PrivilegeIconId]?.emoji ?? '🪙';
   const affordable = balance >= privilege.token_cost;
   const pending = openStatus === 'pending';
   const approved = openStatus === 'approved';

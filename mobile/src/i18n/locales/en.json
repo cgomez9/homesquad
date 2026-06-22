@@ -539,6 +539,17 @@
     "movie": "Movie",
     "toy": "Toy"
   },
+  "privilegeIcons": {
+    "label": "Icon",
+    "extraTime": "Extra time",
+    "screenTime": "Screen time",
+    "stayUp": "Stay up",
+    "pickMeal": "Pick meal",
+    "gameTime": "Game time",
+    "outing": "Outing",
+    "music": "Music",
+    "movie": "Movie"
+  },
   "pin": {
     "title": "Enter PIN"
   },

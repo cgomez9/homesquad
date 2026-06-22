@@ -539,6 +539,17 @@
     "movie": "Peli",
     "toy": "Peluche"
   },
+  "privilegeIcons": {
+    "label": "Icono",
+    "extraTime": "Más tiempo",
+    "screenTime": "Pantalla",
+    "stayUp": "Trasnochar",
+    "pickMeal": "Elegir comida",
+    "gameTime": "Videojuegos",
+    "outing": "Salida",
+    "music": "Música",
+    "movie": "Peli"
+  },
   "pin": {
     "title": "Introduce tu PIN"
   },

@@ -6,10 +6,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../../src/lib/supabase';
 import { Button } from '../../../../src/components/Button';
 import { TextField } from '../../../../src/components/TextField';
-import { RewardIconPicker } from '../../../../src/components/RewardIconPicker';
+import { PrivilegeIconPicker } from '../../../../src/components/PrivilegeIconPicker';
 import { TidePoolBackground } from '../../../../src/components/TidePool';
 import { useTheme, type Palette, spacing, typography } from '../../../../src/theme';
-import type { RewardIconId } from '../../../../src/constants/rewardIcons';
+import type { PrivilegeIconId } from '../../../../src/constants/privilegeIcons';
 
 const TOP_INSET =
   Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) + spacing.lg : 56;
@@ -25,7 +25,7 @@ export default function EditPrivilege() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [cost, setCost] = useState('3');
-  const [iconId, setIconId] = useState<RewardIconId>(1);
+  const [iconId, setIconId] = useState<PrivilegeIconId>(1);
 
   const { data: privilege, isLoading } = useQuery({
     queryKey: ['privilege', id],
@@ -45,7 +45,7 @@ export default function EditPrivilege() {
     setTitle(privilege.title);
     setDescription(privilege.description ?? '');
     setCost(String(privilege.token_cost));
-    setIconId(privilege.icon_id as RewardIconId);
+    setIconId(privilege.icon_id as PrivilegeIconId);
   }, [privilege]);
 
   const update = useMutation({
@@ -97,7 +97,7 @@ export default function EditPrivilege() {
             <TextField label={t('forms.title')} value={title} onChangeText={setTitle} />
             <TextField label={t('forms.descriptionOptional')} value={description} onChangeText={setDescription} />
             <TextField label={t('forms.tokenCost')} value={cost} onChangeText={setCost} keyboardType="number-pad" />
-            <RewardIconPicker value={iconId} onChange={setIconId} />
+            <PrivilegeIconPicker value={iconId} onChange={setIconId} />
             <View style={styles.actions}>
               <Button label={t('forms.saveChanges')} loading={update.isPending} onPress={() => update.mutate()} />
               <Button label={t('common.archive')} variant="secondary" onPress={() => archive.mutate()} style={{ marginTop: spacing.sm }} />

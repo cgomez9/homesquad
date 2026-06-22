@@ -7,7 +7,7 @@ const baseInst: ChoreCardInstance = {
   status: 'pending',
   assignee_profile_id: null,
   due_at: '2026-05-29T10:00:00Z',
-  chore: { id: 'c1', title: 'Vacuum', star_value: 10, verification_mode: 'approval', recurrence: null },
+  chore: { id: 'c1', title: 'Vacuum', kind: 'chore', star_value: 10, token_value: null, current_skill_streak: 0, verification_mode: 'approval', recurrence: null },
   assignee: null,
   rejection_reason: null,
 };

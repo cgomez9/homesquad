@@ -390,11 +390,6 @@ export default function Settings() {
             <Text style={styles.rowKey}>{t('goals.title')}</Text>
             <Text style={styles.chevron}>›</Text>
           </Pressable>
-          <View style={styles.divider} />
-          <Pressable onPress={() => router.push('/(app)/parent/privileges' as never)} style={styles.linkRow}>
-            <Text style={styles.rowKey}>{t('parent.privilegesTitle')}</Text>
-            <Text style={styles.chevron}>›</Text>
-          </Pressable>
         </View>
 
         {/* account */}

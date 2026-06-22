@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -169,13 +174,18 @@ export type Database = {
           assignee_profile_id: string | null
           created_at: string
           created_by: string
+          current_skill_streak: number
           description: string | null
           family_id: string
           id: string
+          kind: string
+          last_skill_date: string | null
+          longest_skill_streak: number
           next_due_at: string | null
           recurrence: Json
-          star_value: number
+          star_value: number | null
           title: string
+          token_value: number | null
           verification_mode: string
         }
         Insert: {
@@ -183,13 +193,18 @@ export type Database = {
           assignee_profile_id?: string | null
           created_at?: string
           created_by: string
+          current_skill_streak?: number
           description?: string | null
           family_id: string
           id?: string
+          kind?: string
+          last_skill_date?: string | null
+          longest_skill_streak?: number
           next_due_at?: string | null
           recurrence: Json
-          star_value: number
+          star_value?: number | null
           title: string
+          token_value?: number | null
           verification_mode: string
         }
         Update: {
@@ -197,13 +212,18 @@ export type Database = {
           assignee_profile_id?: string | null
           created_at?: string
           created_by?: string
+          current_skill_streak?: number
           description?: string | null
           family_id?: string
           id?: string
+          kind?: string
+          last_skill_date?: string | null
+          longest_skill_streak?: number
           next_due_at?: string | null
           recurrence?: Json
-          star_value?: number
+          star_value?: number | null
           title?: string
+          token_value?: number | null
           verification_mode?: string
         }
         Relationships: [
@@ -482,6 +502,170 @@ export type Database = {
           ip?: unknown
         }
         Relationships: []
+      }
+      privilege_redemptions: {
+        Row: {
+          family_id: string
+          id: string
+          kid_profile_id: string
+          parent_note: string | null
+          privilege_id: string
+          requested_at: string
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          token_cost_snapshot: number
+        }
+        Insert: {
+          family_id: string
+          id?: string
+          kid_profile_id: string
+          parent_note?: string | null
+          privilege_id: string
+          requested_at?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          token_cost_snapshot: number
+        }
+        Update: {
+          family_id?: string
+          id?: string
+          kid_profile_id?: string
+          parent_note?: string | null
+          privilege_id?: string
+          requested_at?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          token_cost_snapshot?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "privilege_redemptions_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "privilege_redemptions_kid_profile_id_fkey"
+            columns: ["kid_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "privilege_redemptions_privilege_id_fkey"
+            columns: ["privilege_id"]
+            isOneToOne: false
+            referencedRelation: "privileges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "privilege_redemptions_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      privilege_token_ledger: {
+        Row: {
+          created_at: string
+          delta: number
+          family_id: string
+          id: string
+          profile_id: string
+          reason: string
+          source_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          delta: number
+          family_id: string
+          id?: string
+          profile_id: string
+          reason: string
+          source_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          delta?: number
+          family_id?: string
+          id?: string
+          profile_id?: string
+          reason?: string
+          source_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "privilege_token_ledger_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "privilege_token_ledger_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      privileges: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string
+          description: string | null
+          family_id: string
+          icon_id: number
+          id: string
+          title: string
+          token_cost: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by: string
+          description?: string | null
+          family_id: string
+          icon_id: number
+          id?: string
+          title: string
+          token_cost: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          family_id?: string
+          icon_id?: number
+          id?: string
+          title?: string
+          token_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "privileges_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "privileges_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -813,12 +997,18 @@ export type Database = {
         Returns: undefined
       }
       approve_chore: { Args: { instance_id: string }; Returns: undefined }
+      approve_privilege_redemption: {
+        Args: { redemption_id: string }
+        Returns: undefined
+      }
       approve_redemption: {
         Args: { redemption_id: string }
         Returns: undefined
       }
       archive_chore: { Args: { chore_id: string }; Returns: undefined }
+      archive_privilege: { Args: { privilege_id: string }; Returns: undefined }
       archive_reward: { Args: { reward_id: string }; Returns: undefined }
+      bump_skill_streak: { Args: { p_chore_id: string }; Returns: undefined }
       cancel_family_goal: { Args: { p_goal_id: string }; Returns: undefined }
       check_achievements: { Args: { p_profile_id: string }; Returns: string[] }
       claim_chore: {
@@ -826,18 +1016,33 @@ export type Database = {
         Returns: undefined
       }
       cleanup_pairing_redeem_attempts: { Args: never; Returns: undefined }
-      create_chore: {
-        Args: {
-          assignee_profile_id: string
-          description: string
-          family_id: string
-          recurrence: Json
-          star_value: number
-          title: string
-          verification_mode: string
-        }
-        Returns: string
-      }
+      create_chore:
+        | {
+            Args: {
+              assignee_profile_id: string
+              description: string
+              family_id: string
+              recurrence: Json
+              star_value: number
+              title: string
+              verification_mode: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              assignee_profile_id: string
+              description: string
+              family_id: string
+              kind?: string
+              recurrence: Json
+              star_value: number
+              title: string
+              token_value?: number
+              verification_mode: string
+            }
+            Returns: string
+          }
       create_family: {
         Args: {
           family_name: string
@@ -875,6 +1080,16 @@ export type Database = {
         Args: { avatar: number; kid_name: string; pin_hash?: string }
         Returns: string
       }
+      create_privilege: {
+        Args: {
+          description: string
+          family_id: string
+          icon_id: number
+          title: string
+          token_cost: number
+        }
+        Returns: string
+      }
       create_reward: {
         Args: {
           description: string
@@ -893,6 +1108,10 @@ export type Database = {
       current_kid_id: { Args: never; Returns: string }
       current_streak: { Args: { p: string }; Returns: number }
       delete_account: { Args: never; Returns: undefined }
+      deny_privilege_redemption: {
+        Args: { parent_note?: string; redemption_id: string }
+        Returns: undefined
+      }
       deny_redemption: {
         Args: { parent_note?: string; redemption_id: string }
         Returns: undefined
@@ -908,6 +1127,10 @@ export type Database = {
           instance_id: string
           photo_url?: string
         }
+        Returns: undefined
+      }
+      fulfill_privilege_redemption: {
+        Args: { redemption_id: string }
         Returns: undefined
       }
       fulfill_redemption: {
@@ -961,6 +1184,10 @@ export type Database = {
         Args: { actor_profile_id: string; instance_id: string }
         Returns: undefined
       }
+      request_privilege_redemption: {
+        Args: { kid_profile_id: string; privilege_id: string }
+        Returns: string
+      }
       request_redemption: {
         Args: { kid_profile_id: string; reward_id: string }
         Returns: string
@@ -1000,16 +1227,41 @@ export type Database = {
           expires_at: string
         }[]
       }
-      update_chore: {
+      update_chore:
+        | {
+            Args: {
+              assignee_profile_id?: string
+              chore_id: string
+              clear_assignee?: boolean
+              description?: string
+              recurrence?: Json
+              star_value?: number
+              title?: string
+              verification_mode?: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              assignee_profile_id?: string
+              chore_id: string
+              clear_assignee?: boolean
+              description?: string
+              recurrence?: Json
+              star_value?: number
+              title?: string
+              token_value?: number
+              verification_mode?: string
+            }
+            Returns: undefined
+          }
+      update_privilege: {
         Args: {
-          assignee_profile_id?: string
-          chore_id: string
-          clear_assignee?: boolean
           description?: string
-          recurrence?: Json
-          star_value?: number
+          icon_id?: number
+          privilege_id: string
           title?: string
-          verification_mode?: string
+          token_cost?: number
         }
         Returns: undefined
       }
@@ -1160,4 +1412,3 @@ export const Constants = {
     },
   },
 } as const
-
