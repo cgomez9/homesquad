@@ -285,7 +285,7 @@
   "kid": {
     "greeting": "Hi, {{name}}!",
     "greetingNoName": "Hi!",
-    "today": "Today",
+    "today": "Today's missions 🧭",
     "toGo": "{{count}} to go",
     "stars": "⭐ Stars",
     "dayStreak": "🔥 Day streak",
@@ -538,6 +538,29 @@
     "snack": "Snack",
     "movie": "Movie",
     "toy": "Toy"
+  },
+  "choreCard": {
+    "stateUpForGrabs": "Up for grabs",
+    "stateReady": "Yours — ready",
+    "stateOnIt": "On it",
+    "stateTryAgain": "Try again",
+    "stateDone": "Mission done",
+    "new": "NEW",
+    "reward": "reward",
+    "yours": "Yours, {{name}}",
+    "yoursNoName": "Yours",
+    "claim": "I'll do it",
+    "start": "Start",
+    "release": "Drop",
+    "finish": "I'm done",
+    "tryAgain": "Try again",
+    "doneStamp": "DONE",
+    "awaitingApproval": "Awaiting grown-up approval",
+    "approved": "Approved ✓",
+    "assignee": "{{name}} · {{status}}",
+    "statusOnIt": "on it",
+    "statusDone": "done",
+    "statusWaiting": "got it"
   },
   "privilegeIcons": {
     "label": "Icon",

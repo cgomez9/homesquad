@@ -54,4 +54,22 @@ describe('ChoreCard', () => {
     fireEvent.press(getByTestId('action-start'));
     expect(onAction).toHaveBeenCalledWith({ kind: 'start', instanceId: 'inst-1' });
   });
+
+  it('shows the done state with no actions when mine and finished', () => {
+    const inst = { ...baseInst, assignee_profile_id: 'actor-1', status: 'finished' as const };
+    const { getByText, queryByTestId } = render(<ChoreCard inst={inst} viewerActorId="actor-1" onAction={() => {}} />);
+    expect(getByText('Awaiting grown-up approval')).toBeTruthy();
+    expect(queryByTestId('action-finish')).toBeNull();
+    expect(queryByTestId('action-start')).toBeNull();
+  });
+
+  it('renders the token reward for a skill task', () => {
+    const inst = {
+      ...baseInst,
+      chore: { ...baseInst.chore!, kind: 'skill' as const, star_value: null, token_value: 5, current_skill_streak: 3 },
+    };
+    const { getByText } = render(<ChoreCard inst={inst} viewerActorId="actor-1" onAction={() => {}} />);
+    expect(getByText('🪙 5')).toBeTruthy();
+    expect(getByText('🔥 3')).toBeTruthy();
+  });
 });

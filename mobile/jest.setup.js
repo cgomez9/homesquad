@@ -9,6 +9,13 @@ jest.mock(
   () => require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
 
+// expo-audio's asset resolver (createAudioPlayer(require('*.mp3'))) can't run
+// under Jest. src/lib/feedback.ts loads it at module scope, so any component
+// that imports feedback (e.g. ChoreCard) needs this stub.
+jest.mock('expo-audio', () => ({
+  createAudioPlayer: () => ({ play: () => {}, remove: () => {} }),
+}));
+
 // Initialize i18next synchronously with the bundled English locale so any
 // component test that uses useTranslation/t() sees real translations rather
 // than the raw key paths. Spanish bundle is loaded as a fallback resource

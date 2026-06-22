@@ -285,7 +285,7 @@
   "kid": {
     "greeting": "¡Hola, {{name}}!",
     "greetingNoName": "¡Hola!",
-    "today": "Hoy",
+    "today": "Misiones de hoy 🧭",
     "toGo": "Faltan {{count}}",
     "stars": "⭐ Estrellas",
     "dayStreak": "🔥 Racha",
@@ -538,6 +538,29 @@
     "snack": "Snack",
     "movie": "Peli",
     "toy": "Peluche"
+  },
+  "choreCard": {
+    "stateUpForGrabs": "Disponible",
+    "stateReady": "Tuya — lista",
+    "stateOnIt": "En marcha",
+    "stateTryAgain": "Inténtalo de nuevo",
+    "stateDone": "Misión cumplida",
+    "new": "NUEVA",
+    "reward": "premio",
+    "yours": "Tuya, {{name}}",
+    "yoursNoName": "Tuya",
+    "claim": "Yo lo hago",
+    "start": "Empezar",
+    "release": "Soltar",
+    "finish": "¡Terminé!",
+    "tryAgain": "Reintentar",
+    "doneStamp": "LISTO",
+    "awaitingApproval": "Esperando a un adulto",
+    "approved": "Aprobada ✓",
+    "assignee": "{{name}} · {{status}}",
+    "statusOnIt": "en marcha",
+    "statusDone": "terminó",
+    "statusWaiting": "lo tomó"
   },
   "privilegeIcons": {
     "label": "Icono",
